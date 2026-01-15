@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class OrderItem {
+  final int id;
   final String orderNumber;
   final String fullname;
   final String? clientName;
@@ -8,9 +9,13 @@ class OrderItem {
   final String address;
   final String? product;
   final String? phone;
-  final String planningStatus; // in_progress, pending, delivered, rejected, unavailable
+  final String planningStatus;
+  final double? latitude;
+  final double? longitude;
+  final String? googleMapsUrl;
 
   OrderItem({
+    required this.id,
     required this.orderNumber,
     required this.fullname,
     this.clientName,
@@ -19,10 +24,14 @@ class OrderItem {
     this.product,
     this.phone,
     required this.planningStatus,
+    this.latitude,
+    this.longitude,
+    this.googleMapsUrl,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
+      id: json['id'] as int? ?? 0,
       orderNumber: json['order_number'] as String? ?? '',
       fullname: json['fullname'] as String? ?? '',
       clientName: json['client_name'] as String?,
@@ -31,8 +40,11 @@ class OrderItem {
       product: json['product'] as String?,
       phone: json['phone'] as String?,
       planningStatus: json['planning_status'] as String? ?? 'pending',
+      latitude: json['latitude'] as double?,
+      longitude: json['longitude'] as double?,
+      googleMapsUrl: json['google_maps_url'] as String?,
     );
-  }
+  }     
 
   Color get statusColor {
     switch (planningStatus) {

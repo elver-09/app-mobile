@@ -3,6 +3,9 @@
         android:label="trainyl_2_0"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCxTlk0WgcQzu_Odxmk2ROu6peiUOX-8Wk" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

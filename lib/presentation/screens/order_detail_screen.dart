@@ -1,13 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class OrderDetailScreen extends StatefulWidget {
+  final int orderId;
   final String orderNumber;
   final String clientName;
+  final String phone;
+  final String address;
+  final String product;
+  final String district;
+  final String reference;
+  final String token;
+  final double latitude;
+  final double longitude;
+  final String googleMapsUrl;
 
   const OrderDetailScreen({
     super.key,
+    required this.orderId,
     required this.orderNumber,
     required this.clientName,
+    required this.phone,
+    required this.address,
+    required this.product,
+    required this.district,
+    required this.reference,
+    required this.token,
+    this.latitude = -8.00295,
+    this.longitude = -78.3163062,
+    this.googleMapsUrl = 'https://www.google.com/maps/@-8.00295,-78.3163062,12074m/data=!3m1!1e3?authuser=0&entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
   });
 
   @override
@@ -15,6 +39,151 @@ class OrderDetailScreen extends StatefulWidget {
 }
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  late GoogleMapController mapController;
+  GoogleMapController? routeMapController;
+  
+  // Coordenadas de inicio de ruta
+  final double routeStartLat = -8.000056;
+  final double routeStartLng = -78.3067795;
+  
+  // ⚠️ REEMPLAZA ESTO CON TU API KEY DE GOOGLE CLOUD
+  // 1. Ve a https://console.cloud.google.com
+  // 2. Crea un proyecto o selecciona uno existente
+  // 3. Habilita "Maps SDK for Android" y "Directions API"
+  // 4. Crea una API key
+  // 5. Reemplaza la key abajo
+  final String GOOGLE_MAPS_API_KEY = 'AIzaSyCxTlk0WgcQzu_Odxmk2ROu6peiUOX-8Wk';
+  
+  List<LatLng> routePoints = [];
+  bool isLoadingRoute = true;
+
+  @override
+  void initState() {
+    super.initState();
+    print('📍 OrderDetailScreen - Lat: ${widget.latitude}, Lng: ${widget.longitude}');
+    _getRoutePoints();
+  }
+
+  Future<void> _getRoutePoints() async {
+    try {
+      final String url =
+          'https://router.project-osrm.org/route/v1/driving/$routeStartLng,$routeStartLat;${widget.longitude},${widget.latitude}?overview=full&geometries=geojson';
+
+      print('🔗 Llamando API: $url');
+      final response = await http.get(Uri.parse(url));
+
+      print('📊 Status Code: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        final code = json['code'];
+        
+        print('✅ Status API: $code');
+        
+        if (code == 'Ok') {
+          final routes = json['routes'] as List;
+          
+          if (routes.isNotEmpty) {
+            final geometry = routes[0]['geometry'];
+            final coordinates = geometry['coordinates'] as List;
+            
+            print('📍 Coordenadas obtenidas: ${coordinates.length}');
+            
+            final decodedPoints = coordinates.map((coord) {
+              return LatLng(coord[1] as double, coord[0] as double);
+            }).toList();
+            
+            setState(() {
+              routePoints = decodedPoints;
+              isLoadingRoute = false;
+            });
+            
+            print('✅ Ruta obtenida con ${decodedPoints.length} puntos');
+            for (var i = 0; i < decodedPoints.length && i < 5; i++) {
+              print('   Punto $i: ${decodedPoints[i]}');
+            }
+          } else {
+            throw Exception('No routes found');
+          }
+        } else {
+          print('❌ API Error: $code');
+          print('Message: ${json['message']}');
+          _useFallbackRoute();
+        }
+      } else {
+        print('❌ HTTP Error: ${response.statusCode}');
+        _useFallbackRoute();
+      }
+    } catch (e) {
+      print('❌ Exception: $e');
+      _useFallbackRoute();
+    }
+  }
+
+  void _useFallbackRoute() {
+    setState(() {
+      isLoadingRoute = false;
+      routePoints = [
+        LatLng(routeStartLat, routeStartLng),
+        LatLng(widget.latitude, widget.longitude),
+      ];
+    });
+  }
+
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> poly = [];
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      poly.add(LatLng(lat / 1e5, lng / 1e5));
+    }
+    return poly;
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    print('🔵 Intentando llamar a: $phoneNumber');
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    try {
+      await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+      print('✅ Llamada iniciada correctamente');
+    } catch (e) {
+      print('❌ Error al iniciar la llamada: $e');
+    }
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+    print('📍 Mapa creado - Lat: ${widget.latitude}, Lng: ${widget.longitude}');
+  }
+
+  void _onRouteMapCreated(GoogleMapController controller) {
+    routeMapController = controller;
+    print('🛣️ Mapa de ruta creado');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,14 +218,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Supermercado Los Álamos · Zona Centro',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF9CA3AF),
                                 ),
                               ),
                             ],
@@ -151,41 +312,43 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Supermercado Los Álamos',
-                            style: TextStyle(
+                          Text(
+                            widget.clientName,
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Producto: Despensa semanal · Zona Centro',
-                            style: TextStyle(
+                          Text(
+                            'Producto: Despensa semanal · Zona ${widget.district}',
+                            style: const TextStyle(
                               fontSize: 14,
                               color: Color(0xFF9CA3AF),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _buildInfoRow('Cliente:', 'Anallely Ayala'),
+                          _buildInfoRow('Cliente:', widget.clientName),
                           const SizedBox(height: 12),
-                          _buildInfoRow('Teléfono:', '+56 9 1234 5678'),
+                          _buildInfoRow('Teléfono:', widget.phone),
                           const SizedBox(height: 12),
-                          _buildInfoRow('Dirección:', 'Av. Central 1450 · Torre B'),
+                          _buildInfoRow('Dirección:', widget.address),
                           const SizedBox(height: 12),
                           _buildInfoRow(
                             'Referencia:',
-                            'Ingreso por estacionamiento\nsubterráneo · Dejar en recepción',
+                            widget.reference.isNotEmpty 
+                              ? widget.reference 
+                              : widget.address,
                           ),
                           const SizedBox(height: 16),
                           Row(
                             children: [
                               Expanded(
                                 child: ElevatedButton.icon(
-                                  onPressed: () {},
+                                  onPressed: () => _makePhoneCall(widget.phone),
                                   icon: const Icon(Icons.phone, size: 18),
-                                  label: const Text('Llamar a Anallely'),
+                                  label: Text('Llamar a ${widget.clientName.split(' ').first}'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFE0F2FE),
                                     foregroundColor: Colors.black,
@@ -248,35 +411,91 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     // Map preview
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 200,
-                              color: const Color(0xFFE5E7EB),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.map,
-                                  size: 48,
-                                  color: Color(0xFF9CA3AF),
+                      child: SizedBox(
+                        height: 220,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 220,
+                                child: GoogleMap(
+                                  onMapCreated: _onMapCreated,
+                                  initialCameraPosition: CameraPosition(
+                                    target: LatLng(widget.latitude, widget.longitude),
+                                    zoom: 17.0,
+                                  ),
+                                  markers: {
+                                    Marker(
+                                      markerId: const MarkerId('delivery_location'),
+                                      position: LatLng(widget.latitude, widget.longitude),
+                                      infoWindow: InfoWindow(
+                                        title: widget.clientName,
+                                        snippet: widget.address,
+                                      ),
+                                    ),
+                                  },
                                 ),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: Container(
-                              height: 200,
-                              color: const Color(0xFFD1D5DB),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.streetview,
-                                  size: 48,
-                                  color: Color(0xFF9CA3AF),
+                            Expanded(
+                              child: SizedBox(
+                                height: 220,
+                                child: GoogleMap(
+                                  onMapCreated: _onRouteMapCreated,
+                                  initialCameraPosition: CameraPosition(
+                                    target: LatLng(
+                                      (routeStartLat + widget.latitude) / 2,
+                                      (routeStartLng + widget.longitude) / 2,
+                                    ),
+                                    zoom: 14.0,
+                                  ),
+                                  markers: {
+                                    Marker(
+                                      markerId: const MarkerId('route_start'),
+                                      position: LatLng(routeStartLat, routeStartLng),
+                                      infoWindow: const InfoWindow(
+                                        title: 'Inicio',
+                                      ),
+                                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                                        BitmapDescriptor.hueGreen,
+                                      ),
+                                    ),
+                                    Marker(
+                                      markerId: const MarkerId('route_end'),
+                                      position: LatLng(widget.latitude, widget.longitude),
+                                      infoWindow: const InfoWindow(
+                                        title: 'Destino',
+                                      ),
+                                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                                        BitmapDescriptor.hueRed,
+                                      ),
+                                    ),
+                                  },
+                                  polylines: {
+                                    Polyline(
+                                      polylineId: const PolylineId('route'),
+                                      color: const Color(0xFF2563EB),
+                                      width: 3,
+                                      points: isLoadingRoute
+                                          ? [
+                                              LatLng(routeStartLat, routeStartLng),
+                                              LatLng(widget.latitude, widget.longitude),
+                                            ]
+                                          : routePoints,
+                                    ),
+                                  },
+                                  zoomGesturesEnabled: false,
+                                  scrollGesturesEnabled: false,
+                                  rotateGesturesEnabled: false,
+                                  tiltGesturesEnabled: false,
+                                  zoomControlsEnabled: false,
+                                  myLocationButtonEnabled: false,
+                                  mapToolbarEnabled: false,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),

@@ -113,14 +113,25 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
   }
 
   Widget _buildOrderCard(OrderItem o) {
+    print('📦 Orden: ${o.orderNumber} - Lat: ${o.latitude}, Lng: ${o.longitude}');
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OrderDetailScreen(
+              orderId: o.id,
               orderNumber: o.orderNumber,
-              clientName: o.clientName ?? 'Cliente',
+              clientName: o.fullname,
+              phone: o.phone ?? '+56 9 0000 0000',
+              address: o.address ?? 'Dirección no disponible',
+              product: o.product ?? 'N/A',
+              district: o.district ?? 'N/A',
+              reference: o.address ?? 'Dirección no disponible',
+              token: widget.token,
+              latitude: o.latitude ?? -8.00295,
+              longitude: o.longitude ?? -78.3163062,
+              googleMapsUrl: o.googleMapsUrl ?? '',
             ),
           ),
         );
@@ -182,7 +193,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
             const SizedBox(height: 12),
             // Product and zone
             Text(
-              'Producto: ${o.product ?? 'N/A'} · Zona ${o.district ?? 'N/A'}',
+              'Producto: ${o.product ?? 'N/A'} · Zona ${o.district}',
               style: const TextStyle(
                 fontSize: 14,
                 color: Color(0xFF9CA3AF),
@@ -197,7 +208,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    o.address ?? 'Dirección no disponible',
+                    o.address,
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF9CA3AF),
@@ -212,14 +223,18 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  o.fullname,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                Expanded(
+                  child: Text(
+                    o.fullname,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Row(
                   children: [
                     const Icon(Icons.phone, size: 18, color: Color(0xFF9CA3AF)),
