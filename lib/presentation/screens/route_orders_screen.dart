@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
-import 'package:trainyl_2_0/presentation/screens/order_detail_screen.dart';
+import '../widgets/route_orders/route_order_card.dart';
 
 class RouteOrdersScreen extends StatefulWidget {
   final int routeId;
@@ -91,10 +91,13 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
                     Column(
                       children: [
                         ...orders.asMap().entries.map((entry) {
-                          final o = entry.value;
+                          final order = entry.value;
                           return Column(
                             children: [
-                              _buildOrderCard(o),
+                              RouteOrderCard(
+                                order: order,
+                                token: widget.token,
+                              ),
                               if (entry.key < orders.length - 1)
                                 const SizedBox(height: 12),
                             ],
@@ -107,150 +110,6 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrderCard(OrderItem o) {
-    print('📦 Orden: ${o.orderNumber} - Lat: ${o.latitude}, Lng: ${o.longitude}');
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OrderDetailScreen(
-              orderId: o.id,
-              orderNumber: o.orderNumber,
-              clientName: o.fullname,
-              phone: o.phone ?? '+56 9 0000 0000',
-              address: o.address ?? 'Dirección no disponible',
-              product: o.product ?? 'N/A',
-              district: o.district ?? 'N/A',
-              reference: o.address ?? 'Dirección no disponible',
-              token: widget.token,
-              latitude: o.latitude ?? -8.00295,
-              longitude: o.longitude ?? -78.3163062,
-              googleMapsUrl: o.googleMapsUrl ?? '',
-            ),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Order name and status
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        o.clientName ?? 'Cliente',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        o.orderNumber,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: o.statusColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    o.statusLabel,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Product and zone
-            Text(
-              'Producto: ${o.product ?? 'N/A'} · Zona ${o.district}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF9CA3AF),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Address
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.location_on_outlined, size: 18, color: Color(0xFF9CA3AF)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    o.address,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF9CA3AF),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Contact info
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    o.fullname,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.phone, size: 18, color: Color(0xFF9CA3AF)),
-                    const SizedBox(width: 6),
-                    Text(
-                      o.phone ?? '+56 9 0000 0000',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );

@@ -2,7 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
+import 'dart:io';
+
+// Core services
+import '../../core/services/photo_storage_service.dart';
+
+// Widgets
+import '../widgets/order_detail/order_info_card.dart';
+import '../widgets/order_detail/delivery_photos_widget.dart';
+import '../widgets/order_detail/photo_view_dialog.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
@@ -56,12 +66,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   
   List<LatLng> routePoints = [];
   bool isLoadingRoute = true;
+  List<File> deliveryPhotos = [];
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     print('📍 OrderDetailScreen - Lat: ${widget.latitude}, Lng: ${widget.longitude}');
     _getRoutePoints();
+    _loadSavedPhotos();
+  }
+
+  Future<void> _loadSavedPhotos() async {
+    try {
+      final photos = await PhotoStorageService.loadPhotos(widget.orderId.toString());
+      setState(() {
+        deliveryPhotos = photos;
+      });
+      print('📸 Fotos cargadas para orden ${widget.orderId}: ${deliveryPhotos.length}');
+    } catch (e) {
+      print('❌ Error al cargar fotos: $e');
+    }
+  }
+
+  Future<void> _savePhotos() async {
+    try {
+      await PhotoStorageService.savePhotoPaths(widget.orderId.toString(), deliveryPhotos);
+      print('💾 Fotos guardadas para orden ${widget.orderId}: ${deliveryPhotos.length}');
+    } catch (e) {
+      print('❌ Error al guardar fotos: $e');
+    }
   }
 
   Future<void> _getRoutePoints() async {
@@ -130,34 +164,61 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     });
   }
 
-  List<LatLng> _decodePolyline(String encoded) {
-    List<LatLng> poly = [];
-    int index = 0, len = encoded.length;
-    int lat = 0, lng = 0;
-
-    while (index < len) {
-      int b, shift = 0, result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lat += dlat;
-
-      shift = 0;
-      result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lng += dlng;
-
-      poly.add(LatLng(lat / 1e5, lng / 1e5));
+  Future<void> _takePhoto() async {
+    if (deliveryPhotos.length >= 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Máximo 2 fotos permitidas')),
+      );
+      return;
     }
-    return poly;
+
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+      
+      if (photo != null) {
+        setState(() {
+          deliveryPhotos.add(File(photo.path));
+        });
+        await _savePhotos();
+        print('📷 Foto capturada: ${photo.path}');
+      }
+    } catch (e) {
+      print('❌ Error al capturar foto: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al capturar foto: $e')),
+      );
+    }
+  }
+
+  Future<void> _removePhoto(int index) async {
+    setState(() {
+      deliveryPhotos.removeAt(index);
+    });
+    await _savePhotos();
+  }
+
+  void _showPhotosDialog() {
+    if (deliveryPhotos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay fotos para mostrar')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => PhotoViewDialog(
+        photos: deliveryPhotos,
+        onDeletePhoto: (index) {
+          setState(() {
+            _removePhoto(index);
+          });
+        },
+      ),
+    );
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
@@ -182,6 +243,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   void _onRouteMapCreated(GoogleMapController controller) {
     routeMapController = controller;
     print('🛣️ Mapa de ruta creado');
+  }
+
+  Widget _buildStatusButton(
+    String label,
+    IconData icon,
+    Color backgroundColor,
+    VoidCallback onPressed,
+  ) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 20),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -275,112 +361,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Order info card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                widget.orderNumber,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF9CA3AF),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF59E0B),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  'En curso',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            widget.clientName,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Producto: Despensa semanal · Zona ${widget.district}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildInfoRow('Cliente:', widget.clientName),
-                          const SizedBox(height: 12),
-                          _buildInfoRow('Teléfono:', widget.phone),
-                          const SizedBox(height: 12),
-                          _buildInfoRow('Dirección:', widget.address),
-                          const SizedBox(height: 12),
-                          _buildInfoRow(
-                            'Referencia:',
-                            widget.reference.isNotEmpty 
-                              ? widget.reference 
-                              : widget.address,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () => _makePhoneCall(widget.phone),
-                                  icon: const Icon(Icons.phone, size: 18),
-                                  label: Text('Llamar a ${widget.clientName.split(' ').first}'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE0F2FE),
-                                    foregroundColor: Colors.black,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () {},
-                                  icon: const Icon(Icons.map_outlined, size: 18),
-                                  label: const Text('Abrir en mapas'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE0F2FE),
-                                    foregroundColor: Colors.black,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    OrderInfoCard(
+                      orderNumber: widget.orderNumber,
+                      clientName: widget.clientName,
+                      phone: widget.phone,
+                      address: widget.address,
+                      reference: widget.reference,
+                      district: widget.district,
+                      onCallPressed: () => _makePhoneCall(widget.phone),
+                      onMapPressed: () {
+                        // TODO: Implementar apertura de mapa externo
+                      },
                     ),
                     const SizedBox(height: 24),
                     // Location section
@@ -522,158 +513,34 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                     // Status buttons
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.check_circle_outline, size: 20),
-                        label: const Text('Marcar como entregado'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
+                    _buildStatusButton(
+                      'Marcar como entregado',
+                      Icons.check_circle_outline,
+                      const Color(0xFF10B981),
+                      () {},
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.cancel_outlined, size: 20),
-                        label: const Text('Marcar como rechazado'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEF4444),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
+                    _buildStatusButton(
+                      'Marcar como rechazado',
+                      Icons.cancel_outlined,
+                      const Color(0xFFEF4444),
+                      () {},
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.error_outline, size: 20),
-                        label: const Text('No disponible en domicilio'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF97316),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
+                    _buildStatusButton(
+                      'No disponible en domicilio',
+                      Icons.error_outline,
+                      const Color(0xFFF97316),
+                      () {},
                     ),
                     const SizedBox(height: 24),
-                    // Evidence section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Evidencia de la entrega',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const Text(
-                          'Obligatoria para finalizar',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Evidence buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.camera_alt_outlined, size: 20),
-                            label: const Text('Tomar foto'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE0F2FE),
-                              foregroundColor: Colors.black,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.photo_library_outlined, size: 20),
-                            label: const Text('Ver fotos'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE0F2FE),
-                              foregroundColor: Colors.black,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Evidence photos
-                    Row(
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: const Color(0xFFE5E7EB),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: const Icon(
-                              Icons.image,
-                              size: 40,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: const Color(0xFFE5E7EB),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: const Icon(
-                              Icons.image,
-                              size: 40,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ),
-                      ],
+                    // Widget de fotos
+                    DeliveryPhotosWidget(
+                      photos: deliveryPhotos,
+                      maxPhotos: 2,
+                      onTakePhoto: _takePhoto,
+                      onViewPhotos: _showPhotosDialog,
+                      onRemovePhoto: _removePhoto,
                     ),
                     const SizedBox(height: 16),
                     // Comment field
@@ -730,35 +597,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 90,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9CA3AF),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
