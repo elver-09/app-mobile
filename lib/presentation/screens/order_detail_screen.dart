@@ -56,12 +56,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final double routeStartLat = -8.000056;
   final double routeStartLng = -78.3067795;
   
-  // ⚠️ REEMPLAZA ESTO CON TU API KEY DE GOOGLE CLOUD
-  // 1. Ve a https://console.cloud.google.com
-  // 2. Crea un proyecto o selecciona uno existente
-  // 3. Habilita "Maps SDK for Android" y "Directions API"
-  // 4. Crea una API key
-  // 5. Reemplaza la key abajo
   final String GOOGLE_MAPS_API_KEY = 'AIzaSyCxTlk0WgcQzu_Odxmk2ROu6peiUOX-8Wk';
   
   List<LatLng> routePoints = [];
