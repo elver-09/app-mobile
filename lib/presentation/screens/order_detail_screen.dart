@@ -8,6 +8,7 @@ import 'dart:io';
 
 // Core services
 import '../../core/services/photo_storage_service.dart';
+import '../../core/services/maps_service.dart';
 
 // Widgets
 import '../widgets/order_detail/order_info_card.dart';
@@ -49,7 +50,6 @@ class OrderDetailScreen extends StatefulWidget {
 }
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
-  late GoogleMapController mapController;
   GoogleMapController? routeMapController;
   
   // Coordenadas de inicio de ruta
@@ -229,9 +229,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-    print('📍 Mapa creado - Lat: ${widget.latitude}, Lng: ${widget.longitude}');
+  Future<void> _openRouteInMaps() async {
+    print('🗺️ Abriendo ruta en mapas desde ($routeStartLat, $routeStartLng) hasta (${widget.latitude}, ${widget.longitude})');
+    
+    final success = await MapsService.openRouteInMaps(
+      originLat: routeStartLat,
+      originLng: routeStartLng,
+      destinationLat: widget.latitude,
+      destinationLng: widget.longitude,
+      destinationLabel: widget.clientName,
+    );
+    
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir la aplicación de mapas')),
+      );
+    }
   }
 
   void _onRouteMapCreated(GoogleMapController controller) {
@@ -363,123 +376,75 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       reference: widget.reference,
                       district: widget.district,
                       onCallPressed: () => _makePhoneCall(widget.phone),
-                      onMapPressed: () {
-                        // TODO: Implementar apertura de mapa externo
-                      },
+                      onMapPressed: _openRouteInMaps,
                     ),
                     const SizedBox(height: 24),
                     // Location section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Ubicación de entrega',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {},
-                          child: const Text(
-                            'Vista previa de la ruta',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'Ubicación de entrega',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    // Map preview
+                    // Map preview - Full width
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: SizedBox(
                         height: 220,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: SizedBox(
-                                height: 220,
-                                child: GoogleMap(
-                                  onMapCreated: _onMapCreated,
-                                  initialCameraPosition: CameraPosition(
-                                    target: LatLng(widget.latitude, widget.longitude),
-                                    zoom: 17.0,
-                                  ),
-                                  markers: {
-                                    Marker(
-                                      markerId: const MarkerId('delivery_location'),
-                                      position: LatLng(widget.latitude, widget.longitude),
-                                      infoWindow: InfoWindow(
-                                        title: widget.clientName,
-                                        snippet: widget.address,
-                                      ),
-                                    ),
-                                  },
-                                ),
+                        child: GoogleMap(
+                          onMapCreated: _onRouteMapCreated,
+                          initialCameraPosition: CameraPosition(
+                            target: LatLng(
+                              (routeStartLat + widget.latitude) / 2,
+                              (routeStartLng + widget.longitude) / 2,
+                            ),
+                            zoom: 14.0,
+                          ),
+                          markers: {
+                            Marker(
+                              markerId: const MarkerId('route_start'),
+                              position: LatLng(routeStartLat, routeStartLng),
+                              infoWindow: const InfoWindow(
+                                title: 'Inicio',
+                              ),
+                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                BitmapDescriptor.hueGreen,
                               ),
                             ),
-                            Expanded(
-                              child: SizedBox(
-                                height: 220,
-                                child: GoogleMap(
-                                  onMapCreated: _onRouteMapCreated,
-                                  initialCameraPosition: CameraPosition(
-                                    target: LatLng(
-                                      (routeStartLat + widget.latitude) / 2,
-                                      (routeStartLng + widget.longitude) / 2,
-                                    ),
-                                    zoom: 14.0,
-                                  ),
-                                  markers: {
-                                    Marker(
-                                      markerId: const MarkerId('route_start'),
-                                      position: LatLng(routeStartLat, routeStartLng),
-                                      infoWindow: const InfoWindow(
-                                        title: 'Inicio',
-                                      ),
-                                      icon: BitmapDescriptor.defaultMarkerWithHue(
-                                        BitmapDescriptor.hueGreen,
-                                      ),
-                                    ),
-                                    Marker(
-                                      markerId: const MarkerId('route_end'),
-                                      position: LatLng(widget.latitude, widget.longitude),
-                                      infoWindow: const InfoWindow(
-                                        title: 'Destino',
-                                      ),
-                                      icon: BitmapDescriptor.defaultMarkerWithHue(
-                                        BitmapDescriptor.hueRed,
-                                      ),
-                                    ),
-                                  },
-                                  polylines: {
-                                    Polyline(
-                                      polylineId: const PolylineId('route'),
-                                      color: const Color(0xFF2563EB),
-                                      width: 3,
-                                      points: isLoadingRoute
-                                          ? [
-                                              LatLng(routeStartLat, routeStartLng),
-                                              LatLng(widget.latitude, widget.longitude),
-                                            ]
-                                          : routePoints,
-                                    ),
-                                  },
-                                  zoomGesturesEnabled: false,
-                                  scrollGesturesEnabled: false,
-                                  rotateGesturesEnabled: false,
-                                  tiltGesturesEnabled: false,
-                                  zoomControlsEnabled: false,
-                                  myLocationButtonEnabled: false,
-                                  mapToolbarEnabled: false,
-                                ),
+                            Marker(
+                              markerId: const MarkerId('route_end'),
+                              position: LatLng(widget.latitude, widget.longitude),
+                              infoWindow: const InfoWindow(
+                                title: 'Destino',
+                              ),
+                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                BitmapDescriptor.hueRed,
                               ),
                             ),
-                          ],
+                          },
+                          polylines: {
+                            Polyline(
+                              polylineId: const PolylineId('route'),
+                              color: const Color(0xFF2563EB),
+                              width: 3,
+                              points: isLoadingRoute
+                                  ? [
+                                      LatLng(routeStartLat, routeStartLng),
+                                      LatLng(widget.latitude, widget.longitude),
+                                    ]
+                                  : routePoints,
+                            ),
+                          },
+                          zoomGesturesEnabled: true,
+                          scrollGesturesEnabled: true,
+                          rotateGesturesEnabled: false,
+                          tiltGesturesEnabled: false,
+                          zoomControlsEnabled: true,
+                          myLocationButtonEnabled: false,
+                          mapToolbarEnabled: false,
                         ),
                       ),
                     ),
