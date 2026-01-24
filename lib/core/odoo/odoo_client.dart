@@ -4,6 +4,19 @@ import 'package:http/http.dart' as http;
 import 'package:trainyl_2_0/core/odoo/route_model.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
 
+/// Clase para la respuesta de órdenes de ruta con información del vehículo
+class RouteOrdersResponse {
+  final List<OrderItem> orders;
+  final String fleetType;
+  final String fleetLicense;
+
+  RouteOrdersResponse({
+    required this.orders,
+    required this.fleetType,
+    required this.fleetLicense,
+  });
+}
+
 class DriverInfo {
   final int employeeId;
   final String name;
@@ -132,7 +145,7 @@ class OdooClient {
   }
 
   /// Obtiene las órdenes de una ruta específica
-  Future<List<OrderItem>> fetchRouteOrders({
+  Future<RouteOrdersResponse> fetchRouteOrders({
     required String token,
     required int routeId,
   }) async {
@@ -160,13 +173,68 @@ class OdooClient {
     final data = jsonDecode(resp.body);
     final result = data['result'];
     if (result == null || result['success'] != true) {
-      return [];
+      return RouteOrdersResponse(
+        orders: [],
+        fleetType: 'Vehículo',
+        fleetLicense: 'N/A',
+      );
     }
 
     final List ordersData = result['orders'] ?? [];
-    return ordersData
+    final orders = ordersData
         .map((o) => OrderItem.fromJson(o as Map<String, dynamic>))
         .toList();
+    
+    return RouteOrdersResponse(
+      orders: orders,
+      fleetType: result['fleet_type'] as String? ?? 'Vehículo',
+      fleetLicense: result['fleet_license'] as String? ?? 'N/A',
+    );
+  }
+
+  /// Obtiene el detalle completo de una orden específica
+  Future<OrderItem?> fetchOrderDetail({
+    required String token,
+    required int orderId,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/detail');
+
+    final resp = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {
+          'order_id': orderId,
+        },
+      }),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('HTTP ${resp.statusCode}');
+    }
+
+    final data = jsonDecode(resp.body);
+    print('📦 Respuesta del servidor: $data');
+    
+    final result = data['result'];
+    if (result == null || result['success'] != true) {
+      print('❌ Success = false. Error: ${result?['error']}');
+      return null;
+    }
+
+    final orderData = result['order'];
+    if (orderData == null) {
+      print('❌ orderData es null');
+      return null;
+    }
+
+    print('✅ Orden recibida: $orderData');
+    return OrderItem.fromJson(orderData as Map<String, dynamic>);
   }
 }
 

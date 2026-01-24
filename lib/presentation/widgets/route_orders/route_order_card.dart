@@ -5,12 +5,14 @@ import '../../screens/order_detail_screen.dart';
 class RouteOrderCard extends StatelessWidget {
   final OrderItem order;
   final String token;
+  final String? routeName;
   final VoidCallback? onTap;
 
   const RouteOrderCard({
     super.key,
     required this.order,
     required this.token,
+    this.routeName,
     this.onTap,
   });
 
@@ -28,12 +30,6 @@ class RouteOrderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildOrderHeader(),
-            const SizedBox(height: 12),
-            _buildProductInfo(),
-            const SizedBox(height: 12),
-            _buildAddressInfo(),
-            const SizedBox(height: 16),
-            _buildContactInfo(),
           ],
         ),
       ),
@@ -43,29 +39,13 @@ class RouteOrderCard extends StatelessWidget {
   Widget _buildOrderHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                order.clientName ?? 'Cliente',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                order.orderNumber,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF9CA3AF),
-                ),
-              ),
-            ],
+        Text(
+          order.orderNumber,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF9CA3AF),
           ),
         ),
         Container(
@@ -87,77 +67,6 @@ class RouteOrderCard extends StatelessWidget {
     );
   }
 
-  Widget _buildProductInfo() {
-    return Text(
-      'Producto: ${order.product ?? 'N/A'} · Zona ${order.district}',
-      style: const TextStyle(
-        fontSize: 14,
-        color: Color(0xFF9CA3AF),
-      ),
-    );
-  }
-
-  Widget _buildAddressInfo() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(
-          Icons.location_on_outlined,
-          size: 18,
-          color: Color(0xFF9CA3AF),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            order.address,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9CA3AF),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContactInfo() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Text(
-            order.fullname,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Row(
-          children: [
-            const Icon(
-              Icons.phone,
-              size: 18,
-              color: Color(0xFF9CA3AF),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              order.phone ?? '+56 9 0000 0000',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF9CA3AF),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   void _navigateToOrderDetail(BuildContext context) {
     print('📦 Orden: ${order.orderNumber} - Lat: ${order.latitude}, Lng: ${order.longitude}');
     Navigator.push(
@@ -167,12 +76,12 @@ class RouteOrderCard extends StatelessWidget {
           orderId: order.id,
           orderNumber: order.orderNumber,
           clientName: order.fullname,
-          phone: order.phone ?? '+56 9 0000 0000',
+          phone: order.phone ?? '',
           address: order.address,
           product: order.product ?? 'N/A',
           district: order.district,
-          reference: order.address,
           token: token,
+          routeName: routeName,
           latitude: order.latitude ?? -8.00295,
           longitude: order.longitude ?? -78.3163062,
           googleMapsUrl: order.googleMapsUrl ?? '',

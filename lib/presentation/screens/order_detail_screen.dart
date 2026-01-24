@@ -23,8 +23,10 @@ class OrderDetailScreen extends StatefulWidget {
   final String address;
   final String product;
   final String district;
-  final String reference;
   final String token;
+  final String? routeName;
+  final String? fleetType;
+  final String? fleetLicense;
   final double latitude;
   final double longitude;
   final String googleMapsUrl;
@@ -38,8 +40,10 @@ class OrderDetailScreen extends StatefulWidget {
     required this.address,
     required this.product,
     required this.district,
-    required this.reference,
     required this.token,
+    this.routeName,
+    this.fleetType,
+    this.fleetLicense,
     this.latitude = -8.00295,
     this.longitude = -78.3163062,
     this.googleMapsUrl = 'https://www.google.com/maps/@-8.00295,-78.3163062,12074m/data=!3m1!1e3?authuser=0&entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
@@ -321,9 +325,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        const Text(
-                          'Hoy · Ruta 12 · En curso',
-                          style: TextStyle(
+                        Text(
+                          'Hoy · ${widget.routeName ?? ''} · En curso',
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF9CA3AF),
                           ),
@@ -335,19 +339,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Text(
+                              const Text(
                                 'Vehículo',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Color(0xFF9CA3AF),
                                 ),
                               ),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               Text(
-                                'Moto · ABC-123',
-                                style: TextStyle(
+                                '${widget.fleetType ?? ''} · ${widget.fleetLicense ?? ''}',
+                                style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black,
@@ -373,8 +377,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       clientName: widget.clientName,
                       phone: widget.phone,
                       address: widget.address,
-                      reference: widget.reference,
                       district: widget.district,
+                      product: widget.product,
                       onCallPressed: () => _makePhoneCall(widget.phone),
                       onMapPressed: _openRouteInMaps,
                     ),

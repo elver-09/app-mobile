@@ -32,14 +32,14 @@ class OrderItem {
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
       id: json['id'] as int? ?? 0,
-      orderNumber: json['order_number'] as String? ?? '',
+      orderNumber: json['display_name'] as String? ?? json['order_number'] as String? ?? '',
       fullname: json['fullname'] as String? ?? '',
       clientName: json['client_name'] as String?,
       district: json['district'] as String? ?? '',
       address: json['address'] as String? ?? '',
       product: json['product'] as String?,
       phone: json['phone'] as String?,
-      planningStatus: json['planning_status'] as String? ?? 'pending',
+      planningStatus: json['planning_status'] as String? ?? 'planned',
       latitude: json['latitude'] as double?,
       longitude: json['longitude'] as double?,
       googleMapsUrl: json['google_maps_url'] as String?,

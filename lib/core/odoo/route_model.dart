@@ -2,21 +2,26 @@ class RouteItem {
   final int id;
   final String name;
   final String zone;
+  final String? fleet;
+  final String? rutaDate;
+  final int ordersQty;
+  // Campos para compatibilidad (se calculan internamente si es necesario)
   final int planned;
   final int confirmed;
   final int delivered;
   final double confirmedPercent;
-  final int ordersQty;
 
   RouteItem({
     required this.id,
     required this.name,
     required this.zone,
-    required this.planned,
-    required this.confirmed,
-    required this.delivered,
-    required this.confirmedPercent,
+    this.fleet,
+    this.rutaDate,
     required this.ordersQty,
+    this.planned = 0,
+    this.confirmed = 0,
+    this.delivered = 0,
+    this.confirmedPercent = 0.0,
   });
 
   factory RouteItem.fromJson(Map<String, dynamic> json) {
@@ -24,12 +29,9 @@ class RouteItem {
       id: json['id'] as int,
       name: json['name'] as String,
       zone: json['zone'] as String? ?? '',
-      planned: json['planned'] as int? ?? 0,
-      confirmed: json['confirmed'] as int? ?? 0,
-      delivered: json['delivered'] as int? ?? 0,
-      confirmedPercent: (json['confirmed_porcent'] as num?)?.toDouble() ?? 0.0,
-      // Prefer exact orders count from backend, fall back to planned
-      ordersQty: json['orders_qty'] as int? ?? (json['planned'] as int? ?? 0),
+      fleet: json['fleet'] as String?,
+      rutaDate: json['ruta_date'] as String?,
+      ordersQty: json['orders_qty'] as int? ?? 0,
     );
   }
 

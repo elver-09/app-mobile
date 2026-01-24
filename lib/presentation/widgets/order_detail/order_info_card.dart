@@ -5,8 +5,8 @@ class OrderInfoCard extends StatelessWidget {
   final String clientName;
   final String phone;
   final String address;
-  final String reference;
   final String district;
+  final String? product;
   final VoidCallback onCallPressed;
   final VoidCallback onMapPressed;
 
@@ -16,8 +16,8 @@ class OrderInfoCard extends StatelessWidget {
     required this.clientName,
     required this.phone,
     required this.address,
-    required this.reference,
     required this.district,
+    this.product,
     required this.onCallPressed,
     required this.onMapPressed,
   });
@@ -39,7 +39,7 @@ class OrderInfoCard extends StatelessWidget {
               Text(
                 orderNumber,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 18,
                   color: Color(0xFF9CA3AF),
                 ),
               ),
@@ -71,7 +71,7 @@ class OrderInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Producto: Despensa semanal · Zona $district',
+            'Producto: ${product ?? 'N/A'} · Zona $district',
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF9CA3AF),
@@ -83,11 +83,6 @@ class OrderInfoCard extends StatelessWidget {
           _buildInfoRow('Teléfono:', phone),
           const SizedBox(height: 12),
           _buildInfoRow('Dirección:', address),
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            'Referencia:',
-            reference.isNotEmpty ? reference : address,
-          ),
           const SizedBox(height: 16),
           Row(
             children: [
