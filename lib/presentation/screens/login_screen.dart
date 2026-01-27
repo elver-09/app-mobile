@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Align(
                       alignment: Alignment.center,
                       child: Text(
-                        'Ingrese para eligir sede y\nescanear tus órdenes',
+                        'Ingrese para elegir sede e\niniciar rutas',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     ),

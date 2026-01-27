@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/route_model.dart';
-import 'package:trainyl_2_0/presentation/screens/scan_assigned_orders.dart';
 import 'package:trainyl_2_0/presentation/screens/route_orders_screen.dart';
 import '../widgets/choose_sede/sede_header.dart';
 import '../widgets/choose_sede/pie_chart_widget.dart';
@@ -88,7 +87,6 @@ class _ChooseSedeState extends State<ChooseSede> {
                             ChartData('Pendiente', 16, Colors.grey),
                             ChartData('Entregado', 8, Colors.green),
                             ChartData('Rechazado', 0, Colors.red),
-                            ChartData('Sin\nescanear', 0, Colors.lightBlue),
                           ],
                         ),
                       ),
@@ -184,14 +182,9 @@ class _ChooseSedeState extends State<ChooseSede> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ScanAssignedOrders(
-                            nombreSede: 'Centro Norte',
-                            ordenesAsignadas: 24,
-                          ),
-                        ),
+                      // TODO: Implementar continuar última ruta
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Continuar última ruta')),
                       );
                     },
                     style: ElevatedButton.styleFrom(

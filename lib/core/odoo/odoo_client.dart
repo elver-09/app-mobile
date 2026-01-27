@@ -9,11 +9,15 @@ class RouteOrdersResponse {
   final List<OrderItem> orders;
   final String fleetType;
   final String fleetLicense;
+  final double? routeStartLatitude;
+  final double? routeStartLongitude;
 
   RouteOrdersResponse({
     required this.orders,
     required this.fleetType,
     required this.fleetLicense,
+    this.routeStartLatitude,
+    this.routeStartLongitude,
   });
 }
 
@@ -189,6 +193,8 @@ class OdooClient {
       orders: orders,
       fleetType: result['fleet_type'] as String? ?? 'Vehículo',
       fleetLicense: result['fleet_license'] as String? ?? 'N/A',
+      routeStartLatitude: result['route_start_latitude'] as double?,
+      routeStartLongitude: result['route_start_longitude'] as double?,
     );
   }
 

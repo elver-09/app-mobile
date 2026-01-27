@@ -1,5 +1,4 @@
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show Platform;
 
 class MapsService {
   /// Abre la ruta completa desde el origen hasta el destino en la app de mapas del dispositivo

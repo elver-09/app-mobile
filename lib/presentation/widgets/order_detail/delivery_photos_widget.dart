@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class DeliveryPhotosWidget extends StatelessWidget {
   final List<File> photos;
   final int maxPhotos;
-  final VoidCallback onTakePhoto;
+  final VoidCallback? onTakePhoto;
   final VoidCallback onViewPhotos;
   final Function(int) onRemovePhoto;
 
@@ -12,7 +12,7 @@ class DeliveryPhotosWidget extends StatelessWidget {
     super.key,
     required this.photos,
     required this.maxPhotos,
-    required this.onTakePhoto,
+    this.onTakePhoto,
     required this.onViewPhotos,
     required this.onRemovePhoto,
   });
@@ -50,55 +50,40 @@ class DeliveryPhotosWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              ...List.generate(
-                maxPhotos,
-                (index) => Expanded(
-                  child: Padding(
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ...List.generate(
+                  maxPhotos,
+                  (index) => Padding(
                     padding: EdgeInsets.only(right: index < maxPhotos - 1 ? 12 : 0),
-                    child: _buildPhotoBox(context, index),
+                    child: SizedBox(
+                      width: 150,
+                      child: _buildPhotoBox(context, index),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: photos.length >= maxPhotos ? null : onTakePhoto,
-                  icon: const Icon(Icons.camera_alt_outlined),
-                  label: const Text('Tomar foto'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: Color(0xFF3B82F6)),
-                    foregroundColor: const Color(0xFF3B82F6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+          if (photos.isNotEmpty)
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: onViewPhotos,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Ver fotos'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  side: const BorderSide(color: Color(0xFF3B82F6)),
+                  foregroundColor: const Color(0xFF3B82F6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: photos.isEmpty ? null : onViewPhotos,
-                  icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Ver fotos'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: Color(0xFF3B82F6)),
-                    foregroundColor: const Color(0xFF3B82F6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
         ],
       ),
     );

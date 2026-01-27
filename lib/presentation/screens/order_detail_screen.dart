@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -14,6 +13,11 @@ import '../../core/services/maps_service.dart';
 import '../widgets/order_detail/order_info_card.dart';
 import '../widgets/order_detail/delivery_photos_widget.dart';
 import '../widgets/order_detail/photo_view_dialog.dart';
+import '../widgets/order_detail/delivery_status_buttons.dart';
+import '../widgets/order_detail/reject_order_modal.dart';
+import '../widgets/order_detail/delivery_confirmation_modal.dart';
+import '../widgets/order_detail/cancel_order_modal.dart';
+import '../widgets/order_detail/loss_report_modal.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
@@ -65,7 +69,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   List<LatLng> routePoints = [];
   bool isLoadingRoute = true;
   List<File> deliveryPhotos = [];
-  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -162,35 +165,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     });
   }
 
-  Future<void> _takePhoto() async {
-    if (deliveryPhotos.length >= 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Máximo 2 fotos permitidas')),
-      );
-      return;
-    }
-
-    try {
-      final XFile? photo = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-      
-      if (photo != null) {
-        setState(() {
-          deliveryPhotos.add(File(photo.path));
-        });
-        await _savePhotos();
-        print('📷 Foto capturada: ${photo.path}');
-      }
-    } catch (e) {
-      print('❌ Error al capturar foto: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al capturar foto: $e')),
-      );
-    }
-  }
-
   Future<void> _removePhoto(int index) async {
     setState(() {
       deliveryPhotos.removeAt(index);
@@ -236,7 +210,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Future<void> _openRouteInMaps() async {
     print('🗺️ Abriendo ruta en mapas desde ($routeStartLat, $routeStartLng) hasta (${widget.latitude}, ${widget.longitude})');
     
-    final success = await MapsService.openRouteInMaps(
+    final bool success = await MapsService.openRouteInMaps(
       originLat: routeStartLat,
       originLng: routeStartLng,
       destinationLat: widget.latitude,
@@ -256,29 +230,166 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     print('🛣️ Mapa de ruta creado');
   }
 
-  Widget _buildStatusButton(
-    String label,
-    IconData icon,
-    Color backgroundColor,
-    VoidCallback onPressed,
-  ) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
+  Future<void> _showRejectModal() async {
+    print('🔴 Abriendo modal de rechazo...');
+    
+    final result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        print('🔴 Construyendo RejectOrderModal');
+        return RejectOrderModal(
+          orderNumber: widget.orderNumber,
+          clientName: widget.clientName,
+        );
+      },
     );
+
+    print('🔴 Modal cerrado con resultado: $result');
+
+    if (result != null && mounted) {
+      // Aquí puedes procesar los datos del rechazo
+      print('🔴 Orden rechazada:');
+      print('   Motivo: ${result['reason']}');
+      print('   Comentario: ${result['comment']}');
+      print('   Fotos: ${result['photos'].length}');
+      
+      // Agregar fotos del modal a deliveryPhotos
+      setState(() {
+        deliveryPhotos.addAll(result['photos'] as List<File>);
+      });
+      await _savePhotos();
+      
+      // TODO: Implementar lógica de actualización de estado en el backend
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Orden marcada como rechazada'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      
+      // Volver a la pantalla anterior
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _showDeliveryModal() async {
+    print('🟢 Abriendo modal de entrega...');
+    
+    final result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        print('🟢 Construyendo DeliveryConfirmationModal');
+        return DeliveryConfirmationModal(
+          orderNumber: widget.orderNumber,
+          clientName: widget.clientName,
+        );
+      },
+    );
+
+    print('🟢 Modal cerrado con resultado: $result');
+
+    if (result != null && mounted) {
+      // Aquí puedes procesar los datos de entrega
+      print('🟢 Orden entregada:');
+      print('   Fotos: ${result['photos'].length}');
+      print('   Receptor: ${result['recipient']}');
+      
+      // Agregar fotos del modal a deliveryPhotos
+      setState(() {
+        deliveryPhotos.addAll(result['photos'] as List<File>);
+      });
+      await _savePhotos();
+      
+      // TODO: Implementar lógica de actualización de estado en el backend
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Orden marcada como entregada'),
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+      
+      // Volver a la pantalla anterior
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _showCancelModal() async {
+    print('🟠 Abriendo modal de anulación...');
+    
+    final result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        print('🟠 Construyendo CancelOrderModal');
+        return CancelOrderModal(
+          orderNumber: widget.orderNumber,
+          clientName: widget.clientName,
+        );
+      },
+    );
+
+    print('🟠 Modal cerrado con resultado: $result');
+
+    if (result != null && mounted) {
+      // Aquí puedes procesar los datos de anulación
+      print('🟠 Orden anulada:');
+      print('   Justificación: ${result['justification']}');
+      
+      // TODO: Implementar lógica de actualización de estado en el backend
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Orden marcada como anulada'),
+          backgroundColor: Color(0xFFF97316),
+        ),
+      );
+      
+      // Volver a la pantalla anterior
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _showLossReportModal() async {
+    print('🔵 Abriendo modal de siniestro...');
+    
+    final result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        print('🔵 Construyendo LossReportModal');
+        return LossReportModal(
+          orderNumber: widget.orderNumber,
+          clientName: widget.clientName,
+        );
+      },
+    );
+
+    print('🔵 Modal cerrado con resultado: $result');
+
+    if (result != null && mounted) {
+      // Aquí puedes procesar los datos del siniestro
+      print('🔵 Siniestro reportado:');
+      print('   Descripción del daño: ${result['damageDescription']}');
+      print('   Fotos: ${result['photos'].length}');
+      
+      // Agregar fotos del modal a deliveryPhotos
+      setState(() {
+        deliveryPhotos.addAll(result['photos'] as List<File>);
+      });
+      await _savePhotos();
+      
+      // TODO: Implementar lógica de actualización de estado en el backend
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Orden marcada como siniestrada'),
+          backgroundColor: Color(0xFF6366F1),
+        ),
+      );
+      
+      // Volver a la pantalla anterior
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -476,32 +587,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                     // Status buttons
-                    _buildStatusButton(
-                      'Marcar como entregado',
-                      Icons.check_circle_outline,
-                      const Color(0xFF10B981),
-                      () {},
-                    ),
-                    const SizedBox(height: 12),
-                    _buildStatusButton(
-                      'Marcar como rechazado',
-                      Icons.cancel_outlined,
-                      const Color(0xFFEF4444),
-                      () {},
-                    ),
-                    const SizedBox(height: 12),
-                    _buildStatusButton(
-                      'No disponible en domicilio',
-                      Icons.error_outline,
-                      const Color(0xFFF97316),
-                      () {},
+                    DeliveryStatusButtons(
+                      onEntregadoPressed: _showDeliveryModal,
+                      onRechazadoPressed: _showRejectModal,
+                      onAnuladoPressed: _showCancelModal,
+                      onSiniestradoPressed: _showLossReportModal,
                     ),
                     const SizedBox(height: 24),
                     // Widget de fotos
                     DeliveryPhotosWidget(
                       photos: deliveryPhotos,
                       maxPhotos: 2,
-                      onTakePhoto: _takePhoto,
                       onViewPhotos: _showPhotosDialog,
                       onRemovePhoto: _removePhoto,
                     ),

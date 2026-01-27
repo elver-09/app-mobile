@@ -71,7 +71,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
             fleetLicense: fleetLicense,
             latitude: detail.latitude ?? -8.00295,
             longitude: detail.longitude ?? -78.3163062,
-            googleMapsUrl: detail.googleMapsUrl ?? '',
+            googleMapsUrl: detail.googleMapsUrl ?? 'https://www.google.com/maps/@-8.00295,-78.3163062,12074m/data=!3m1!1e3?authuser=0&entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
           ),
         ),
       );
