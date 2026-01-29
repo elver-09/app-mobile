@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class SedeHeader extends StatelessWidget {
   final String formattedDate;
-  final String headquartersName;
+  final String? headquartersName;
 
   const SedeHeader({
     super.key,
     required this.formattedDate,
-    required this.headquartersName,
+    this.headquartersName,
   });
 
   @override
@@ -63,29 +63,30 @@ class SedeHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.route, size: 16, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Text(
-                      headquartersName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black87,
-                        height: 1.2,
+              if (headquartersName != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.route, size: 16, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(
+                        headquartersName!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                          height: 1.2,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ],

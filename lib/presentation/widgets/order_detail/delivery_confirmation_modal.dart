@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'photo_capture_widget.dart';
 
 class DeliveryConfirmationModal extends StatefulWidget {
   final String orderNumber;
@@ -19,64 +19,11 @@ class DeliveryConfirmationModal extends StatefulWidget {
 class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
   final TextEditingController _recipientController = TextEditingController();
   List<File> deliveryPhotos = [];
-  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void dispose() {
     _recipientController.dispose();
     super.dispose();
-  }
-
-  Future<void> _takePhoto() async {
-    try {
-      final XFile? photo = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-      
-      if (photo != null) {
-        setState(() {
-          deliveryPhotos.add(File(photo.path));
-        });
-        print('📷 Foto de entrega capturada: ${photo.path}');
-      }
-    } catch (e) {
-      print('❌ Error al capturar foto: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al capturar foto: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _pickFromGallery() async {
-    try {
-      final XFile? photo = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-      
-      if (photo != null) {
-        setState(() {
-          deliveryPhotos.add(File(photo.path));
-        });
-        print('🖼️ Foto seleccionada de galería: ${photo.path}');
-      }
-    } catch (e) {
-      print('❌ Error al seleccionar foto: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al seleccionar foto: $e')),
-        );
-      }
-    }
-  }
-
-  void _removePhoto(int index) {
-    setState(() {
-      deliveryPhotos.removeAt(index);
-    });
   }
 
   bool _canConfirm() {
@@ -99,29 +46,6 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
       'photos': deliveryPhotos,
       'recipient': _recipientController.text.trim(),
     });
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Expanded(
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE0F2FE),
-          foregroundColor: const Color(0xFF0369A1),
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -211,20 +135,20 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                     ),
                     const SizedBox(height: 12),
                     // Botones de foto
-                    Row(
-                      children: [
-                        _buildActionButton(
-                          label: 'Tomar foto',
-                          icon: Icons.camera_alt,
-                          onPressed: _takePhoto,
-                        ),
-                        const SizedBox(width: 12),
-                        _buildActionButton(
-                          label: 'Galería',
-                          icon: Icons.image,
-                          onPressed: _pickFromGallery,
-                        ),
-                      ],
+                    PhotoCaptureWidget(
+                      photos: deliveryPhotos,
+                      onPhotoAdded: (photo) {
+                        setState(() {
+                          deliveryPhotos.add(photo);
+                        });
+                      },
+                      onPhotoRemoved: (index) {
+                        setState(() {
+                          deliveryPhotos.removeAt(index);
+                        });
+                      },
+                      maxPhotos: 10,
+                      emptyMessage: 'No hay fotos para ver',
                     ),
                     const SizedBox(height: 12),
                     // Preview de fotos en grid
@@ -256,7 +180,11 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                                       top: 8,
                                       right: 8,
                                       child: GestureDetector(
-                                        onTap: () => _removePhoto(0),
+                                        onTap: () {
+                                          setState(() {
+                                            deliveryPhotos.removeAt(0);
+                                          });
+                                        },
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
@@ -300,7 +228,11 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                                       top: 8,
                                       right: 8,
                                       child: GestureDetector(
-                                        onTap: () => _removePhoto(1),
+                                        onTap: () {
+                                          setState(() {
+                                            deliveryPhotos.removeAt(1);
+                                          });
+                                        },
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
@@ -433,6 +365,101 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
           ],
         ),
       ),
+    );
+  }
+}
+class PhotoViewerModal extends StatefulWidget {
+  final List<File> photos;
+
+  const PhotoViewerModal({
+    super.key,
+    required this.photos,
+  });
+
+  @override
+  State<PhotoViewerModal> createState() => _PhotoViewerModalState();
+}
+
+class _PhotoViewerModalState extends State<PhotoViewerModal> {
+  late PageController _pageController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Fondo oscuro
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            color: Colors.black87,
+          ),
+        ),
+        // Visor de fotos
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Fotos en PageView
+              SizedBox(
+                height: 500,
+                width: MediaQuery.of(context).size.width * 0.9,
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  itemCount: widget.photos.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          widget.photos[index],
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Indicador de página
+              Text(
+                '${_currentIndex + 1} / ${widget.photos.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Botón cerrar
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                ),
+                child: const Text('Cerrar'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

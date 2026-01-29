@@ -9,6 +9,8 @@ class OrderInfoCard extends StatelessWidget {
   final String? product;
   final VoidCallback onCallPressed;
   final VoidCallback onMapPressed;
+  final String statusLabel;
+  final Color statusColor;
 
   const OrderInfoCard({
     super.key,
@@ -20,6 +22,8 @@ class OrderInfoCard extends StatelessWidget {
     this.product,
     required this.onCallPressed,
     required this.onMapPressed,
+    this.statusLabel = 'Pendiente',
+    this.statusColor = const Color(0xFF2563EB),
   });
 
   @override
@@ -36,22 +40,29 @@ class OrderInfoCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                orderNumber,
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF9CA3AF),
+              Expanded(
+                child: Text(
+                  orderNumber,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B),
+                  color: statusColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'En curso',
-                  style: TextStyle(
+                child: Text(
+                  statusLabel,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -63,10 +74,7 @@ class OrderInfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Producto: ${product ?? 'N/A'} · Zona $district',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9CA3AF),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 16),
           _buildInfoRow('Cliente:', clientName),
@@ -125,10 +133,7 @@ class OrderInfoCard extends StatelessWidget {
           width: 90,
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9CA3AF),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
           ),
         ),
         const SizedBox(width: 8),

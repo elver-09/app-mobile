@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'photo_view_dialog.dart';
+import 'photo_capture_widget.dart';
 
 class LossReportModal extends StatefulWidget {
   final String orderNumber;
@@ -20,85 +19,11 @@ class LossReportModal extends StatefulWidget {
 class _LossReportModalState extends State<LossReportModal> {
   final TextEditingController _damageDescriptionController = TextEditingController();
   List<File> evidencePhotos = [];
-  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void dispose() {
     _damageDescriptionController.dispose();
     super.dispose();
-  }
-
-  Future<void> _takePhoto() async {
-    try {
-      final XFile? photo = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-      
-      if (photo != null) {
-        setState(() {
-          evidencePhotos.add(File(photo.path));
-        });
-        print('📷 Foto de siniestro capturada: ${photo.path}');
-      }
-    } catch (e) {
-      print('❌ Error al capturar foto: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al capturar foto: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _pickFromGallery() async {
-    try {
-      final XFile? photo = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-      
-      if (photo != null) {
-        setState(() {
-          evidencePhotos.add(File(photo.path));
-        });
-        print('🖼️ Foto seleccionada de galería: ${photo.path}');
-      }
-    } catch (e) {
-      print('❌ Error al seleccionar foto: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al seleccionar foto: $e')),
-        );
-      }
-    }
-  }
-
-  void _removePhoto(int index) {
-    setState(() {
-      evidencePhotos.removeAt(index);
-    });
-  }
-
-  void _showPhotosDialog() {
-    if (evidencePhotos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay fotos para mostrar')),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => PhotoViewDialog(
-        photos: evidencePhotos,
-        onDeletePhoto: (index) {
-          setState(() {
-            _removePhoto(index);
-          });
-        },
-      ),
-    );
   }
 
   bool _canConfirm() {
@@ -122,29 +47,6 @@ class _LossReportModalState extends State<LossReportModal> {
       'damageDescription': _damageDescriptionController.text.trim(),
       'photos': evidencePhotos,
     });
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Expanded(
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE0F2FE),
-          foregroundColor: const Color(0xFF0369A1),
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -279,31 +181,21 @@ class _LossReportModalState extends State<LossReportModal> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // Botones de foto - Primera fila
-                    Row(
-                      children: [
-                        _buildActionButton(
-                          label: 'Tomar foto',
-                          icon: Icons.camera_alt,
-                          onPressed: _takePhoto,
-                        ),
-                        const SizedBox(width: 12),
-                        _buildActionButton(
-                          label: 'Galería',
-                          icon: Icons.image,
-                          onPressed: _pickFromGallery,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Botones de foto - Segunda fila
-                    SizedBox(
-                      width: double.infinity,
-                      child: _buildActionButton(
-                        label: 'Ver fotos',
-                        icon: Icons.photo_library,
-                        onPressed: _showPhotosDialog,
-                      ),
+                    // Botones de foto
+                    PhotoCaptureWidget(
+                      photos: evidencePhotos,
+                      onPhotoAdded: (photo) {
+                        setState(() {
+                          evidencePhotos.add(photo);
+                        });
+                      },
+                      onPhotoRemoved: (index) {
+                        setState(() {
+                          evidencePhotos.removeAt(index);
+                        });
+                      },
+                      maxPhotos: 3,
+                      emptyMessage: 'No hay fotos para ver',
                     ),
                     const SizedBox(height: 12),
                     // Preview de fotos en grid
@@ -335,7 +227,9 @@ class _LossReportModalState extends State<LossReportModal> {
                                       top: 8,
                                       right: 8,
                                       child: GestureDetector(
-                                        onTap: () => _removePhoto(0),
+                                        onTap: () => setState(() {
+                                          evidencePhotos.removeAt(0);
+                                        }),
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
@@ -379,7 +273,9 @@ class _LossReportModalState extends State<LossReportModal> {
                                       top: 8,
                                       right: 8,
                                       child: GestureDetector(
-                                        onTap: () => _removePhoto(1),
+                                        onTap: () => setState(() {
+                                          evidencePhotos.removeAt(1);
+                                        }),
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(

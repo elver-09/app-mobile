@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
+import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import '../../screens/order_detail_screen.dart';
 
 class RouteOrderCard extends StatelessWidget {
   final OrderItem order;
   final String token;
+  final OdooClient odooClient;
   final String? routeName;
   final VoidCallback? onTap;
 
@@ -12,6 +14,7 @@ class RouteOrderCard extends StatelessWidget {
     super.key,
     required this.order,
     required this.token,
+    required this.odooClient,
     this.routeName,
     this.onTap,
   });
@@ -36,10 +39,7 @@ class RouteOrderCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFF6F8FB),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: const Color(0xFFE5E7EB),
-              width: 1,
-            ),
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,12 +196,16 @@ class RouteOrderCard extends StatelessWidget {
     if (normalized.contains('pendiente')) return const Color(0xFF3B82F6);
     if (normalized.contains('entregado')) return const Color(0xFF10B981);
     if (normalized.contains('rechaz')) return const Color(0xFFEF4444);
+    if (normalized.contains('anulado')) return const Color(0xFFF97316);
+    if (normalized.contains('siniestrado')) return const Color(0xFF8B5CF6);
     if (normalized.contains('no dispo')) return const Color(0xFFF59E0B);
     return const Color(0xFF94A3B8);
   }
 
   void _navigateToOrderDetail(BuildContext context) {
-    print('📦 Orden: ${order.orderNumber} - Lat: ${order.latitude}, Lng: ${order.longitude}');
+    print(
+      '📦 Orden: ${order.orderNumber} - Lat: ${order.latitude}, Lng: ${order.longitude}',
+    );
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -214,10 +218,12 @@ class RouteOrderCard extends StatelessWidget {
           product: order.product ?? 'N/A',
           district: order.district,
           token: token,
+          odooClient: odooClient,
           routeName: routeName,
           latitude: order.latitude ?? -8.00295,
           longitude: order.longitude ?? -78.3163062,
           googleMapsUrl: order.googleMapsUrl ?? '',
+          planningStatus: order.planningStatus,
         ),
       ),
     );

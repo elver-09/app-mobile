@@ -242,5 +242,217 @@ class OdooClient {
     print('✅ Orden recibida: $orderData');
     return OrderItem.fromJson(orderData as Map<String, dynamic>);
   }
+
+  /// Actualizar estado de orden a ENTREGADA
+  Future<bool> updateOrderDelivered({
+    required String token,
+    required int orderId,
+    required String recipientName,
+    required List<String> photoBase64List,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/update_delivered');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_id': orderId,
+            'recipient_name': recipientName,
+            'delivery_photos': photoBase64List,
+            'delivery_date': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en updateOrderDelivered: ${resp.statusCode}');
+        print('   Body: ${resp.body}');
+        return false;
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo updateOrderDelivered: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ Orden entregada sincronizada con Odoo');
+        return true;
+      } else {
+        print('❌ Error al sincronizar');
+        print('   result: $result');
+        print('   error: ${result?['error']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception en updateOrderDelivered: $e');
+      return false;
+    }
+  }
+
+  /// Actualizar estado de orden a RECHAZADA
+  Future<bool> updateOrderRejected({
+    required String token,
+    required int orderId,
+    required String reason,
+    required String comment,
+    required List<String> photoBase64List,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/update_rejected');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_id': orderId,
+            'reject_reason': reason,
+            'reject_comment': comment,
+            'reject_photos': photoBase64List,
+            'rejection_date': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en updateOrderRejected: ${resp.statusCode}');
+        print('   Body: ${resp.body}');
+        return false;
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo updateOrderRejected: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ Orden rechazada sincronizada con Odoo');
+        return true;
+      } else {
+        print('❌ Error al sincronizar');
+        print('   result: $result');
+        print('   error: ${result?['error']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception en updateOrderRejected: $e');
+      return false;
+    }
+  }
+
+  /// Actualizar estado de orden a ANULADA
+  Future<bool> updateOrderCancelled({
+    required String token,
+    required int orderId,
+    required String justification,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/update_cancelled');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_id': orderId,
+            'cancellation_justification': justification,
+            'cancellation_date': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en updateOrderCancelled: ${resp.statusCode}');
+        print('   Body: ${resp.body}');
+        return false;
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo updateOrderCancelled: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ Orden anulada sincronizada con Odoo');
+        return true;
+      } else {
+        print('❌ Error al sincronizar');
+        print('   result: $result');
+        print('   error: ${result?['error']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception en updateOrderCancelled: $e');
+      return false;
+    }
+  }
+
+  /// Actualizar estado de orden a SINIESTRADA
+  Future<bool> updateOrderLossReport({
+    required String token,
+    required int orderId,
+    required String damageDescription,
+    required List<String> photoBase64List,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/update_loss_report');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_id': orderId,
+            'damage_description': damageDescription,
+            'loss_report_photos': photoBase64List,
+            'loss_report_date': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en updateOrderLossReport: ${resp.statusCode}');
+        print('   Body: ${resp.body}');
+        return false;
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo updateOrderLossReport: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ Siniestro reportado sincronizado con Odoo');
+        return true;
+      } else {
+        print('❌ Error al sincronizar');
+        print('   result: $result');
+        print('   error: ${result?['error']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception en updateOrderLossReport: $e');
+      return false;
+    }
+  }
 }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'photo_view_dialog.dart';
+import 'photo_capture_widget.dart';
 
 class RejectOrderModal extends StatefulWidget {
   final String orderNumber;
@@ -21,7 +20,6 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
   String? selectedReason;
   final TextEditingController _commentController = TextEditingController();
   List<File> evidencePhotos = [];
-  final ImagePicker _imagePicker = ImagePicker();
 
   final List<String> rejectReasons = [
     'Cliente rechaza pedido',
@@ -37,67 +35,15 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
     super.dispose();
   }
 
-  Future<void> _takePhoto() async {
-    if (evidencePhotos.length >= 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Máximo 2 fotos permitidas')),
-      );
-      return;
-    }
-
-    try {
-      final XFile? photo = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-      
-      if (photo != null) {
-        setState(() {
-          evidencePhotos.add(File(photo.path));
-        });
-        print('📷 Foto de evidencia capturada: ${photo.path}');
-      }
-    } catch (e) {
-      print('❌ Error al capturar foto: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al capturar foto: $e')),
-        );
-      }
-    }
-  }
-
-  void _removePhoto(int index) {
-    setState(() {
-      evidencePhotos.removeAt(index);
-    });
-  }
-
-  void _showPhotosDialog() {
-    if (evidencePhotos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay fotos para mostrar')),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => PhotoViewDialog(
-        photos: evidencePhotos,
-        onDeletePhoto: (index) {
-          setState(() {
-            _removePhoto(index);
-          });
-        },
-      ),
-    );
-  }
-
   bool _canConfirm() {
-    return selectedReason != null && 
-          _commentController.text.trim().isNotEmpty &&
-          evidencePhotos.isNotEmpty;
+    // Si selecciona "Otro motivo", el comentario es obligatorio
+    if (selectedReason == 'Otro motivo') {
+      return selectedReason != null && 
+            _commentController.text.trim().isNotEmpty &&
+            evidencePhotos.isNotEmpty;
+    }
+    // Para otros motivos, solo se necesita motivo y evidencia
+    return selectedReason != null && evidencePhotos.isNotEmpty;
   }
 
   void _confirmReject() {
@@ -142,29 +88,6 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
             fontSize: 14,
             color: isSelected ? const Color(0xFF059669) : const Color(0xFF6B7280),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Expanded(
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFE0F2FE),
-          foregroundColor: const Color(0xFF0369A1),
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
           ),
         ),
       ),
@@ -263,35 +186,37 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                       children: rejectReasons.map((reason) => _buildReasonChip(reason)).toList(),
                     ),
                     const SizedBox(height: 16),
-                    // Campo de texto
-                    TextField(
-                      controller: _commentController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'Escribe el motivo del rechazo (obligatorio)',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF9CA3AF),
-                          fontSize: 14,
+                    // Campo de texto - Solo mostrar si selecciona "Otro motivo"
+                    if (selectedReason == 'Otro motivo') ...[
+                      TextField(
+                        controller: _commentController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Escribe el motivo del rechazo (obligatorio)',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 14,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF9FAFB),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.all(12),
                         ),
-                        filled: true,
-                        fillColor: const Color(0xFFF9FAFB),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
-                        ),
-                        contentPadding: const EdgeInsets.all(12),
+                        onChanged: (_) => setState(() {}),
                       ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
+                    ],
                     // Evidencia del intento
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -315,20 +240,20 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                     ),
                     const SizedBox(height: 12),
                     // Botones de foto
-                    Row(
-                      children: [
-                        _buildActionButton(
-                          label: 'Tomar foto',
-                          icon: Icons.camera_alt,
-                          onPressed: _takePhoto,
-                        ),
-                        const SizedBox(width: 12),
-                        _buildActionButton(
-                          label: 'Ver fotos',
-                          icon: Icons.image,
-                          onPressed: _showPhotosDialog,
-                        ),
-                      ],
+                    PhotoCaptureWidget(
+                      photos: evidencePhotos,
+                      onPhotoAdded: (photo) {
+                        setState(() {
+                          evidencePhotos.add(photo);
+                        });
+                      },
+                      onPhotoRemoved: (index) {
+                        setState(() {
+                          evidencePhotos.removeAt(index);
+                        });
+                      },
+                      maxPhotos: 2,
+                      emptyMessage: 'No hay fotos para ver',
                     ),
                     const SizedBox(height: 12),
                     // Preview de fotos en grid 2 columnas
@@ -360,7 +285,9 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                                       top: 8,
                                       right: 8,
                                       child: GestureDetector(
-                                        onTap: () => _removePhoto(0),
+                                        onTap: () => setState(() {
+                                          evidencePhotos.removeAt(0);
+                                        }),
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
@@ -404,7 +331,9 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                                       top: 8,
                                       right: 8,
                                       child: GestureDetector(
-                                        onTap: () => _removePhoto(1),
+                                        onTap: () => setState(() {
+                                          evidencePhotos.removeAt(1);
+                                        }),
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(

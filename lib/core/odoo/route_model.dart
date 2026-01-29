@@ -1,3 +1,6 @@
+import 'package:trainyl_2_0/core/constants/route_status.dart';
+import 'package:trainyl_2_0/core/odoo/order_model.dart';
+
 class RouteItem {
   final int id;
   final String name;
@@ -10,6 +13,7 @@ class RouteItem {
   final int confirmed;
   final int delivered;
   final double confirmedPercent;
+  final List<OrderItem> orders;
 
   RouteItem({
     required this.id,
@@ -22,6 +26,7 @@ class RouteItem {
     this.confirmed = 0,
     this.delivered = 0,
     this.confirmedPercent = 0.0,
+    this.orders = const [],
   });
 
   factory RouteItem.fromJson(Map<String, dynamic> json) {
@@ -35,43 +40,63 @@ class RouteItem {
     );
   }
 
-  /// Calcula el estado de la ruta
-  String getStatus() {
-    if (delivered == planned) return 'Terminado';
-    if (confirmed > 0 || delivered > 0) return 'En progreso';
-    return 'Pendiente';
+  /// Calcula el estado de la ruta basado en las órdenes
+  RouteStatus get status {
+    if (orders.isEmpty) {
+      return RouteStatus.pending;
+    }
+
+    final completedOrders = orders
+        .where((order) => order.planningStatus != 'pending')
+        .length;
+
+    if (completedOrders >= orders.length && orders.isNotEmpty) {
+      return RouteStatus.completed;
+    }
+    return RouteStatus.pending;
   }
 
   /// Obtiene el color basado en el estado
   int getStatusColor() {
-    if (delivered == planned) return 0xFF059669; // Verde
-    if (confirmed > 0 || delivered > 0) return 0xFF2563EB; // Azul
-    return 0xFF9CA3AF; // Gris
+    return status.colorInt;
   }
 
-  /// Retorna si está en progreso
-  bool get inProgress => delivered > 0 || confirmed > 0;
+  /// Retorna si hay órdenes completadas (no pendientes)
+  bool get inProgress {
+    final completedOrders =
+        orders.where((order) => order.planningStatus != 'pending').length;
+    return completedOrders > 0;
+  }
 
-  /// Calcula el progreso como fracción
+  /// Calcula el progreso como fracción basado en órdenes completadas
   double get progressValue {
     if (ordersQty == 0) return 0;
-    return delivered / ordersQty;
+    final completedOrders =
+        orders.where((order) => order.planningStatus != 'pending').length;
+    return completedOrders / ordersQty;
   }
 
   /// Formatea el texto de progreso
-  String get progressText => 'Progreso $delivered / $ordersQty entregas';
-
-  /// Formatea el estado con número
-  // Primer número depende del estado de la orden:
-  // - Terminado: entregadas (delivered)
-  // - En progreso: confirmadas (confirmed)
-  // - Pendiente: 0
-  int get statusCount {
-    final s = getStatus();
-    if (s == 'Terminado') return delivered;
-    if (s == 'En progreso') return confirmed;
-    return 0;
+  String get progressText {
+    final pendingCount =
+        orders.where((order) => order.planningStatus == 'pending').length;
+    return 'Pendiente $pendingCount / $ordersQty órdenes';
   }
 
-  String get statusDisplay => '${getStatus()} · $statusCount/$ordersQty';
+  /// Cuenta órdenes pendientes
+  int get pendingOrdersCount =>
+      orders.where((order) => order.planningStatus == 'pending').length;
+
+  int get statusCount {
+    if (orders.isEmpty) {
+      return 0;
+    }
+    return orders.where((order) => order.planningStatus != 'pending').length;
+  }
+
+  String get statusDisplay {
+    final completedOrders =
+        orders.where((order) => order.planningStatus != 'pending').length;
+    return 'Terminado · $completedOrders/$ordersQty';
+  }
 }

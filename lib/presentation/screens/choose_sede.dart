@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trainyl_2_0/core/constants/route_status.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/route_model.dart';
 import 'package:trainyl_2_0/presentation/screens/route_orders_screen.dart';
@@ -35,12 +36,130 @@ class _ChooseSedeState extends State<ChooseSede> {
   String _getFormattedDate() {
     final now = DateTime.now();
     final dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    final meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    
+    final meses = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ];
+
     final dia = dias[now.weekday % 7];
     final mes = meses[now.month - 1];
-    
+
     return 'Hoy · $dia ${now.day} $mes';
+  }
+
+  // Obtiene las órdenes para todas las rutas y las agrega a cada ruta
+  Future<List<RouteItem>> _getRoutesWithOrders(
+      List<RouteItem> routes) async {
+    final routesWithOrders = <RouteItem>[];
+
+    for (var route in routes) {
+      try {
+        final orderResponse = await widget.odooClient.fetchRouteOrders(
+          token: widget.token,
+          routeId: route.id,
+        );
+
+        final routeWithOrders = RouteItem(
+          id: route.id,
+          name: route.name,
+          zone: route.zone,
+          fleet: route.fleet,
+          rutaDate: route.rutaDate,
+          ordersQty: route.ordersQty,
+          planned: route.planned,
+          confirmed: route.confirmed,
+          delivered: route.delivered,
+          confirmedPercent: route.confirmedPercent,
+          orders: orderResponse.orders,
+        );
+        routesWithOrders.add(routeWithOrders);
+      } catch (e) {
+        print('Error obteniendo órdenes de ruta ${route.id}: $e');
+        routesWithOrders.add(route);
+      }
+    }
+
+    return routesWithOrders;
+  }
+  Map<String, int> _getRouteStatistics(List<RouteItem> routes) {
+    int pendiente = 0;
+    int terminado = 0;
+
+    for (var route in routes) {
+      switch (route.status) {
+        case RouteStatus.completed:
+          terminado++;
+          break;
+        case RouteStatus.pending:
+          pendiente++;
+          break;
+      }
+    }
+
+    return {
+      'pendiente': pendiente,
+      'terminado': terminado,
+    };
+  }
+
+  // Calcula estadísticas de órdenes dinámicamente basadas en las rutas
+  Future<Map<String, int>> _getOrderStatistics(List<RouteItem> routes) async {
+    int pendiente = 0;
+    int entregado = 0;
+    int rechazado = 0;
+    int anulado = 0;
+    int siniestrado = 0;
+
+    for (var route in routes) {
+      try {
+        final orders = await widget.odooClient.fetchRouteOrders(
+          token: widget.token,
+          routeId: route.id,
+        );
+
+        for (var order in orders.orders) {
+          switch (order.planningStatus) {
+            case 'pending':
+              pendiente++;
+              break;
+            case 'delivered':
+              entregado++;
+              break;
+            case 'cancelled':
+              rechazado++;
+              break;
+            case 'anulled':
+              anulado++;
+              break;
+            case 'loss_report':
+              siniestrado++;
+              break;
+            default:
+              pendiente++;
+          }
+        }
+      } catch (e) {
+        print('Error obteniendo órdenes de ruta ${route.id}: $e');
+      }
+    }
+
+    return {
+      'pendiente': pendiente,
+      'entregado': entregado,
+      'rechazado': rechazado,
+      'anulado': anulado,
+      'siniestrado': siniestrado,
+    };
   }
 
   @override
@@ -57,41 +176,97 @@ class _ChooseSedeState extends State<ChooseSede> {
                 // Header
                 SedeHeader(
                   formattedDate: _getFormattedDate(),
-                  headquartersName: 'Centro\nNorte',
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 5),
                 // Charts section
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: PieChartWidget(
-                          title: 'Estados de rutas',
-                          data: [
-                            ChartData('Pendiente', 1, Colors.grey),
-                            ChartData('En\nprogreso', 2, Colors.blue),
-                            ChartData('Terminado', 0, Colors.green),
-                          ],
-                        ),
+                FutureBuilder<List<RouteItem>>(
+                  future: _routesFuture.then(_getRoutesWithOrders),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final routes = snapshot.data ?? [];
+                    final routeStats = _getRouteStatistics(routes);
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: PieChartWidget(
-                          title: 'Estados de órdenes',
-                          data: [
-                            ChartData('Pendiente', 16, Colors.grey),
-                            ChartData('Entregado', 8, Colors.green),
-                            ChartData('Rechazado', 0, Colors.red),
-                          ],
-                        ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: PieChartWidget(
+                              title: 'Estados de rutas',
+                              data: [
+                                ChartData(
+                                  'Pendiente',
+                                  routeStats['pendiente'] ?? 0,
+                                  Colors.grey,
+                                ),
+                                ChartData(
+                                  'Terminado',
+                                  routeStats['terminado'] ?? 0,
+                                  Colors.green,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: FutureBuilder<Map<String, int>>(
+                              future: _getOrderStatistics(routes),
+                              builder: (context, orderSnapshot) {
+                                if (orderSnapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  );
+                                }
+
+                                final orderStats = orderSnapshot.data ?? {};
+
+                                return PieChartWidget(
+                                  title: 'Estados de órdenes',
+                                  data: [
+                                    ChartData(
+                                      'Pendiente',
+                                      orderStats['pendiente'] ?? 0,
+                                      Colors.grey,
+                                    ),
+                                    ChartData(
+                                      'Entregado',
+                                      orderStats['entregado'] ?? 0,
+                                      Colors.green,
+                                    ),
+                                    ChartData(
+                                      'Rechazado',
+                                      orderStats['rechazado'] ?? 0,
+                                      Colors.red,
+                                    ),
+                                    ChartData(
+                                      'Anulado',
+                                      orderStats['anulado'] ?? 0,
+                                      Colors.orange,
+                                    ),
+                                    ChartData(
+                                      'Siniestrado',
+                                      orderStats['siniestrado'] ?? 0,
+                                      Colors.purple,
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 // Routes section
@@ -120,15 +295,13 @@ class _ChooseSedeState extends State<ChooseSede> {
                 const SizedBox(height: 16),
                 // Route cards - Loaded from Odoo
                 FutureBuilder<List<RouteItem>>(
-                  future: _routesFuture,
+                  future: _routesFuture.then(_getRoutesWithOrders),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
                     if (snapshot.hasError) {
-                      return Center(
-                        child: Text('Error: ${snapshot.error}'),
-                      );
+                      return Center(child: Text('Error: ${snapshot.error}'));
                     }
                     final routes = snapshot.data ?? [];
                     if (routes.isEmpty) {
@@ -148,7 +321,7 @@ class _ChooseSedeState extends State<ChooseSede> {
                                 routeName: route.name,
                                 title: '${route.name} · ${route.zone}',
                                 status: route.statusDisplay,
-                                stops: route.confirmed,
+                                stops: route.ordersQty,
                                 orders: route.ordersQty,
                                 progressText: route.progressText,
                                 progress: route.progressValue,
@@ -230,10 +403,7 @@ class _ChooseSedeState extends State<ChooseSede> {
             icon: Icon(Icons.calendar_today),
             label: 'Hoy',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.route),
-            label: 'Rutas',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.route), label: 'Rutas'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             label: 'Perfil',

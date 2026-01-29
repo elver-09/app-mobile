@@ -127,8 +127,8 @@ class RouteCard extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-            minHeight: 6,
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+            minHeight: 8,
           ),
         ),
         const SizedBox(height: 8),

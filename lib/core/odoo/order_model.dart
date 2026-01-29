@@ -32,7 +32,10 @@ class OrderItem {
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
       id: json['id'] as int? ?? 0,
-      orderNumber: json['display_name'] as String? ?? json['order_number'] as String? ?? '',
+      orderNumber:
+          json['display_name'] as String? ??
+          json['order_number'] as String? ??
+          '',
       fullname: json['fullname'] as String? ?? '',
       clientName: json['client_name'] as String?,
       district: json['district'] as String? ?? '',
@@ -44,7 +47,7 @@ class OrderItem {
       longitude: json['longitude'] as double?,
       googleMapsUrl: json['google_maps_url'] as String?,
     );
-  }     
+  }
 
   Color get statusColor {
     switch (planningStatus) {
@@ -56,6 +59,14 @@ class OrderItem {
         return const Color(0xFF10B981); // verde - "Entregado"
       case 'rejected':
         return const Color(0xFFEF4444); // rojo - "Rechazado"
+      case 'cancelled':
+        return const Color(
+          0xFFEF4444,
+        ); // rojo - "Rechazado" (por compatibilidad)
+      case 'anulled':
+        return const Color(0xFFF97316); // naranja - "Anulado"
+      case 'loss_report':
+        return const Color(0xFF8B5CF6); // morado - "Siniestrado"
       case 'unavailable':
         return const Color(0xFFF97316); // naranja - "No disponible"
       default:
@@ -73,10 +84,47 @@ class OrderItem {
         return 'Entregado';
       case 'rejected':
         return 'Rechazado';
+      case 'cancelled':
+        return 'Rechazado'; // Por compatibilidad
+      case 'anulled':
+        return 'Anulado';
+      case 'loss_report':
+        return 'Siniestrado';
       case 'unavailable':
         return 'No disponible';
       default:
         return 'Pendiente';
     }
+  }
+
+  // Método para crear una copia con valores actualizados
+  OrderItem copyWith({
+    int? id,
+    String? orderNumber,
+    String? fullname,
+    String? clientName,
+    String? district,
+    String? address,
+    String? product,
+    String? phone,
+    String? planningStatus,
+    double? latitude,
+    double? longitude,
+    String? googleMapsUrl,
+  }) {
+    return OrderItem(
+      id: id ?? this.id,
+      orderNumber: orderNumber ?? this.orderNumber,
+      fullname: fullname ?? this.fullname,
+      clientName: clientName ?? this.clientName,
+      district: district ?? this.district,
+      address: address ?? this.address,
+      product: product ?? this.product,
+      phone: phone ?? this.phone,
+      planningStatus: planningStatus ?? this.planningStatus,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      googleMapsUrl: googleMapsUrl ?? this.googleMapsUrl,
+    );
   }
 }

@@ -34,7 +34,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
     );
   }
 
-  Future<void> _openOrderDetail(OrderItem order, String fleetType, String fleetLicense) async {
+  Future<void> _openOrderDetail(
+    OrderItem order,
+    String fleetType,
+    String fleetLicense,
+  ) async {
     try {
       print('🔍 Obteniendo detalle de orden ID: ${order.id}');
       // Obtener detalle completo de la orden
@@ -47,7 +51,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
         print('❌ El detalle retornó null');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo cargar el detalle de la orden')),
+          const SnackBar(
+            content: Text('No se pudo cargar el detalle de la orden'),
+          ),
         );
         return;
       }
@@ -66,20 +72,24 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
             product: detail.product ?? 'N/A',
             district: detail.district,
             token: widget.token,
+            odooClient: widget.odooClient,
             routeName: widget.routeName,
             fleetType: fleetType,
             fleetLicense: fleetLicense,
             latitude: detail.latitude ?? -8.00295,
             longitude: detail.longitude ?? -78.3163062,
-            googleMapsUrl: detail.googleMapsUrl ?? 'https://www.google.com/maps/@-8.00295,-78.3163062,12074m/data=!3m1!1e3?authuser=0&entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
+            googleMapsUrl:
+                detail.googleMapsUrl ??
+                'https://www.google.com/maps/@-8.00295,-78.3163062,12074m/data=!3m1!1e3?authuser=0&entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
+            planningStatus: detail.planningStatus,
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar orden: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar orden: $e')));
     }
   }
 
@@ -121,7 +131,10 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.black),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.black,
+                              ),
                               onPressed: () => Navigator.pop(context),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
@@ -138,17 +151,17 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF5F5F5),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
                             'Secuencia optimizada actual',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
                           ),
                         ),
                       ],
@@ -164,8 +177,13 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
                               RouteOrderCard(
                                 order: order,
                                 token: widget.token,
+                                odooClient: widget.odooClient,
                                 routeName: widget.routeName,
-                                onTap: () => _openOrderDetail(order, fleetType, fleetLicense),
+                                onTap: () => _openOrderDetail(
+                                  order,
+                                  fleetType,
+                                  fleetLicense,
+                                ),
                               ),
                               if (entry.key < orders.length - 1)
                                 const SizedBox(height: 12),
