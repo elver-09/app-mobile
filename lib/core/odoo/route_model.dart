@@ -40,15 +40,34 @@ class RouteItem {
     );
   }
 
+  static const Set<String> _completedStatuses = {
+    'delivered',
+    'rejected',
+    'cancelled',
+    'anulled',
+    'loss_report',
+  };
+
+  static const Set<String> _pendingStatuses = {
+    'pending',
+    'planned',
+    'in_progress',
+    'unavailable',
+  };
+
+  bool _isCompletedStatus(String status) => _completedStatuses.contains(status);
+
+  bool _isPendingStatus(String status) =>
+      _pendingStatuses.contains(status) || !_completedStatuses.contains(status);
+
   /// Calcula el estado de la ruta basado en las órdenes
   RouteStatus get status {
     if (orders.isEmpty) {
       return RouteStatus.pending;
     }
 
-    final completedOrders = orders
-        .where((order) => order.planningStatus != 'pending')
-        .length;
+    final completedOrders =
+        orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
 
     if (completedOrders >= orders.length && orders.isNotEmpty) {
       return RouteStatus.completed;
@@ -64,7 +83,7 @@ class RouteItem {
   /// Retorna si hay órdenes completadas (no pendientes)
   bool get inProgress {
     final completedOrders =
-        orders.where((order) => order.planningStatus != 'pending').length;
+        orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
     return completedOrders > 0;
   }
 
@@ -72,31 +91,31 @@ class RouteItem {
   double get progressValue {
     if (ordersQty == 0) return 0;
     final completedOrders =
-        orders.where((order) => order.planningStatus != 'pending').length;
+        orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
     return completedOrders / ordersQty;
   }
 
   /// Formatea el texto de progreso
   String get progressText {
     final pendingCount =
-        orders.where((order) => order.planningStatus == 'pending').length;
+        orders.where((order) => _isPendingStatus(order.planningStatus)).length;
     return 'Pendiente $pendingCount / $ordersQty órdenes';
   }
 
   /// Cuenta órdenes pendientes
   int get pendingOrdersCount =>
-      orders.where((order) => order.planningStatus == 'pending').length;
+      orders.where((order) => _isPendingStatus(order.planningStatus)).length;
 
   int get statusCount {
     if (orders.isEmpty) {
       return 0;
     }
-    return orders.where((order) => order.planningStatus != 'pending').length;
+    return orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
   }
 
   String get statusDisplay {
     final completedOrders =
-        orders.where((order) => order.planningStatus != 'pending').length;
+        orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
     return 'Terminado · $completedOrders/$ordersQty';
   }
 }

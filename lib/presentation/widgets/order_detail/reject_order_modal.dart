@@ -40,17 +40,17 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
     if (selectedReason == 'Otro motivo') {
       return selectedReason != null && 
             _commentController.text.trim().isNotEmpty &&
-            evidencePhotos.isNotEmpty;
+            evidencePhotos.length >= 2;
     }
     // Para otros motivos, solo se necesita motivo y evidencia
-    return selectedReason != null && evidencePhotos.isNotEmpty;
+    return selectedReason != null && evidencePhotos.length >= 2;
   }
 
   void _confirmReject() {
     if (!_canConfirm()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor completa todos los campos requeridos'),
+          content: Text('Por favor completa los campos y captura 2 fotos'),
           backgroundColor: Colors.red,
         ),
       );
@@ -230,7 +230,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           ),
                         ),
                         Text(
-                          'Máximo 2 fotos',
+                          '2 fotos obligatorias',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[400],

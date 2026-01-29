@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/presentation/controllers/auth_controller.dart';
 import 'package:trainyl_2_0/presentation/screens/choose_sede.dart';
-import 'package:trainyl_2_0/presentation/widgets/bottom_navigation_bar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -173,16 +172,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             : const Text('Ingresar', style: TextStyle(fontSize: 16, color: Colors.white)),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: navegar a recuperar contraseña
-                      },
-                      child: const Text(
-                        'Olvidé mi contraseña',
-                        style: TextStyle(color: Color.fromARGB(255, 4, 91, 241)),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -190,7 +179,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const BottonNavegation(),
     );
   }
 }

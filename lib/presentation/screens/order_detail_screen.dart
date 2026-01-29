@@ -81,6 +81,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   // Estado actual de la orden
   late String currentOrderStatus;
+  
+  // Controller para el campo de comentario
+  final TextEditingController _commentController = TextEditingController();
+  
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -99,12 +108,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       final photos = await PhotoStorageService.loadPhotos(
         widget.orderId.toString(),
       );
+      final comment = await PhotoStorageService.loadComment(
+        widget.orderId.toString(),
+      );
       setState(() {
         deliveryPhotos = photos;
+        _commentController.text = comment;
       });
       print(
         '📸 Fotos cargadas para orden ${widget.orderId}: ${deliveryPhotos.length}',
       );
+      print('📝 Comentario cargado: $comment');
     } catch (e) {
       print('❌ Error al cargar fotos: $e');
     }
@@ -116,9 +130,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         widget.orderId.toString(),
         deliveryPhotos,
       );
+      await PhotoStorageService.saveComment(
+        widget.orderId.toString(),
+        _commentController.text,
+      );
       print(
         '💾 Fotos guardadas para orden ${widget.orderId}: ${deliveryPhotos.length}',
       );
+      print('💾 Comentario guardado: ${_commentController.text}');
     } catch (e) {
       print('❌ Error al guardar fotos: $e');
     }
@@ -358,7 +377,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             // Agregar fotos del modal a deliveryPhotos
             setState(() {
               deliveryPhotos.addAll(result['photos'] as List<File>);
-              currentOrderStatus = 'rejected'; // Actualizar estado a rechazado
+              currentOrderStatus = 'rejected'; // Actualizar estado a rechazado              // Mostrar nombre del receptor en comentario
+              _commentController.text = 'Recibido por: ${result['recipient']}';              // Si es "Otro motivo", mostrar el comentario; si no, mostrar la razón
+              if (result['reason'] == 'Otro motivo') {
+                _commentController.text = 'Motivo: ${result['comment']}';
+              } else {
+                _commentController.text = 'Motivo: ${result['reason']}';
+              }
             });
             await _savePhotos();
 
@@ -444,6 +469,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             setState(() {
               deliveryPhotos.addAll(result['photos'] as List<File>);
               currentOrderStatus = 'delivered'; // Actualizar estado a entregado
+              // Mostrar nombre del receptor en comentario
+              _commentController.text = 'Recibido por: ${result['recipient']}';
             });
             await _savePhotos();
 
@@ -520,6 +547,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           if (success) {
             setState(() {
               currentOrderStatus = 'anulled'; // Actualizar estado a anulado
+              // Mostrar justificación de anulación
+              _commentController.text = 'Justificación: ${result['justification']}';
             });
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -605,6 +634,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               deliveryPhotos.addAll(result['photos'] as List<File>);
               currentOrderStatus =
                   'loss_report'; // Actualizar estado a siniestrado
+              // Mostrar descripción del siniestro
+              _commentController.text = 'Descripción: ${result['damageDescription']}';
             });
             await _savePhotos();
 
@@ -856,6 +887,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(height: 16),
                     // Comment field
                     TextField(
+                      controller: _commentController,
                       maxLines: 4,
                       decoration: InputDecoration(
                         hintText:
@@ -872,31 +904,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         ),
                         contentPadding: const EdgeInsets.all(16),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Confirm button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.check_circle, size: 20),
-                        label: const Text('Confirmar estado y continuar ruta'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Al confirmar, la orden se actualiza en tiempo real y se cargará la siguiente parada optimizada.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                     ),
                     const SizedBox(height: 24),
                   ],

@@ -28,14 +28,14 @@ class _LossReportModalState extends State<LossReportModal> {
 
   bool _canConfirm() {
     return _damageDescriptionController.text.trim().isNotEmpty && 
-           evidencePhotos.isNotEmpty;
+           evidencePhotos.length >= 2;
   }
 
   void _confirmLossReport() {
     if (!_canConfirm()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor completa descripción y captura al menos una foto'),
+          content: Text('Por favor completa descripción y captura al menos 2 fotos'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -172,7 +172,7 @@ class _LossReportModalState extends State<LossReportModal> {
                           ),
                         ),
                         Text(
-                          'Mínimo 1 foto',
+                          'Mínimo 2 fotos',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[400],

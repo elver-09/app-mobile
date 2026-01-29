@@ -27,14 +27,14 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
   }
 
   bool _canConfirm() {
-    return deliveryPhotos.isNotEmpty;
+    return deliveryPhotos.length >= 2;
   }
 
   void _confirmDelivery() {
     if (!_canConfirm()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor captura al menos una foto'),
+          content: Text('Por favor captura al menos 2 fotos'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -125,7 +125,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                           ),
                         ),
                         Text(
-                          'Mínimo 1 foto',
+                          'Mínimo 2 fotos',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[400],
