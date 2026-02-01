@@ -44,8 +44,6 @@ class RouteItem {
     'delivered',
     'rejected',
     'cancelled',
-    'anulled',
-    'loss_report',
   };
 
   static const Set<String> _pendingStatuses = {

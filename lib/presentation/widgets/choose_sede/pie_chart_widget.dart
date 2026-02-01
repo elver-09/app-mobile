@@ -111,6 +111,32 @@ class PieChartPainter extends CustomPainter {
         paint,
       );
 
+      // Dibujar número en el centro del segmento
+      if (item.value > 0) {
+        final labelAngle = startAngle + sweepAngle / 2;
+        final labelRadius = radius * 0.65;
+        final labelX = center.dx + labelRadius * math.cos(labelAngle);
+        final labelY = center.dy + labelRadius * math.sin(labelAngle);
+        
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: '${item.value}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        
+        textPainter.layout();
+        textPainter.paint(
+          canvas,
+          Offset(labelX - textPainter.width / 2, labelY - textPainter.height / 2),
+        );
+      }
+
       startAngle += sweepAngle;
     }
   }

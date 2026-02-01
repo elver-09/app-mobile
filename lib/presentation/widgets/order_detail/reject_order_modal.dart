@@ -26,6 +26,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
     'Dirección incorrecta',
     'No responde / ausente',
     'Problema con acceso',
+    'Anulado',
     'Otro motivo',
   ];
 
@@ -36,8 +37,10 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
   }
 
   bool _canConfirm() {
-    // Si selecciona "Otro motivo", el comentario es obligatorio
-    if (selectedReason == 'Otro motivo') {
+    // Motivos que requieren comentario obligatorio
+    final reasonsRequiringComment = ['Otro motivo', 'Dirección incorrecta', 'Anulado'];
+    
+    if (reasonsRequiringComment.contains(selectedReason)) {
       return selectedReason != null && 
             _commentController.text.trim().isNotEmpty &&
             evidencePhotos.length >= 2;
@@ -71,6 +74,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
       onTap: () {
         setState(() {
           selectedReason = reason;
+          _commentController.clear(); // Limpiar el campo cuando cambia de motivo
         });
       },
       child: Container(
@@ -92,6 +96,19 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
         ),
       ),
     );
+  }
+
+  String _getTextFieldHint() {
+    switch (selectedReason) {
+      case 'Dirección incorrecta':
+        return 'Proporciona detalles de la dirección incorrecta (obligatorio)';
+      case 'Anulado':
+        return 'Escribe la justificación de la anulación (obligatorio)';
+      case 'Otro motivo':
+        return 'Escribe el motivo del rechazo (obligatorio)';
+      default:
+        return 'Escribe detalles (obligatorio)';
+    }
   }
 
   @override
@@ -186,13 +203,13 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                       children: rejectReasons.map((reason) => _buildReasonChip(reason)).toList(),
                     ),
                     const SizedBox(height: 16),
-                    // Campo de texto - Solo mostrar si selecciona "Otro motivo"
-                    if (selectedReason == 'Otro motivo') ...[
+                    // Campo de texto - Mostrar si selecciona motivos que requieren comentario
+                    if (['Otro motivo', 'Dirección incorrecta', 'Anulado'].contains(selectedReason)) ...[
                       TextField(
                         controller: _commentController,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText: 'Escribe el motivo del rechazo (obligatorio)',
+                          hintText: _getTextFieldHint(),
                           hintStyle: const TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 14,

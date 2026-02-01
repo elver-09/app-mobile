@@ -63,10 +63,6 @@ class OrderItem {
         return const Color(
           0xFFEF4444,
         ); // rojo - "Rechazado" (por compatibilidad)
-      case 'anulled':
-        return const Color(0xFFF97316); // naranja - "Anulado"
-      case 'loss_report':
-        return const Color(0xFF8B5CF6); // morado - "Siniestrado"
       case 'unavailable':
         return const Color(0xFFF97316); // naranja - "No disponible"
       default:
@@ -86,10 +82,6 @@ class OrderItem {
         return 'Rechazado';
       case 'cancelled':
         return 'Rechazado'; // Por compatibilidad
-      case 'anulled':
-        return 'Anulado';
-      case 'loss_report':
-        return 'Siniestrado';
       case 'unavailable':
         return 'No disponible';
       default:

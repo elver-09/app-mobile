@@ -117,8 +117,6 @@ class _ChooseSedeState extends State<ChooseSede> {
     int pendiente = 0;
     int entregado = 0;
     int rechazado = 0;
-    int anulado = 0;
-    int siniestrado = 0;
 
     for (var route in routes) {
       try {
@@ -138,12 +136,6 @@ class _ChooseSedeState extends State<ChooseSede> {
             case 'cancelled':
               rechazado++;
               break;
-            case 'anulled':
-              anulado++;
-              break;
-            case 'loss_report':
-              siniestrado++;
-              break;
             default:
               pendiente++;
           }
@@ -157,8 +149,6 @@ class _ChooseSedeState extends State<ChooseSede> {
       'pendiente': pendiente,
       'entregado': entregado,
       'rechazado': rechazado,
-      'anulado': anulado,
-      'siniestrado': siniestrado,
     };
   }
 
@@ -247,16 +237,6 @@ class _ChooseSedeState extends State<ChooseSede> {
                                       'Rechazado',
                                       orderStats['rechazado'] ?? 0,
                                       Colors.red,
-                                    ),
-                                    ChartData(
-                                      'Anulado',
-                                      orderStats['anulado'] ?? 0,
-                                      Colors.orange,
-                                    ),
-                                    ChartData(
-                                      'Siniestrado',
-                                      orderStats['siniestrado'] ?? 0,
-                                      Colors.purple,
                                     ),
                                   ],
                                 );

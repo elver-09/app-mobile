@@ -17,8 +17,6 @@ import '../widgets/order_detail/photo_view_dialog.dart';
 import '../widgets/order_detail/delivery_status_buttons.dart';
 import '../widgets/order_detail/reject_order_modal.dart';
 import '../widgets/order_detail/delivery_confirmation_modal.dart';
-import '../widgets/order_detail/cancel_order_modal.dart';
-import '../widgets/order_detail/loss_report_modal.dart';
 
 // Odoo client
 import '../../core/odoo/odoo_client.dart';
@@ -290,10 +288,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return const Color(
           0xFFEF4444,
         ); // rojo - "Rechazado" (por compatibilidad)
-      case 'anulled':
-        return const Color(0xFFF97316); // naranja - "Anulado"
-      case 'loss_report':
-        return const Color(0xFF8B5CF6); // morado - "Siniestrado"
       case 'unavailable':
         return const Color(0xFFF97316); // naranja - "No disponible"
       default:
@@ -314,10 +308,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return 'Rechazado';
       case 'cancelled':
         return 'Rechazado'; // Por compatibilidad
-      case 'anulled':
-        return 'Anulado';
-      case 'loss_report':
-        return 'Siniestrado';
       case 'unavailable':
         return 'No disponible';
       default:
@@ -493,171 +483,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         }
       } catch (e) {
         print('❌ Error en _showDeliveryModal: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ Error: $e'),
-              backgroundColor: Color(0xFFEF4444),
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _showCancelModal() async {
-    print('🟠 Abriendo modal de anulación...');
-
-    final result = await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        print('🟠 Construyendo CancelOrderModal');
-        return CancelOrderModal(
-          orderNumber: widget.orderNumber,
-          clientName: widget.clientName,
-        );
-      },
-    );
-
-    print('🟠 Modal cerrado con resultado: $result');
-
-    if (result != null && mounted) {
-      // Aquí puedes procesar los datos de anulación
-      print('🟠 Orden anulada:');
-      print('   Justificación: ${result['justification']}');
-
-      // Mostrar indicador de envío
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⏳ Sincronizando con Odoo...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      try {
-        // Enviar a Odoo
-        final success = await widget.odooClient.updateOrderCancelled(
-          token: widget.token,
-          orderId: widget.orderId,
-          justification: result['justification'] ?? '',
-        );
-
-        if (mounted) {
-          if (success) {
-            setState(() {
-              currentOrderStatus = 'anulled'; // Actualizar estado a anulado
-              // Mostrar justificación de anulación
-              _commentController.text = 'Justificación: ${result['justification']}';
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('✅ Orden anulada y sincronizada con Odoo'),
-                backgroundColor: Color(0xFFF97316),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  '❌ Error al sincronizar con Odoo. Intenta de nuevo.',
-                ),
-                backgroundColor: Color(0xFFEF4444),
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        print('❌ Error en _showCancelModal: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ Error: $e'),
-              backgroundColor: Color(0xFFEF4444),
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _showLossReportModal() async {
-    print('🔵 Abriendo modal de siniestro...');
-
-    final result = await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        print('🔵 Construyendo LossReportModal');
-        return LossReportModal(
-          orderNumber: widget.orderNumber,
-          clientName: widget.clientName,
-        );
-      },
-    );
-
-    print('🔵 Modal cerrado con resultado: $result');
-
-    if (result != null && mounted) {
-      // Aquí puedes procesar los datos del siniestro
-      print('🔵 Siniestro reportado:');
-      print('   Descripción del daño: ${result['damageDescription']}');
-      print('   Fotos: ${result['photos'].length}');
-
-      // Mostrar indicador de envío
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⏳ Sincronizando con Odoo...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      try {
-        // Convertir fotos a base64
-        final photoBase64 = await PhotoConverterService.filesToBase64(
-          result['photos'] as List<File>,
-        );
-
-        // Enviar a Odoo
-        final success = await widget.odooClient.updateOrderLossReport(
-          token: widget.token,
-          orderId: widget.orderId,
-          damageDescription: result['damageDescription'] ?? '',
-          photoBase64List: photoBase64,
-        );
-
-        if (mounted) {
-          if (success) {
-            // Agregar fotos del modal a deliveryPhotos
-            setState(() {
-              deliveryPhotos.addAll(result['photos'] as List<File>);
-              currentOrderStatus =
-                  'loss_report'; // Actualizar estado a siniestrado
-              // Mostrar descripción del siniestro
-              _commentController.text = 'Descripción: ${result['damageDescription']}';
-            });
-            await _savePhotos();
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('✅ Siniestro reportado y sincronizado con Odoo'),
-                backgroundColor: Color(0xFF8B5CF6),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  '❌ Error al sincronizar con Odoo. Intenta de nuevo.',
-                ),
-                backgroundColor: Color(0xFFEF4444),
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        print('❌ Error en _showLossReportModal: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -873,8 +698,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     DeliveryStatusButtons(
                       onEntregadoPressed: _showDeliveryModal,
                       onRechazadoPressed: _showRejectModal,
-                      onAnuladoPressed: _showCancelModal,
-                      onSiniestradoPressed: _showLossReportModal,
                     ),
                     const SizedBox(height: 24),
                     // Widget de fotos

@@ -196,8 +196,6 @@ class RouteOrderCard extends StatelessWidget {
     if (normalized.contains('pendiente')) return const Color(0xFF3B82F6);
     if (normalized.contains('entregado')) return const Color(0xFF10B981);
     if (normalized.contains('rechaz')) return const Color(0xFFEF4444);
-    if (normalized.contains('anulado')) return const Color(0xFFF97316);
-    if (normalized.contains('siniestrado')) return const Color(0xFF8B5CF6);
     if (normalized.contains('no dispo')) return const Color(0xFFF59E0B);
     return const Color(0xFF94A3B8);
   }
