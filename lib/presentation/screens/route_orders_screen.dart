@@ -22,22 +22,49 @@ class RouteOrdersScreen extends StatefulWidget {
   State<RouteOrdersScreen> createState() => _RouteOrdersScreenState();
 }
 
-class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
+class _RouteOrdersScreenState extends State<RouteOrdersScreen>
+    with WidgetsBindingObserver {
   late Future<RouteOrdersResponse> _ordersFuture;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _ordersFuture = widget.odooClient.fetchRouteOrders(
       token: widget.token,
       routeId: widget.routeId,
     );
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Recargar órdenes cuando la pantalla se reanuda
+      _reloadOrders();
+    }
+  }
+
+  void _reloadOrders() {
+    setState(() {
+      _ordersFuture = widget.odooClient.fetchRouteOrders(
+        token: widget.token,
+        routeId: widget.routeId,
+      );
+    });
+  }
+
   Future<void> _openOrderDetail(
     OrderItem order,
     String fleetType,
     String fleetLicense,
+    double? routeStartLat,
+    double? routeStartLng,
   ) async {
     try {
       print('🔍 Obteniendo detalle de orden ID: ${order.id}');
@@ -60,7 +87,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
 
       print('✅ Detalle cargado correctamente');
       if (!mounted) return;
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => OrderDetailScreen(
@@ -76,15 +103,18 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
             routeName: widget.routeName,
             fleetType: fleetType,
             fleetLicense: fleetLicense,
-            latitude: detail.latitude ?? -8.00295,
-            longitude: detail.longitude ?? -78.3163062,
-            googleMapsUrl:
-                detail.googleMapsUrl ??
-                'https://www.google.com/maps/@-8.00295,-78.3163062,12074m/data=!3m1!1e3?authuser=0&entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
+            routeStartLatitude: routeStartLat,
+            routeStartLongitude: routeStartLng,
+            latitude: detail.latitude,
+            longitude: detail.longitude,
             planningStatus: detail.planningStatus,
+            routeId: widget.routeId,
           ),
         ),
       );
+      if (result is Map && result['updated'] == true) {
+        _reloadOrders();
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -114,9 +144,13 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
             final orders = response.orders;
             final fleetType = response.fleetType;
             final fleetLicense = response.fleetLicense;
+            final routeStartLat = response.routeStartLatitude;
+            final routeStartLng = response.routeStartLongitude;
+            
             if (orders.isEmpty) {
               return const Center(child: Text('No hay órdenes en esta ruta'));
             }
+            
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -166,12 +200,25 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    
                     const SizedBox(height: 24),
                     // Orders list
                     Column(
                       children: [
                         ...orders.asMap().entries.map((entry) {
                           final order = entry.value;
+                            final isOrderActive =
+                              order.planningStatus == 'start_of_route';
+                            final isOrderCompleted =
+                              order.planningStatus == 'delivered' ||
+                              order.planningStatus == 'cancelled' ||
+                              order.planningStatus == 'anulled' ||
+                              order.planningStatus == 'returned' ||
+                              order.planningStatus == 'cancelled_origin' ||
+                              order.planningStatus == 'hand_to_hand';
+                          final isOrderDisabled = !isOrderActive && !isOrderCompleted;
+                          
                           return Column(
                             children: [
                               RouteOrderCard(
@@ -179,10 +226,19 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen> {
                                 token: widget.token,
                                 odooClient: widget.odooClient,
                                 routeName: widget.routeName,
+                                onStartRouteSuccess: _reloadOrders,
+                                isActive: isOrderActive,
+                                isDisabled: isOrderDisabled,
+                                routeId: widget.routeId,
+                                routeStartLatitude: routeStartLat,
+                                routeStartLongitude: routeStartLng,
+                                allOrders: orders,
                                 onTap: () => _openOrderDetail(
                                   order,
                                   fleetType,
                                   fleetLicense,
+                                  routeStartLat,
+                                  routeStartLng,
                                 ),
                               ),
                               if (entry.key < orders.length - 1)

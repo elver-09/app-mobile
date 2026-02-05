@@ -42,15 +42,21 @@ class RouteItem {
 
   static const Set<String> _completedStatuses = {
     'delivered',
-    'rejected',
     'cancelled',
+    'anulled',
+    'returned',
+    'cancelled_origin',
+    'hand_to_hand',
   };
 
   static const Set<String> _pendingStatuses = {
     'pending',
     'planned',
-    'in_progress',
+    'start_of_route',
     'unavailable',
+    'draft',
+    'in_trainyl',
+    'ready_for_drivin',
   };
 
   bool _isCompletedStatus(String status) => _completedStatuses.contains(status);

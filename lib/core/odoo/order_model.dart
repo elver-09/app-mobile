@@ -12,7 +12,8 @@ class OrderItem {
   final String planningStatus;
   final double? latitude;
   final double? longitude;
-  final String? googleMapsUrl;
+  final int? sequence;
+  final double? distanceKm;
 
   OrderItem({
     required this.id,
@@ -26,7 +27,8 @@ class OrderItem {
     required this.planningStatus,
     this.latitude,
     this.longitude,
-    this.googleMapsUrl,
+    this.sequence,
+    this.distanceKm,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -45,21 +47,23 @@ class OrderItem {
       planningStatus: json['planning_status'] as String? ?? 'planned',
       latitude: json['latitude'] as double?,
       longitude: json['longitude'] as double?,
-      googleMapsUrl: json['google_maps_url'] as String?,
+      sequence: json['sequence'] as int?,
+      distanceKm: json['distance_km'] as double?,
     );
   }
 
   Color get statusColor {
     switch (planningStatus) {
-      case 'in_progress':
+      case 'start_of_route':
         return const Color(0xFFF59E0B); // amarillo/naranja - "En curso"
       case 'pending':
         return const Color(0xFF2563EB); // azul - "Pendiente"
       case 'delivered':
         return const Color(0xFF10B981); // verde - "Entregado"
-      case 'rejected':
-        return const Color(0xFFEF4444); // rojo - "Rechazado"
       case 'cancelled':
+      case 'anulled':
+      case 'returned':
+      case 'cancelled_origin':
         return const Color(
           0xFFEF4444,
         ); // rojo - "Rechazado" (por compatibilidad)
@@ -72,15 +76,16 @@ class OrderItem {
 
   String get statusLabel {
     switch (planningStatus) {
-      case 'in_progress':
+      case 'start_of_route':
         return 'En curso';
       case 'pending':
         return 'Pendiente';
       case 'delivered':
         return 'Entregado';
-      case 'rejected':
-        return 'Rechazado';
       case 'cancelled':
+      case 'anulled':
+      case 'returned':
+      case 'cancelled_origin':
         return 'Rechazado'; // Por compatibilidad
       case 'unavailable':
         return 'No disponible';
@@ -102,7 +107,8 @@ class OrderItem {
     String? planningStatus,
     double? latitude,
     double? longitude,
-    String? googleMapsUrl,
+    int? sequence,
+    double? distanceKm,
   }) {
     return OrderItem(
       id: id ?? this.id,
@@ -116,7 +122,8 @@ class OrderItem {
       planningStatus: planningStatus ?? this.planningStatus,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
-      googleMapsUrl: googleMapsUrl ?? this.googleMapsUrl,
+      sequence: sequence ?? this.sequence,
+      distanceKm: distanceKm ?? this.distanceKm,
     );
   }
 }

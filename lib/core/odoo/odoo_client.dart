@@ -9,6 +9,7 @@ class RouteOrdersResponse {
   final List<OrderItem> orders;
   final String fleetType;
   final String fleetLicense;
+  final String? routeStartAddress;
   final double? routeStartLatitude;
   final double? routeStartLongitude;
 
@@ -16,6 +17,7 @@ class RouteOrdersResponse {
     required this.orders,
     required this.fleetType,
     required this.fleetLicense,
+    this.routeStartAddress,
     this.routeStartLatitude,
     this.routeStartLongitude,
   });
@@ -153,7 +155,7 @@ class OdooClient {
     required String token,
     required int routeId,
   }) async {
-    final url = Uri.parse('$baseUrl/driver/routes/orders');
+    final url = Uri.parse('$baseUrl/driver/routes/orders/$routeId');
 
     final resp = await http.post(
       url,
@@ -164,9 +166,7 @@ class OdooClient {
       body: jsonEncode({
         'jsonrpc': '2.0',
         'method': 'call',
-        'params': {
-          'route_id': routeId,
-        },
+        'params': {},
       }),
     );
 
@@ -193,6 +193,7 @@ class OdooClient {
       orders: orders,
       fleetType: result['fleet_type'] as String? ?? 'Vehículo',
       fleetLicense: result['fleet_license'] as String? ?? 'N/A',
+      routeStartAddress: result['route_start_address'] as String?,
       routeStartLatitude: result['route_start_latitude'] as double?,
       routeStartLongitude: result['route_start_longitude'] as double?,
     );
@@ -203,7 +204,7 @@ class OdooClient {
     required String token,
     required int orderId,
   }) async {
-    final url = Uri.parse('$baseUrl/driver/order/detail');
+    final url = Uri.parse('$baseUrl/driver/order/detail/$orderId');
 
     final resp = await http.post(
       url,
@@ -214,9 +215,7 @@ class OdooClient {
       body: jsonEncode({
         'jsonrpc': '2.0',
         'method': 'call',
-        'params': {
-          'order_id': orderId,
-        },
+        'params': {},
       }),
     );
 
@@ -348,6 +347,93 @@ class OdooClient {
     } catch (e) {
       print('❌ Exception en updateOrderRejected: $e');
       return false;
+    }
+  }
+
+  /// Iniciar la siguiente orden de la ruta (optimizada por cercanía)
+  Future<Map<String, dynamic>> startNextOrder({
+    required String token,
+    required int routeId,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/start_next/$routeId');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {},
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en startNextOrder: ${resp.statusCode}');
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo startNextOrder: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ Siguiente orden iniciada correctamente');
+        return result;
+      } else {
+        print('❌ Error al iniciar siguiente orden');
+        return result ?? {'success': false, 'error': 'Sin respuesta'};
+      }
+    } catch (e) {
+      print('❌ Exception en startNextOrder: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// Iniciar siguiente orden desde ubicación actual
+  Future<Map<String, dynamic>> startNextOrderFromCurrent({
+    required String token,
+    required int currentOrderId,
+    required int routeId,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/start_next_from_current/$routeId/$currentOrderId');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {},
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en startNextOrderFromCurrent: ${resp.statusCode}');
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo startNextOrderFromCurrent: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ Siguiente orden iniciada desde ubicación actual');
+        return result as Map<String, dynamic>;
+      } else {
+        print('❌ Error al iniciar siguiente orden desde ubicación actual');
+        return result ?? {'success': false, 'error': 'Sin respuesta'};
+      }
+    } catch (e) {
+      print('❌ Exception en startNextOrderFromCurrent: $e');
+      return {'success': false, 'error': e.toString()};
     }
   }
 }
