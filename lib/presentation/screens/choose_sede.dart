@@ -115,6 +115,7 @@ class _ChooseSedeState extends State<ChooseSede> {
   // Calcula estadísticas de órdenes dinámicamente basadas en las rutas
   Future<Map<String, int>> _getOrderStatistics(List<RouteItem> routes) async {
     int pendiente = 0;
+    int en_curso = 0;
     int entregado = 0;
     int rechazado = 0;
 
@@ -129,6 +130,9 @@ class _ChooseSedeState extends State<ChooseSede> {
           switch (order.planningStatus) {
             case 'pending':
               pendiente++;
+              break;
+            case 'start_of_route':
+              en_curso++;
               break;
             case 'delivered':
               entregado++;
@@ -147,6 +151,7 @@ class _ChooseSedeState extends State<ChooseSede> {
 
     return {
       'pendiente': pendiente,
+      'en_curso': en_curso,
       'entregado': entregado,
       'rechazado': rechazado,
     };
@@ -227,6 +232,11 @@ class _ChooseSedeState extends State<ChooseSede> {
                                       'Pendiente',
                                       orderStats['pendiente'] ?? 0,
                                       Colors.grey,
+                                    ),
+                                    ChartData(
+                                      'En curso',
+                                      orderStats['en_curso'] ?? 0,
+                                      Colors.blue,
                                     ),
                                     ChartData(
                                       'Entregado',
@@ -330,39 +340,6 @@ class _ChooseSedeState extends State<ChooseSede> {
                       ],
                     );
                   },
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Implementar continuar última ruta
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Continuar última ruta')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.navigation, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Continuar última ruta',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ],
             ),

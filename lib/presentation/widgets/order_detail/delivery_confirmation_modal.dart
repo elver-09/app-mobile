@@ -65,7 +65,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -82,7 +82,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -90,7 +90,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                           '${widget.orderNumber} · ${widget.clientName}',
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF9CA3AF),
+                            color: Color(0xFF64748B),
                           ),
                         ),
                       ],
@@ -99,7 +99,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
-                    color: Colors.black,
+                    color: const Color(0xFF334155),
                   ),
                 ],
               ),
@@ -121,14 +121,14 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         Text(
                           'Mínimo 2 fotos',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[400],
+                            color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
@@ -161,9 +161,9 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                                 height: 150,
                                 margin: EdgeInsets.only(right: deliveryPhotos.length > 1 ? 8 : 0),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
+                                  color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
                                 ),
                                 child: Stack(
                                   children: [
@@ -188,7 +188,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
-                                            color: Colors.red,
+                                            color: Color(0xFFB91C1C),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(
@@ -209,9 +209,9 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                                 height: 150,
                                 margin: const EdgeInsets.only(left: 8),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
+                                  color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
                                 ),
                                 child: Stack(
                                   children: [
@@ -236,7 +236,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
-                                            color: Colors.red,
+                                            color: Color(0xFFB91C1C),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(
@@ -259,7 +259,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                       'Incluye fachada del lugar y bultos entregados.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey[500],
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -272,14 +272,14 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         Text(
                           'Opcional para el conductor',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[400],
+                            color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
@@ -290,22 +290,22 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                       decoration: InputDecoration(
                         hintText: 'Nombre / firma de quien recibe (opcional)',
                         hintStyle: const TextStyle(
-                          color: Color(0xFF9CA3AF),
+                          color: Color(0xFF94A3B8),
                           fontSize: 14,
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF9FAFB),
+                        fillColor: const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                          borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2),
                         ),
                         contentPadding: const EdgeInsets.all(12),
                       ),
@@ -317,7 +317,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -325,7 +325,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                       'La orden ${widget.orderNumber} quedará como Entregada y se cargará la siguiente parada optimizada en tu ruta.',
                       style: const TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF6B7280),
+                        color: Color(0xFF475569),
                       ),
                     ),
                   ],
@@ -336,8 +336,9 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
                 border: Border(
-                  top: BorderSide(color: Color(0xFFE5E7EB)),
+                  top: BorderSide(color: Color(0xFFE2E8F0)),
                 ),
               ),
               child: SizedBox(
@@ -348,11 +349,11 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                   label: const Text('Confirmar entrega y continuar ruta'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _canConfirm() 
-                        ? const Color(0xFF10B981) 
-                        : const Color(0xFFE5E7EB),
+                        ? const Color(0xFF0F766E) 
+                        : const Color(0xFFE2E8F0),
                     foregroundColor: _canConfirm() 
                         ? Colors.white 
-                        : const Color(0xFF9CA3AF),
+                        : const Color(0xFF94A3B8),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

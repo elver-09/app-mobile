@@ -6,12 +6,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:async';
 
 // Core services
 import '../../core/services/photo_storage_service.dart';
 import '../../core/services/maps_service.dart';
+import '../../core/services/location_service.dart';
 import '../../core/services/photo_converter_service.dart';
 
 // Widgets
@@ -24,7 +24,6 @@ import '../widgets/order_detail/delivery_confirmation_modal.dart';
 
 // Odoo client
 import '../../core/odoo/odoo_client.dart';
-import '../../core/odoo/order_model.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
@@ -80,16 +79,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   List<LatLng> routePoints = [];
   bool isLoadingRoute = true;
+    LatLng? _originLatLng;
   List<File> deliveryPhotos = [];
+  List<Map<String, dynamic>> rejectionReasons = [];
 
   // Estado actual de la orden
   late String currentOrderStatus;
-  bool _isLoadingNextOrder = false;
   
   // Controller para el campo de comentario
   final TextEditingController _commentController = TextEditingController();
 
   Timer? _autoRefreshTimer;
+  bool _isAppInBackground = false;
   
   @override
   void dispose() {
@@ -110,6 +111,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     );
     _getRoutePoints();
     _loadSavedPhotos();
+    _loadRejectionReasons();
     // Actualizar estado desde servidor
     _refreshOrderStatus();
     _startAutoRefresh();
@@ -126,7 +128,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshOrderStatus();
+      _isAppInBackground = false;
+      _startAutoRefresh();
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && !_isAppInBackground) {
+          _refreshOrderStatus();
+        }
+      });
+      return;
+    }
+
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      _isAppInBackground = true;
+      _autoRefreshTimer?.cancel();
     }
   }
 
@@ -141,6 +157,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           currentOrderStatus = details.planningStatus;
         });
       }
+    } on SocketException catch (e) {
+      if (_isAppInBackground) return;
+      print('❌ Error actualizando estado de orden: $e');
     } catch (e) {
       print('❌ Error actualizando estado de orden: $e');
     }
@@ -154,10 +173,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       final comment = await PhotoStorageService.loadComment(
         widget.orderId.toString(),
       );
-      setState(() {
-        deliveryPhotos = photos;
-        _commentController.text = comment;
-      });
+      if (mounted) {
+        setState(() {
+          deliveryPhotos = photos;
+          _commentController.text = comment;
+        });
+      }
       print(
         '📸 Fotos cargadas para orden ${widget.orderId}: ${deliveryPhotos.length}',
       );
@@ -186,12 +207,49 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     }
   }
 
+  Future<void> _loadRejectionReasons() async {
+    if (!mounted) return;
+    
+    try {
+      final reasons = await widget.odooClient.fetchRejectionReasons(
+        token: widget.token,
+      );
+      if (mounted) {
+        setState(() {
+          rejectionReasons = reasons;
+        });
+        print('✅ Razones de rechazo cargadas: ${reasons.length}');
+      }
+    } catch (e) {
+      if (mounted) {
+        print('❌ Error al cargar razones de rechazo: $e');
+      }
+    }
+  }
+
   Future<void> _getRoutePoints() async {
+    // Determinar origen usando GPS y fallback al origen de ruta
+    LatLng? origin;
+    try {
+      final currentLocation = await LocationService.getCurrentLocation();
+      if (currentLocation != null) {
+        origin = LatLng(currentLocation.latitude, currentLocation.longitude);
+      }
+    } catch (_) {}
+
+    origin ??= (widget.routeStartLatitude != null &&
+            widget.routeStartLongitude != null)
+        ? LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!)
+        : null;
+
+    if (mounted) {
+      setState(() {
+        _originLatLng = origin;
+      });
+    }
+
     // Validar que tengamos todas las coordenadas necesarias
-    if (widget.routeStartLatitude == null || 
-        widget.routeStartLongitude == null || 
-        widget.latitude == null || 
-        widget.longitude == null) {
+    if (origin == null || widget.latitude == null || widget.longitude == null) {
       print('⚠️ Coordenadas incompletas, usando ruta simple');
       _useFallbackRoute();
       return;
@@ -199,7 +257,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     
     try {
       final String url =
-          'https://router.project-osrm.org/route/v1/driving/${widget.routeStartLongitude},${widget.routeStartLatitude};${widget.longitude},${widget.latitude}?overview=full&geometries=geojson';
+          'https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${widget.longitude},${widget.latitude}?overview=full&geometries=geojson';
 
       print('🔗 Llamando API: $url');
       final response = await http.get(Uri.parse(url));
@@ -225,10 +283,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               return LatLng(coord[1] as double, coord[0] as double);
             }).toList();
 
-            setState(() {
-              routePoints = decodedPoints;
-              isLoadingRoute = false;
-            });
+            if (mounted) {
+              setState(() {
+                routePoints = decodedPoints;
+                isLoadingRoute = false;
+              });
+            }
 
             _fitRouteBounds();
 
@@ -255,14 +315,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   }
 
   void _useFallbackRoute() {
+    if (!mounted) return;
     setState(() {
       // Crear una línea recta entre inicio y fin si hay coordenadas
-      if (widget.routeStartLatitude != null && 
-          widget.routeStartLongitude != null &&
-          widget.latitude != null && 
+      final fallbackOrigin = _originLatLng ??
+          ((widget.routeStartLatitude != null &&
+                  widget.routeStartLongitude != null)
+              ? LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!)
+              : null);
+
+      if (fallbackOrigin != null &&
+          widget.latitude != null &&
           widget.longitude != null) {
         routePoints = [
-          LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!),
+          fallbackOrigin,
           LatLng(widget.latitude!, widget.longitude!),
         ];
       } else {
@@ -274,10 +340,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     _fitRouteBounds();
   }
 
+  LatLng? _resolveOriginLatLng() {
+    if (_originLatLng != null) return _originLatLng;
+    if (widget.routeStartLatitude != null &&
+        widget.routeStartLongitude != null) {
+      return LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!);
+    }
+    return null;
+  }
+
   Future<void> _removePhoto(int index) async {
-    setState(() {
-      deliveryPhotos.removeAt(index);
-    });
+    if (mounted) {
+      setState(() {
+        deliveryPhotos.removeAt(index);
+      });
+    }
     await _savePhotos();
   }
 
@@ -294,9 +371,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       builder: (context) => PhotoViewDialog(
         photos: deliveryPhotos,
         onDeletePhoto: (index) {
-          setState(() {
-            _removePhoto(index);
-          });
+          if (mounted) {
+            setState(() {
+              _removePhoto(index);
+            });
+          }
         },
       ),
     );
@@ -313,329 +392,84 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     }
   }
 
-  bool _isOrderCompleted() {
-    return currentOrderStatus == 'delivered' ||
-        currentOrderStatus == 'cancelled' ||
-        currentOrderStatus == 'anulled' ||
-        currentOrderStatus == 'returned' ||
-        currentOrderStatus == 'cancelled_origin' ||
-        currentOrderStatus == 'hand_to_hand';
-  }
-
-  bool _isPending() {
-    return currentOrderStatus == 'pending';
-  }
-
-  Future<bool> _isFirstOrderToStart() async {
-    try {
-      // Solo mostrar el botón si la orden está en pending
-      if (!_isPending()) {
-        return false;
-      }
-
-      // Obtener todas las órdenes de la ruta
-      final response = await widget.odooClient.fetchRouteOrders(
-        token: widget.token,
-        routeId: widget.routeId,
-      );
-
-      // Verificar si hay alguna orden ya en curso
-      bool hasStartedOrCompleted = response.orders.any((order) {
-        final status = order.planningStatus;
-        return status == 'start_of_route' ||
-            status == 'delivered' ||
-            status == 'cancelled' ||
-            status == 'anulled' ||
-            status == 'returned' ||
-            status == 'cancelled_origin' ||
-            status == 'hand_to_hand';
-      });
-
-      // Si hay una orden iniciada o completada, no mostrar el botón
-      if (hasStartedOrCompleted) {
-        return false;
-      }
-
-      // Obtener órdenes pendientes
-      final pendingOrders = response.orders.where(
-        (order) => order.planningStatus == 'pending'
-      ).toList();
-
-      if (pendingOrders.isEmpty) {
-        return false;
-      }
-
-      // Calcular distancias al punto de recojo para todas las órdenes pendientes
-      double getDistance(OrderItem order) {
-        if (widget.routeStartLatitude == null ||
-            widget.routeStartLongitude == null ||
-            order.latitude == null ||
-            order.longitude == null) {
-          return double.maxFinite;
-        }
-
-        // Haversine
-        const earthRadiusKm = 6371.0;
-        final dLat = _toRadians(order.latitude! - widget.routeStartLatitude!);
-        final dLon = _toRadians(order.longitude! - widget.routeStartLongitude!);
-        final a = (sin(dLat / 2) * sin(dLat / 2)) +
-            cos(_toRadians(widget.routeStartLatitude!)) *
-                cos(_toRadians(order.latitude!)) *
-                sin(dLon / 2) *
-                sin(dLon / 2);
-        final c = 2 * asin(sqrt(a));
-        return earthRadiusKm * c;
-      }
-
-      // Encontrar la orden más cercana
-      OrderItem closestOrder = pendingOrders.first;
-      double minDistance = getDistance(closestOrder);
-
-      for (var order in pendingOrders.skip(1)) {
-        double distance = getDistance(order);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestOrder = order;
-        }
-      }
-
-      // Retornar true si esta es la orden más cercana
-      return closestOrder.id == widget.orderId;
-    } catch (e) {
-      print('❌ Error verificando si es primera orden: $e');
-      return false;
-    }
-  }
-
-  double _toRadians(double degrees) {
-    return degrees * (3.141592653589793 / 180.0);
-  }
-
-  Future<bool> _isLastCompletedOrder() async {
-    try {
-      // Obtener todas las órdenes de la ruta
-      final response = await widget.odooClient.fetchRouteOrders(
-        token: widget.token,
-        routeId: widget.routeId,
-      );
-
-      // Verificar si hay alguna orden en curso
-      bool hasOrderInProgress = response.orders.any(
-        (order) => order.planningStatus == 'start_of_route'
-      );
-
-      // Si hay una orden en curso, no mostrar el botón
-      if (hasOrderInProgress) {
-        return false;
-      }
-
-      // Buscar la última orden completada
-      OrderItem? lastCompleted;
-      for (var order in response.orders.reversed) {
-        if (order.planningStatus == 'delivered' ||
-            order.planningStatus == 'cancelled' ||
-            order.planningStatus == 'anulled' ||
-            order.planningStatus == 'returned' ||
-            order.planningStatus == 'cancelled_origin' ||
-            order.planningStatus == 'hand_to_hand') {
-          lastCompleted = order;
-          break;
-        }
-      }
-
-      // Retornar true si esta es la última orden completada
-      return lastCompleted?.id == widget.orderId;
-    } catch (e) {
-      print('❌ Error verificando si es última orden completada: $e');
-      return false;
-    }
-  }
-
-  Future<void> _startRoute() async {
-    setState(() {
-      _isLoadingNextOrder = true;
-    });
-
-    try {
-      // Llamar al endpoint para iniciar la siguiente orden (la más cercana)
-      final result = await widget.odooClient.startNextOrder(
-        token: widget.token,
-        routeId: widget.routeId,
-      );
-
-      if (result['success'] == true) {
-        print('✅ Ruta iniciada: ${result['order_number']}');
-        // Actualizar el estado
-        await _refreshOrderStatus();
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Ruta iniciada: ${result['order_number']}'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        print('❌ Error al iniciar ruta: ${result['error']}');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${result['error'] ?? 'Desconocido'}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      print('❌ Exception en _startRoute: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingNextOrder = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _startNextDelivery() async {
-    setState(() {
-      _isLoadingNextOrder = true;
-    });
-
-    try {
-      // Iniciar la siguiente orden desde la ubicación de la orden actual
-      final result = await widget.odooClient.startNextOrderFromCurrent(
-        token: widget.token,
-        currentOrderId: widget.orderId,
-        routeId: widget.routeId,
-      );
-
-      if (result['success'] == true) {
-        final int nextOrderId = result['order_id'] as int? ?? 0;
-
-        if (nextOrderId == 0) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No se pudo obtener la siguiente orden'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-          return;
-        }
-
-        // Obtener detalle completo de la orden siguiente
-        final detail = await widget.odooClient.fetchOrderDetail(
-          token: widget.token,
-          orderId: nextOrderId,
-        );
-
-        if (detail != null && mounted) {
-          // Usar coordenadas de la orden actual como punto de inicio
-          final startLat = widget.latitude ?? result['latitude'] as double?;
-          final startLng = widget.longitude ?? result['longitude'] as double?;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Navegando a siguiente entrega'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // Navegar al detalle de la orden
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OrderDetailScreen(
-                orderId: detail.id,
-                orderNumber: detail.orderNumber,
-                clientName: detail.fullname,
-                phone: detail.phone ?? '',
-                address: detail.address,
-                product: detail.product ?? 'N/A',
-                district: detail.district,
-                token: widget.token,
-                odooClient: widget.odooClient,
-                routeName: widget.routeName,
-                fleetType: widget.fleetType,
-                fleetLicense: widget.fleetLicense,
-                routeStartLatitude: startLat,
-                routeStartLongitude: startLng,
-                latitude: detail.latitude,
-                longitude: detail.longitude,
-                planningStatus: detail.planningStatus,
-                routeId: widget.routeId,
-              ),
-            ),
-          );
-        }
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['error']?.toString() ?? 'No hay más órdenes en ruta'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingNextOrder = false;
-        });
-      }
-    }
-  }
-
   Future<void> _openRouteInMaps() async {
-    // Validar que tengamos todas las coordenadas
-    if (widget.routeStartLatitude == null || 
-        widget.routeStartLongitude == null || 
-        widget.latitude == null || 
-        widget.longitude == null) {
+    // Validar coordenadas de destino
+    if (widget.latitude == null || widget.longitude == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No se tienen las coordenadas necesarias para mostrar la ruta'),
+          content: Text('No se tienen las coordenadas de la orden'),
         ),
       );
       return;
     }
-    
-    print(
-      '🗺️ Abriendo ruta en mapas desde (${widget.routeStartLatitude}, ${widget.routeStartLongitude}) hasta (${widget.latitude}, ${widget.longitude})',
-    );
 
-    final bool success = await MapsService.openRouteInMaps(
-      originLat: widget.routeStartLatitude!,
-      originLng: widget.routeStartLongitude!,
-      destinationLat: widget.latitude!,
-      destinationLng: widget.longitude!,
-      destinationLabel: widget.clientName,
-    );
-
-    if (!success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo abrir la aplicación de mapas'),
+    // Mostrar loading
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Dialog(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Obteniendo tu ubicación actual...'),
+            ],
+          ),
         ),
+      ),
+    );
+
+    try {
+      // Obtener ubicación actual del conductor
+      final currentLocation = await LocationService.getCurrentLocation();
+      
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading dialog
+
+      if (currentLocation == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo obtener tu ubicación actual. Asegúrate de tener permisos y GPS activado.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      print(
+        '🗺️ Abriendo ruta desde ubicación actual (${currentLocation.latitude}, ${currentLocation.longitude}) hasta orden (${widget.latitude}, ${widget.longitude})',
       );
+
+      // Abrir ruta desde ubicación actual hasta la orden
+      final bool success = await MapsService.openRouteInMaps(
+        originLat: currentLocation.latitude,
+        originLng: currentLocation.longitude,
+        destinationLat: widget.latitude!,
+        destinationLng: widget.longitude!,
+        destinationLabel: widget.clientName,
+      );
+
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir la aplicación de mapas'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al obtener ubicación: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -719,14 +553,28 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   Future<void> _showRejectModal() async {
     print('🔴 Abriendo modal de rechazo...');
 
+    // Validar que haya razones de rechazo
+    if (rejectionReasons.isEmpty) {
+      print('⚠️ Sin razones de rechazo disponibles');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ No hay razones de rechazo disponibles. Intenta más tarde.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     final result = await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        print('🔴 Construyendo RejectOrderModal');
+        print('🔴 Construyendo RejectOrderModal con ${rejectionReasons.length} razones');
         return RejectOrderModal(
           orderNumber: widget.orderNumber,
           clientName: widget.clientName,
+          rejectionReasons: rejectionReasons,
         );
       },
     );
@@ -736,6 +584,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     if (result != null && mounted) {
       // Aquí puedes procesar los datos del rechazo
       print('🔴 Orden rechazada:');
+      print('   Motivo ID: ${result['reasonId']}');
       print('   Motivo: ${result['reason']}');
       print('   Comentario: ${result['comment']}');
       print('   Fotos: ${result['photos'].length}');
@@ -759,6 +608,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           token: widget.token,
           orderId: widget.orderId,
           reason: result['reason'] ?? '',
+          reasonId: result['reasonId'],
           comment: result['comment'] ?? '',
           photoBase64List: photoBase64,
         );
@@ -912,6 +762,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final origin = _resolveOriginLatLng();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -1033,16 +884,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       borderRadius: BorderRadius.circular(12),
                       child: SizedBox(
                         height: 220,
-                        child: (widget.routeStartLatitude == null || 
-                                widget.routeStartLongitude == null ||
-                                widget.latitude == null || 
-                                widget.longitude == null)
+                        child: (origin == null ||
+                          widget.latitude == null ||
+                          widget.longitude == null)
                             ? Container(
                                 color: Colors.grey[200],
-                                child: const Center(
+                                child: Center(
                                   child: Text(
-                                    'Coordenadas no disponibles',
-                                    style: TextStyle(color: Colors.grey),
+                                    isLoadingRoute
+                                        ? 'Cargando mapa...'
+                                        : 'Coordenadas no disponibles',
+                                    style: const TextStyle(color: Colors.grey),
                                   ),
                                 ),
                               )
@@ -1055,16 +907,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                 },
                                 initialCameraPosition: CameraPosition(
                                   target: LatLng(
-                                    (widget.routeStartLatitude! + widget.latitude!) / 2,
-                                    (widget.routeStartLongitude! + widget.longitude!) / 2,
+                                    (origin.latitude + widget.latitude!) / 2,
+                                    (origin.longitude + widget.longitude!) / 2,
                                   ),
                                   zoom: 14.0,
                                 ),
                                 markers: {
                                   Marker(
                                     markerId: const MarkerId('route_start'),
-                                    position: LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!),
-                                    infoWindow: const InfoWindow(title: 'Inicio'),
+                                    position: LatLng(origin.latitude, origin.longitude),
+                                    infoWindow: InfoWindow(
+                                      title: _originLatLng != null
+                                          ? 'Mi ubicación'
+                                          : 'Inicio',
+                                    ),
                                     icon: BitmapDescriptor.defaultMarkerWithHue(
                                       BitmapDescriptor.hueGreen,
                                     ),
@@ -1088,7 +944,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                     width: 3,
                                     points: isLoadingRoute
                                         ? [
-                                            LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!),
+                                            LatLng(origin.latitude, origin.longitude),
                                             LatLng(widget.latitude!, widget.longitude!),
                                           ]
                                         : routePoints,
@@ -1114,14 +970,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         const Text(
                           'Elige solo una opción',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF9CA3AF),
+                            color: Color(0xFF94A3B8),
                           ),
                         ),
                       ],
@@ -1133,6 +989,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       onRechazadoPressed: _showRejectModal,
                     ),
                     const SizedBox(height: 24),
+                    
                     // Widget de fotos
                     DeliveryPhotosWidget(
                       photos: deliveryPhotos,
@@ -1149,119 +1006,28 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                         hintText:
                             'Comentario para la central y el cliente\n(opcional)',
                         hintStyle: const TextStyle(
-                          color: Color(0xFF9CA3AF),
+                          color: Color(0xFF94A3B8),
                           fontSize: 14,
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF9FAFB),
+                        fillColor: const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2),
                         ),
                         contentPadding: const EdgeInsets.all(16),
                       ),
                     ),
                     const SizedBox(height: 24),
                     
-                    // Botón Iniciar ruta (solo para la primera orden más cercana)
-                    if (_isPending())
-                      FutureBuilder<bool>(
-                        future: _isFirstOrderToStart(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            );
-                          }
-                          
-                          if (snapshot.data == true) {
-                            return Center(
-                              child: ElevatedButton.icon(
-                                onPressed: _isLoadingNextOrder ? null : _startRoute,
-                                icon: _isLoadingNextOrder
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(Icons.route),
-                                label: const Text('Iniciar ruta'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF059669),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-                          return SizedBox.shrink();
-                        },
-                      ),
-                    
-                    if (_isPending())
-                      const SizedBox(height: 24),
-                    
-                    // Botón Iniciar siguiente entrega (solo cuando la orden está completada y es la última)
-                    if (_isOrderCompleted())
-                      FutureBuilder<bool>(
-                        future: _isLastCompletedOrder(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            );
-                          }
-                          
-                          if (snapshot.data == true) {
-                            return Center(
-                              child: ElevatedButton.icon(
-                                onPressed: _isLoadingNextOrder ? null : _startNextDelivery,
-                                icon: _isLoadingNextOrder
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(Icons.navigate_next),
-                                label: const Text('Iniciar siguiente entrega'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2563EB),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-                          
-                          return const SizedBox.shrink();
-                        },
-                      ),
                     const SizedBox(height: 24),
                   ],
                 ),

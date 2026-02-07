@@ -57,7 +57,8 @@ class OdooClient {
   final String baseUrl;
   final String db;
 
-  const OdooClient({required this.baseUrl, required this.db});
+  OdooClient({required String baseUrl, required this.db})
+      : baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), '');
 
   Future<OdooAuthResult?> login({
     required String login,
@@ -300,6 +301,7 @@ class OdooClient {
     required String token,
     required int orderId,
     required String reason,
+    int? reasonId,
     required String comment,
     required List<String> photoBase64List,
   }) async {
@@ -318,6 +320,7 @@ class OdooClient {
           'params': {
             'order_id': orderId,
             'reject_reason': reason,
+            'reject_reason_id': reasonId,
             'reject_comment': comment,
             'reject_photos': photoBase64List,
             'rejection_date': DateTime.now().toIso8601String(),
@@ -393,6 +396,50 @@ class OdooClient {
     }
   }
 
+  /// Iniciar una orden específica manualmente
+  Future<Map<String, dynamic>> startSpecificOrder({
+    required String token,
+    required int orderId,
+    required int routeId,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/start/$routeId/$orderId');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {},
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en startSpecificOrder: ${resp.statusCode}');
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo startSpecificOrder: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ Orden específica iniciada correctamente');
+        return result;
+      } else {
+        print('❌ Error al iniciar orden específica');
+        return result ?? {'success': false, 'error': 'Sin respuesta'};
+      }
+    } catch (e) {
+      print('❌ Exception en startSpecificOrder: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// Iniciar siguiente orden desde ubicación actual
   Future<Map<String, dynamic>> startNextOrderFromCurrent({
     required String token,
@@ -436,5 +483,44 @@ class OdooClient {
       return {'success': false, 'error': e.toString()};
     }
   }
+
+  /// Obtiene las razones de rechazo disponibles en móvil
+  Future<List<Map<String, dynamic>>> fetchRejectionReasons({
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/rejection/reasons');
+
+    final resp = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {},
+      }),
+    );
+
+    if (resp.statusCode != 200) {
+      print('❌ HTTP Error en fetchRejectionReasons: ${resp.statusCode}');
+      return [];
+    }
+
+    final data = jsonDecode(resp.body);
+    print('📦 Respuesta razones de rechazo: $data');
+    
+    final result = data['result'];
+    if (result == null || result['success'] != true) {
+      print('❌ Error obteniendo razones de rechazo');
+      return [];
+    }
+
+    final List reasonsData = result['reasons'] ?? [];
+    print('✅ Razones obtenidas: ${reasonsData.length}');
+    return reasonsData.cast<Map<String, dynamic>>();
+  }
 }
+
 

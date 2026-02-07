@@ -5,11 +5,13 @@ import 'photo_capture_widget.dart';
 class RejectOrderModal extends StatefulWidget {
   final String orderNumber;
   final String clientName;
+  final List<Map<String, dynamic>> rejectionReasons;
 
   const RejectOrderModal({
     super.key,
     required this.orderNumber,
     required this.clientName,
+    required this.rejectionReasons,
   });
 
   @override
@@ -17,18 +19,20 @@ class RejectOrderModal extends StatefulWidget {
 }
 
 class _RejectOrderModalState extends State<RejectOrderModal> {
-  String? selectedReason;
+  int? selectedReasonId;
+  String? selectedReasonName;
   final TextEditingController _commentController = TextEditingController();
   List<File> evidencePhotos = [];
 
-  final List<String> rejectReasons = [
-    'Cliente rechaza pedido',
-    'Dirección incorrecta',
-    'No responde / ausente',
-    'Problema con acceso',
-    'Anulado',
-    'Otro motivo',
-  ];
+  // Verificar si la razón seleccionada requiere nota
+  bool _selectedReasonNeedsNote() {
+    if (selectedReasonId == null) return false;
+    final reason = widget.rejectionReasons.firstWhere(
+      (r) => r['id'] == selectedReasonId,
+      orElse: () => {},
+    );
+    return reason['need_note'] ?? false;
+  }
 
   @override
   void dispose() {
@@ -37,16 +41,18 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
   }
 
   bool _canConfirm() {
-    // Motivos que requieren comentario obligatorio
-    final reasonsRequiringComment = ['Otro motivo', 'Dirección incorrecta', 'Anulado'];
+    // Verificar que se seleccionó un motivo
+    if (selectedReasonId == null) return false;
     
-    if (reasonsRequiringComment.contains(selectedReason)) {
-      return selectedReason != null && 
-            _commentController.text.trim().isNotEmpty &&
+    // Verificar si la razón requiere nota
+    final needsNote = _selectedReasonNeedsNote();
+    
+    if (needsNote) {
+      return _commentController.text.trim().isNotEmpty &&
             evidencePhotos.length >= 2;
     }
     // Para otros motivos, solo se necesita motivo y evidencia
-    return selectedReason != null && evidencePhotos.length >= 2;
+    return evidencePhotos.length >= 2;
   }
 
   void _confirmReject() {
@@ -62,35 +68,40 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
 
     // Retornar los datos al screen anterior
     Navigator.pop(context, {
-      'reason': selectedReason,
+      'reasonId': selectedReasonId,
+      'reason': selectedReasonName,
       'comment': _commentController.text.trim(),
       'photos': evidencePhotos,
     });
   }
 
-  Widget _buildReasonChip(String reason) {
-    final isSelected = selectedReason == reason;
+  Widget _buildReasonChip(Map<String, dynamic> reason) {
+    final reasonId = reason['id'] as int;
+    final reasonName = reason['name'] as String;
+    final isSelected = selectedReasonId == reasonId;
+    
     return InkWell(
       onTap: () {
         setState(() {
-          selectedReason = reason;
+          selectedReasonId = reasonId;
+          selectedReasonName = reasonName;
           _commentController.clear(); // Limpiar el campo cuando cambia de motivo
         });
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFF3F4F6),
+          color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(8),
           border: isSelected 
-              ? Border.all(color: const Color(0xFF10B981), width: 2)
-              : null,
+              ? Border.all(color: const Color(0xFF0F766E), width: 2)
+              : Border.all(color: const Color(0xFFE2E8F0), width: 1),
         ),
         child: Text(
-          reason,
+          reasonName,
           style: TextStyle(
             fontSize: 14,
-            color: isSelected ? const Color(0xFF059669) : const Color(0xFF6B7280),
+            color: isSelected ? const Color(0xFF0F766E) : const Color(0xFF334155),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -99,16 +110,10 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
   }
 
   String _getTextFieldHint() {
-    switch (selectedReason) {
-      case 'Dirección incorrecta':
-        return 'Proporciona detalles de la dirección incorrecta (obligatorio)';
-      case 'Anulado':
-        return 'Escribe la justificación de la anulación (obligatorio)';
-      case 'Otro motivo':
-        return 'Escribe el motivo del rechazo (obligatorio)';
-      default:
-        return 'Escribe detalles (obligatorio)';
+    if (selectedReasonName == null) {
+      return 'Selecciona un motivo primero';
     }
+    return 'Escribe detalles adicionales (obligatorio)';
   }
 
   @override
@@ -128,7 +133,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -145,7 +150,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -153,7 +158,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           '${widget.orderNumber} · ${widget.clientName}',
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF9CA3AF),
+                            color: Color(0xFF64748B),
                           ),
                         ),
                       ],
@@ -162,7 +167,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
-                    color: Colors.black,
+                    color: const Color(0xFF334155),
                   ),
                 ],
               ),
@@ -184,14 +189,14 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         Text(
                           'Elige o escribe un motivo',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[400],
+                            color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
@@ -200,22 +205,22 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: rejectReasons.map((reason) => _buildReasonChip(reason)).toList(),
+                      children: widget.rejectionReasons.map((reason) => _buildReasonChip(reason)).toList(),
                     ),
                     const SizedBox(height: 16),
-                    // Campo de texto - Mostrar si selecciona motivos que requieren comentario
-                    if (['Otro motivo', 'Dirección incorrecta', 'Anulado'].contains(selectedReason)) ...[
+                    // Campo de texto - Mostrar solo si se requiere nota por la razón
+                    if (_selectedReasonNeedsNote()) ...[
                       TextField(
                         controller: _commentController,
                         maxLines: 3,
                         decoration: InputDecoration(
                           hintText: _getTextFieldHint(),
                           hintStyle: const TextStyle(
-                            color: Color(0xFF9CA3AF),
+                            color: Color(0xFF94A3B8),
                             fontSize: 14,
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF9FAFB),
+                          fillColor: const Color(0xFFF8FAFC),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -226,7 +231,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                            borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2),
                           ),
                           contentPadding: const EdgeInsets.all(12),
                         ),
@@ -243,14 +248,14 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         Text(
                           '2 fotos obligatorias',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[400],
+                            color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
@@ -283,9 +288,9 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                                 height: 150,
                                 margin: EdgeInsets.only(right: evidencePhotos.length > 1 ? 8 : 0),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
+                                  color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
                                 ),
                                 child: Stack(
                                   children: [
@@ -329,9 +334,9 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                                 height: 150,
                                 margin: const EdgeInsets.only(left: 8),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
+                                  color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
                                 ),
                                 child: Stack(
                                   children: [
@@ -377,7 +382,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                       'Muestra puerta cerrada, timbre o señalización del lugar.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey[500],
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -387,7 +392,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -395,7 +400,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                       'La orden ${widget.orderNumber} quedará como Rechazada y se cargará la siguiente parada optimizada.',
                       style: const TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF6B7280),
+                        color: Color(0xFF475569),
                       ),
                     ),
                   ],
@@ -406,8 +411,9 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
                 border: Border(
-                  top: BorderSide(color: Color(0xFFE5E7EB)),
+                  top: BorderSide(color: Color(0xFFE2E8F0)),
                 ),
               ),
               child: Column(
@@ -419,12 +425,12 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                       icon: const Icon(Icons.cancel, size: 20),
                       label: const Text('Confirmar rechazo y continuar ruta'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _canConfirm() 
-                            ? const Color(0xFFEF4444) 
-                            : const Color(0xFFE5E7EB),
+                            backgroundColor: _canConfirm() 
+                              ? const Color(0xFFB91C1C) 
+                              : const Color(0xFFE2E8F0),
                         foregroundColor: _canConfirm() 
                             ? Colors.white 
-                            : const Color(0xFF9CA3AF),
+                              : const Color(0xFF94A3B8),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(

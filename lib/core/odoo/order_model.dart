@@ -13,7 +13,7 @@ class OrderItem {
   final double? latitude;
   final double? longitude;
   final int? sequence;
-  final double? distanceKm;
+  final int? routeSequence;
 
   OrderItem({
     required this.id,
@@ -28,7 +28,7 @@ class OrderItem {
     this.latitude,
     this.longitude,
     this.sequence,
-    this.distanceKm,
+    this.routeSequence,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -48,7 +48,7 @@ class OrderItem {
       latitude: json['latitude'] as double?,
       longitude: json['longitude'] as double?,
       sequence: json['sequence'] as int?,
-      distanceKm: json['distance_km'] as double?,
+      routeSequence: json['route_sequence'] as int?,
     );
   }
 
@@ -108,7 +108,7 @@ class OrderItem {
     double? latitude,
     double? longitude,
     int? sequence,
-    double? distanceKm,
+    int? routeSequence,
   }) {
     return OrderItem(
       id: id ?? this.id,
@@ -123,7 +123,7 @@ class OrderItem {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       sequence: sequence ?? this.sequence,
-      distanceKm: distanceKm ?? this.distanceKm,
+      routeSequence: routeSequence ?? this.routeSequence,
     );
   }
 }

@@ -48,14 +48,14 @@ class DeliveryStatusButtons extends StatelessWidget {
         _buildStatusButton(
           label: 'Entregado',
           icon: Icons.check_circle_outline,
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: const Color(0xFF0F766E),
           onPressed: onEntregadoPressed,
         ),
         const SizedBox(width: 12),
         _buildStatusButton(
           label: 'Rechazado',
           icon: Icons.cancel_outlined,
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: const Color(0xFFB91C1C),
           onPressed: onRechazadoPressed,
         ),
       ],

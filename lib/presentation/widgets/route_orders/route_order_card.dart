@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
-import 'dart:math';
 import '../../screens/order_detail_screen.dart';
+import 'start_order_button.dart';
 
 class RouteOrderCard extends StatefulWidget {
   final OrderItem order;
@@ -39,133 +39,6 @@ class RouteOrderCard extends StatefulWidget {
 }
 
 class _RouteOrderCardState extends State<RouteOrderCard> {
-  bool _isLoadingStartRoute = false;
-
-  double _toRadians(double degrees) {
-    return degrees * (pi / 180.0);
-  }
-
-  double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
-    const earthRadiusKm = 6371.0;
-    final dLat = _toRadians(lat2 - lat1);
-    final dLon = _toRadians(lon2 - lon1);
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_toRadians(lat1)) * cos(_toRadians(lat2)) * sin(dLon / 2) * sin(dLon / 2);
-    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return earthRadiusKm * c;
-  }
-
-  Future<bool> _isFirstOrderToStart() async {
-    // Solo mostrar si la orden está pending
-    if (widget.order.planningStatus != 'pending') {
-      return false;
-    }
-
-    // No mostrar si ya hay alguna orden iniciada o completada
-    bool hasStartedOrCompleted = widget.allOrders.any((order) {
-      final status = order.planningStatus;
-      return status == 'start_of_route' ||
-          status == 'delivered' ||
-          status == 'cancelled' ||
-          status == 'anulled' ||
-          status == 'returned' ||
-          status == 'cancelled_origin' ||
-          status == 'hand_to_hand';
-    });
-
-    if (hasStartedOrCompleted) {
-      return false;
-    }
-
-    // Obtener órdenes pending
-    final pendingOrders = widget.allOrders.where(
-      (order) => order.planningStatus == 'pending'
-    ).toList();
-
-    if (pendingOrders.isEmpty || widget.routeStartLatitude == null || widget.routeStartLongitude == null) {
-      return false;
-    }
-
-    // Encontrar la orden más cercana
-    OrderItem closestOrder = pendingOrders.first;
-    double minDistance = double.maxFinite;
-
-    if (closestOrder.latitude != null && closestOrder.longitude != null) {
-      minDistance = _haversineDistance(
-        widget.routeStartLatitude!,
-        widget.routeStartLongitude!,
-        closestOrder.latitude!,
-        closestOrder.longitude!,
-      );
-    }
-
-    for (var order in pendingOrders.skip(1)) {
-      if (order.latitude != null && order.longitude != null) {
-        double distance = _haversineDistance(
-          widget.routeStartLatitude!,
-          widget.routeStartLongitude!,
-          order.latitude!,
-          order.longitude!,
-        );
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestOrder = order;
-        }
-      }
-    }
-
-    return closestOrder.id == widget.order.id;
-  }
-
-  Future<void> _startRoute() async {
-    setState(() {
-      _isLoadingStartRoute = true;
-    });
-
-    try {
-      final result = await widget.odooClient.startNextOrder(
-        token: widget.token,
-        routeId: widget.routeId,
-      );
-
-      if (!mounted) return;
-
-      if (result['success'] == true) {
-        print('✅ Ruta iniciada: ${result['order_number']}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ruta iniciada: ${result['order_number']}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onStartRouteSuccess?.call();
-      } else {
-        print('❌ Error al iniciar ruta: ${result['error']}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${result['error'] ?? 'Desconocido'}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      print('❌ Exception en _startRoute: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingStartRoute = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Opacity(
@@ -203,59 +76,6 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                 _buildOrderHeader(),
                 const SizedBox(height: 12),
                 _buildContactInfo(),
-                if (widget.order.sequence != null || widget.order.distanceKm != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: _buildDeliveryInfo(),
-                  ),
-                // Botón "Iniciar ruta" si es la primera orden
-                if (widget.order.planningStatus == 'pending')
-                  FutureBuilder<bool>(
-                    future: _isFirstOrderToStart(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(
-                          height: 20,
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 12),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      }
-
-                      if (snapshot.data == true) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _isLoadingStartRoute ? null : _startRoute,
-                              icon: _isLoadingStartRoute
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Icon(Icons.route, size: 18),
-                              label: const Text('Iniciar ruta'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF059669),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return SizedBox.shrink();
-                    },
-                  ),
               ],
             ),
           ),
@@ -269,29 +89,6 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Badge de secuencia si existe
-        if (widget.order.sequence != null)
-          Container(
-            width: 32,
-            height: 32,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: widget.isActive 
-                ? const Color(0xFFF59E0B)
-                : const Color(0xFF2563EB),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '${widget.order.sequence}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,21 +118,39 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
           ),
         ),
         const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: _statusColor(widget.order.statusLabel),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Text(
-            widget.order.statusLabel,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _statusColor(widget.order.statusLabel),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                widget.order.statusLabel,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
             ),
-          ),
+            // Botón "Iniciar" para órdenes pendientes
+            if (widget.order.planningStatus == 'pending') ...[
+              const SizedBox(height: 8),
+              StartOrderButton(
+                orderId: widget.order.id,
+                routeId: widget.routeId,
+                orderNumber: widget.order.orderNumber,
+                token: widget.token,
+                odooClient: widget.odooClient,
+                onSuccess: widget.onStartRouteSuccess,
+                allOrders: widget.allOrders,
+              ),
+            ],
+          ],
         ),
       ],
     );
@@ -420,29 +235,6 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
       ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildDeliveryInfo() {
-    return Row(
-      children: [
-        if (widget.order.distanceKm != null) ...[
-          const Icon(
-            Icons.route,
-            size: 14,
-            color: Color(0xFF6B7280),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '${widget.order.distanceKm!.toStringAsFixed(1)} km',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ],
     );
   }
 
