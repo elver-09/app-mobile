@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
+import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/controllers/auth_controller.dart';
 import 'package:trainyl_2_0/presentation/screens/choose_sede.dart';
 
@@ -72,78 +73,163 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 120),
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: responsive.getResponsiveSize(20),
+                vertical: responsive.getResponsiveSize(48),
+              ),
+              child: Container(
+                width: double.infinity,
+                constraints: BoxConstraints(maxWidth: responsive.maxContentWidth),
+                padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(responsive.borderRadius + 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Center(
                       child: Container(
-                        height: 50,
-                        width: 50,
+                        height: responsive.getResponsiveSize(64),
+                        width: responsive.getResponsiveSize(64),
                         decoration: BoxDecoration(
                           color: const Color.fromARGB(255, 4, 91, 241),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(responsive.borderRadius + 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color.fromARGB(255, 4, 91, 241).withOpacity(0.25),
+                              blurRadius: 10,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
                             'R',
-                            style: TextStyle(color: Colors.white, fontSize: 20),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: responsive.headingLargeFontSize,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Inicia tu jornada',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    SizedBox(height: responsive.getResponsiveSize(16)),
+                    Text(
+                      'Inicia Tu Jornada',
+                      style: TextStyle(
+                        fontSize: responsive.headingMediumFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    const Align(
+                    SizedBox(height: responsive.getResponsiveSize(8)),
+                    Align(
                       alignment: Alignment.center,
                       child: Text(
                         'Ingrese para elegir sede e\niniciar rutas',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('Usuario', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _auth.userCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Correo Electrónico',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: responsive.bodySmallFontSize,
+                          color: const Color(0xFF64748B),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Align(
+                    SizedBox(height: responsive.getResponsiveSize(24)),
+                    Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('PIN / Contraseña', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                      child: Text(
+                        'Usuario',
+                        style: TextStyle(
+                          fontSize: responsive.bodySmallFontSize,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: responsive.getResponsiveSize(10)),
+                    TextField(
+                      controller: _auth.userCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: InputDecoration(
+                        labelText: 'Correo Electrónico',
+                        prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF64748B)),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: responsive.getResponsiveSize(14),
+                          vertical: responsive.getResponsiveSize(14),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(responsive.borderRadius),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(responsive.borderRadius),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(responsive.borderRadius),
+                          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.6),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(20)),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'PIN / Contraseña',
+                        style: TextStyle(
+                          fontSize: responsive.bodySmallFontSize,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(10)),
                     TextField(
                       controller: _auth.passCtrl,
                       obscureText: !_showPassword,
                       decoration: InputDecoration(
                         hintText: '••••••',
+                        prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: responsive.getResponsiveSize(14),
+                          vertical: responsive.getResponsiveSize(14),
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(responsive.borderRadius),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(responsive.borderRadius),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(responsive.borderRadius),
+                          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.6),
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _showPassword ? Icons.visibility : Icons.visibility_off,
-                            color: Colors.grey,
+                            color: const Color(0xFF64748B),
                           ),
                           onPressed: () {
                             setState(() => _showPassword = !_showPassword);
@@ -151,31 +237,42 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    SizedBox(height: responsive.getResponsiveSize(30)),
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: responsive.buttonHeight,
                       child: ElevatedButton(
                         onPressed: _loading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color.fromARGB(255, 4, 91, 241),
+                          elevation: 3,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(responsive.borderRadius),
                           ),
                         ),
                         child: _loading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            ? SizedBox(
+                                width: responsive.getResponsiveSize(20),
+                                height: responsive.getResponsiveSize(20),
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
-                            : const Text('Ingresar', style: TextStyle(fontSize: 16, color: Colors.white)),
+                            : Text(
+                                'Ingresar',
+                                style: TextStyle(
+                                  fontSize: responsive.bodyMediumFontSize,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

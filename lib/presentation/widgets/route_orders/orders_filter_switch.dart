@@ -44,7 +44,7 @@ class _OrdersFilterSwitchState extends State<OrdersFilterSwitch> {
                 children: [
                   Text(
                     _showOnlyActive 
-                      ? 'Pendientes y En curso'
+                      ? 'En Transporte y En curso'
                       : 'Todas las órdenes',
                     style: TextStyle(
                       fontSize: 13,

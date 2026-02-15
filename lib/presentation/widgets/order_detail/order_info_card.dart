@@ -80,9 +80,18 @@ class OrderInfoCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
-            'Producto: ${product ?? 'N/A'} · Zona $district',
+            'Zona $district',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Producto: ${product ?? 'N/A'}',
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF64748B),

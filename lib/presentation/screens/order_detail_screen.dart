@@ -13,6 +13,7 @@ import '../../core/services/photo_storage_service.dart';
 import '../../core/services/maps_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/photo_converter_service.dart';
+import '../../core/responsive/responsive_helper.dart';
 
 // Widgets
 import '../widgets/order_detail/order_info_card.dart';
@@ -768,7 +769,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
     final origin = _resolveOriginLatLng();
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -778,7 +781,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border(
@@ -794,23 +797,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.arrow_back,
-                            color: Color(0xFF0F172A),
-                            size: 24,
+                            color: const Color(0xFF0F172A),
+                            size: responsive.iconSize,
                           ),
                           onPressed: () => Navigator.pop(context),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Detalle de la orden',
                                 style: TextStyle(
-                                  fontSize: 26,
+                                  fontSize: responsive.headingLargeFontSize,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                                  color: const Color(0xFF0F172A),
                                 ),
                               ),
                             ],
@@ -818,91 +821,94 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: const Color(0xFFE2E8F0),
-                              width: 1,
+                    SizedBox(height: responsive.getResponsiveSize(16)),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: responsive.getResponsiveSize(12),
+                              vertical: responsive.getResponsiveSize(6),
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: responsive.iconSize * 0.6,
+                                  color: const Color(0xFF64748B),
+                                ),
+                                SizedBox(width: responsive.getResponsiveSize(6)),
+                                Text(
+                                  'Hoy · ${widget.routeName ?? ''}',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize,
+                                    color: const Color(0xFF475569),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: Color(0xFF64748B),
+                          SizedBox(width: responsive.getResponsiveSize(12)),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: responsive.getResponsiveSize(12),
+                              vertical: responsive.getResponsiveSize(6),
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
+                              border: Border.all(
+                                color: const Color(0xFFBFDBFE),
+                                width: 1,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Hoy · ${widget.routeName ?? ''}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF475569),
-                                  fontWeight: FontWeight.w500,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.local_shipping,
+                                  size: responsive.iconSize * 0.65,
+                                  color: const Color(0xFF3B82F6),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: const Color(0xFFBFDBFE),
-                              width: 1,
+                                SizedBox(width: responsive.getResponsiveSize(6)),
+                                Text(
+                                  'Vehículo',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize * 0.9,
+                                    color: const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                SizedBox(width: responsive.getResponsiveSize(6)),
+                                Text(
+                                  '${widget.fleetType ?? ''} · ${widget.fleetLicense ?? ''}',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.local_shipping,
-                                size: 16,
-                                color: Color(0xFF3B82F6),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Vehículo',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF64748B),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${widget.fleetType ?? ''} · ${widget.fleetLicense ?? ''}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
               // Order details card
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -919,22 +925,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       statusLabel: _getStatusLabel(),
                       statusColor: _getStatusColor(),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: responsive.getResponsiveSize(24)),
                     // Location section
-                    const Text(
+                    Text(
                       'Ubicación de entrega',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: responsive.headingSmallFontSize,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: responsive.getResponsiveSize(12)),
                     // Map preview - Full width
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(responsive.borderRadius),
                       child: SizedBox(
-                        height: 220,
+                        height: responsive.getResponsiveSize(220),
                         child: (origin == null ||
                           widget.latitude == null ||
                           widget.longitude == null)
@@ -1005,35 +1011,35 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                 scrollGesturesEnabled: false,
                                 rotateGesturesEnabled: false,
                                 tiltGesturesEnabled: false,
-                          zoomControlsEnabled: true,
-                          myLocationButtonEnabled: false,
-                          mapToolbarEnabled: false,
+                                zoomControlsEnabled: true,
+                                myLocationButtonEnabled: false,
+                                mapToolbarEnabled: false,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: responsive.getResponsiveSize(24)),
                     // Delivery status
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Estado de la entrega',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: responsive.headingSmallFontSize,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: const Color(0xFF0F172A),
                           ),
                         ),
-                        const Text(
+                        Text(
                           'Elige solo una opción',
                           style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF94A3B8),
+                            fontSize: responsive.bodySmallFontSize,
+                            color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: responsive.getResponsiveSize(12)),
                     // Status buttons
                     DeliveryStatusButtons(
                       onEntregadoPressed: _showDeliveryModal,
@@ -1041,7 +1047,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       isOrderInProgress: widget.planningStatus == 'start_of_route',
                       currentStatus: widget.planningStatus,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: responsive.getResponsiveSize(24)),
                     
                     // Widget de fotos
                     DeliveryPhotosWidget(
@@ -1050,7 +1056,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       onViewPhotos: _showPhotosDialog,
                       onRemovePhoto: _removePhoto,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: responsive.getResponsiveSize(16)),
                     // Comment field
                     TextField(
                       controller: _commentController,
@@ -1067,30 +1073,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       decoration: InputDecoration(
                         hintText:
                             'Comentario para la central y el cliente\n(opcional)',
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 14,
+                        hintStyle: TextStyle(
+                          color: const Color(0xFF94A3B8),
+                          fontSize: responsive.bodySmallFontSize,
                         ),
                         filled: true,
                         fillColor: const Color(0xFFF1F5F9),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
                           borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
                           borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
                           borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
                         ),
-                        contentPadding: const EdgeInsets.all(16),
+                        contentPadding: EdgeInsets.all(responsive.getResponsiveSize(16)),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: responsive.getResponsiveSize(24)),
                     
-                    const SizedBox(height: 24),
+                    SizedBox(height: responsive.getResponsiveSize(24)),
                   ],
                 ),
               ),

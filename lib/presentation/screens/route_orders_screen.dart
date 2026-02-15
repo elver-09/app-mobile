@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
+import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/screens/scan_barcode_screen.dart';
 import '../widgets/route_orders/route_order_card.dart';
 import '../widgets/route_orders/orders_filter_switch.dart';
@@ -266,6 +267,8 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: FutureBuilder<RouteOrdersResponse>(
@@ -312,7 +315,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           return SafeArea(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -328,18 +331,18 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: responsive.getResponsiveSize(8)),
                         Text(
                           allOrdersScanned ? 'Órdenes asignadas' : 'Verificar carga',
-                          style: const TextStyle(
-                            fontSize: 22,
+                          style: TextStyle(
+                            fontSize: responsive.headingMediumFontSize,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: const Color(0xFF0F172A),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 1),
+                    SizedBox(height: responsive.getResponsiveSize(1)),
 
                     // Route Verification Header Widget - Mostrar hasta que todas estén escaneadas
                     if (!allOrdersScanned) ...[
@@ -376,31 +379,34 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                       },
                     ),
                     ],
-                    const SizedBox(height: 24),
+                    SizedBox(height: responsive.getResponsiveSize(24)),
 
                     // Órdenes asignadas title
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Órdenes asignadas',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: responsive.bodyMediumFontSize,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: const Color(0xFF0F172A),
                           ),
                         ),
-                        Text(
-                          '${orders.length} órdenes · ${orders.where((o) => o.planningStatus == 'in_planification').length} por escanear',
-                          style: const TextStyle(
-                            fontSize: 17,
-                            color: Color(0xFFCBD5E1),
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Text(
+                            '${orders.length} órdenes · ${orders.where((o) => o.planningStatus == 'in_planification').length} por escanear',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: responsive.bodySmallFontSize,
+                              color: const Color(0xFFCBD5E1),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: responsive.getResponsiveSize(12)),
 
                     // Switch de filtro
                     OrdersFilterSwitch(
@@ -412,19 +418,19 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         }
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: responsive.getResponsiveSize(12)),
 
                     // Orders list
                     if (filteredOrders.isEmpty)
                       Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          padding: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(32)),
                           child: Text(
                             _showOnlyActive
                                 ? 'No hay órdenes pendientes'
                                 : 'No hay órdenes en esta ruta',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: responsive.bodyMediumFontSize,
                               color: Colors.grey.shade600,
                             ),
                           ),
@@ -462,44 +468,44 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                   ),
                                 ),
                                 if (entry.key < filteredOrders.length - 1)
-                                  const SizedBox(height: 12),
+                                  SizedBox(height: responsive.getResponsiveSize(12)),
                               ],
                             );
                           }),
-                          const SizedBox(height: 20),
+                          SizedBox(height: responsive.getResponsiveSize(20)),
                           if (!allOrdersScanned && !routeInProgress) ...[
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
                               child: Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3B82F6),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(responsive.borderRadius),
                                 ),
                                 child: Material(
                                   color: Colors.transparent,
                                   child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(responsive.borderRadius),
                                     onTap: () => _showStartOptimizedRouteDialog(orders),
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: responsive.getResponsiveSize(16),
                                       ),
                                       child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.route,
                                             color: Colors.white,
-                                            size: 22,
+                                            size: responsive.iconSize,
                                           ),
-                                          const SizedBox(width: 10),
-                                          const Text(
+                                          SizedBox(width: responsive.getResponsiveSize(10)),
+                                          Text(
                                             'Iniciar ruta optimizada',
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: 16,
+                                              fontSize: responsive.bodyMediumFontSize,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -510,20 +516,20 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            SizedBox(height: responsive.getResponsiveSize(16)),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
                               child: Text(
                                 'Puedes iniciar la ruta aunque queden órdenes sin validar. Recuerda validar toda la carga antes de salir.',
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: responsive.bodySmallFontSize,
                                   color: Colors.grey.shade600,
                                   height: 1.4,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            SizedBox(height: responsive.getResponsiveSize(20)),
                           ],
                         ],
                       ),
@@ -553,45 +559,22 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             
             // Verificar si hay órdenes en curso (start_of_route)
             final hasOrdersInCourse = orders.any((order) => order.planningStatus == 'start_of_route');
-            
-            // Verificar si hay órdenes en transporte (in_transport)
-            final hasOrdersInTransport = orders.any((order) => order.planningStatus == 'in_transport');
-            
-            // Verificar si todas las órdenes están escaneadas (no en in_planification)
-            final allOrdersScanned = orders.every((order) => order.planningStatus != 'in_planification');
-            
-            // Si hay órdenes en transporte o en curso, mostrar "Siguiente Orden"
-            if (hasOrdersInTransport || hasOrdersInCourse) {
-              return FloatingActionButton.extended(
-                onPressed: _isLoadingNextOrder ? null : _goToNextOrder,
-                backgroundColor: const Color(0xFF3B82F6),
-                icon: _isLoadingNextOrder
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.arrow_forward,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                label: Text(
-                  _isLoadingNextOrder ? 'Cargando...' : 'Siguiente Orden',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              );
-            }
-            
-            // Si todas están escaneadas y no hay órdenes en transporte/curso, mostrar "Iniciar Ruta"
-            if (allOrdersScanned) {
+
+            // Verificar si todas las órdenes están en transporte (in_transport)
+            final allOrdersInTransport = orders.every((order) =>
+              order.planningStatus == 'in_transport');
+
+            // Verificar si hay órdenes entregadas o rechazadas
+            final hasOrdersDeliveredOrRejected = orders.any((order) {
+              return order.planningStatus == 'delivered' ||
+                order.planningStatus == 'cancelled' ||
+                order.planningStatus == 'anulled' ||
+                order.planningStatus == 'returned' ||
+                order.planningStatus == 'cancelled_origin';
+            });
+
+            // Si no hay órdenes en curso y todas están en transporte, mostrar "Iniciar Ruta"
+            if (!hasOrdersInCourse && allOrdersInTransport) {
               return FloatingActionButton.extended(
                 onPressed: _isLoadingNextOrder ? null : _startRoute,
                 backgroundColor: Colors.green,
@@ -611,6 +594,36 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                       ),
                 label: Text(
                   _isLoadingNextOrder ? 'Iniciando...' : 'Iniciar Ruta',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              );
+            }
+
+            // Si hay órdenes en curso o entregadas/rechazadas, mostrar "Siguiente Orden"
+            if (hasOrdersInCourse || hasOrdersDeliveredOrRejected) {
+              return FloatingActionButton.extended(
+                onPressed: _isLoadingNextOrder ? null : _goToNextOrder,
+                backgroundColor: const Color(0xFF3B82F6),
+                icon: _isLoadingNextOrder
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.arrow_forward,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                label: Text(
+                  _isLoadingNextOrder ? 'Cargando...' : 'Siguiente Orden',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,

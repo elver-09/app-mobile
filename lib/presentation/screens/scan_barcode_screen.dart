@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
+import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -252,33 +253,34 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
   }
 
   void _showManualCodeDialog() {
+    final responsive = context.responsive;
     _codeController.clear();
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(responsive.borderRadius),
           ),
-          title: const Text(
+          title: Text(
             'Ingresar código manualmente',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: responsive.headingSmallFontSize,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: const Color(0xFF0F172A),
             ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Ingresa el número de orden para buscarla',
                 style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF64748B),
+                  fontSize: responsive.bodySmallFontSize,
+                  color: const Color(0xFF64748B),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: responsive.getResponsiveSize(16)),
               TextField(
                 controller: _codeController,
                 autofocus: true,
@@ -288,10 +290,10 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                   hintText: 'Ej: PRUEBA 003',
                   prefixIcon: const Icon(Icons.qr_code, color: Color(0xFF2563EB)),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(responsive.borderRadius),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(responsive.borderRadius),
                     borderSide: const BorderSide(
                       color: Color(0xFF2563EB),
                       width: 2,
@@ -308,11 +310,11 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
+              child: Text(
                 'Cancelar',
                 style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF64748B),
+                  fontSize: responsive.bodyMediumFontSize,
+                  color: const Color(0xFF64748B),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -324,18 +326,18 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.getResponsiveSize(24),
+                  vertical: responsive.getResponsiveSize(12),
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(responsive.borderRadius - 2),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Buscar',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: responsive.bodyMediumFontSize,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
@@ -349,351 +351,666 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black),
-                      onPressed: () => Navigator.pop(context),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Escanear códigos',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
-                      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header atractivo
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Apunta al código de barras para marcar la\norden como "En transporte"',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Hoy • ${widget.routeName}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Text(
-                      'Vehículo',
-                      style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Text(
-                          'Estado de ruta',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
+                          padding: EdgeInsets.all(responsive.getResponsiveSize(8)),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFA726),
-                            borderRadius: BorderRadius.circular(20),
+                            color: const Color(0xFF3B82F6).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(responsive.borderRadius),
                           ),
-                          child: const Text(
-                            'Por validar',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.arrow_back,
+                              color: const Color(0xFF0F172A),
+                              size: responsive.iconSize,
                             ),
+                            onPressed: () => Navigator.pop(context),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ),
+                        SizedBox(width: responsive.getResponsiveSize(12)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Escanear códigos',
+                                style: TextStyle(
+                                  fontSize: responsive.headingLargeFontSize,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
+                              SizedBox(height: responsive.getResponsiveSize(4)),
+                              Text(
+                                'Apunta al código para marcar "En transporte"',
+                                style: TextStyle(
+                                  fontSize: responsive.bodySmallFontSize,
+                                  color: const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    Text(
-                      '${widget.fleetType} • ${widget.fleetLicense}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ),
+              // Información de ruta y vehículo
+              Padding(
+                padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Escaneo en curso',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Alinea el código de barras dentro del recuadro\npara registrar la orden.',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Color(0xFF64748B),
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F9FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.fullscreen,
-                        color: Color(0xFF3B82F6),
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                CustomPaint(
-                  painter: DottedBorder(
-                    color: const Color(0xFFCBD5E1),
-                    strokeWidth: 2,
-                  ),
-                  child: Container(
-                    height: 180,
-                    width: double.infinity,
-                    color: const Color(0xFFF8FAFC),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: MobileScanner(
-                        controller: cameraController,
-                        onDetect: (capture) {
-                          for (final barcode in capture.barcodes) {
-                            final code = barcode.rawValue;
-                            if (code != null && code.isNotEmpty) {
-                              print('📱 Código detectado: $code');
-                              _searchOrderByCode(code);
-                            }
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FlashlightButton(
-                        label: 'Linterna',
-                        controller: cameraController,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _ActionChip(
-                        icon: Icons.keyboard,
-                        label: 'Ingresar\ncódigo',
-                        onTap: _showManualCodeDialog,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (_scannedOrder != null) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Orden encontrada',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF475569),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'Lista para "En transporte"',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _scannedOrder!.fullname,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _scannedOrder!.orderNumber,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Producto: ${_scannedOrder!.product ?? 'N/A'} · Zona ${_scannedOrder!.district}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _scannedOrder!.address,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _scannedOrder = null;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                                width: 1,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hoy • ${widget.routeName}',
+                              style: TextStyle(
+                                fontSize: responsive.bodyMediumFontSize,
+                                color: const Color(0xFF475569),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: const Center(
-                              child: Text(
-                                'Cancelar',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
+                            SizedBox(height: responsive.getResponsiveSize(2)),
+                            Row(
+                              children: [
+                                Text(
+                                  'Estado de ruta',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                                SizedBox(width: responsive.getResponsiveSize(8)),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: responsive.getResponsiveSize(12),
+                                    vertical: responsive.getResponsiveSize(4),
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        const Color(0xFFFFA726),
+                                        const Color(0xFFFF9800),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFFFA726).withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    'Por validar',
+                                    style: TextStyle(
+                                      fontSize: responsive.bodySmallFontSize * 0.8,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Vehículo',
+                              style: TextStyle(
+                                fontSize: responsive.bodySmallFontSize,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            SizedBox(height: responsive.getResponsiveSize(2)),
+                            Text(
+                              '${widget.fleetType} • ${widget.fleetLicense}',
+                              style: TextStyle(
+                                fontSize: responsive.bodyMediumFontSize,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(12)),
+                    // Sección de escaneo
+                    Container(
+                      padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(responsive.borderRadius),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Escaneo en curso',
+                                    style: TextStyle(
+                                      fontSize: responsive.headingMediumFontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  SizedBox(height: responsive.getResponsiveSize(4)),
+                                  Text(
+                                    'Alinea el código dentro del recuadro',
+                                    style: TextStyle(
+                                      fontSize: responsive.bodySmallFontSize,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFF3B82F6).withOpacity(0.1),
+                                      const Color(0xFF2563EB).withOpacity(0.05),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(responsive.borderRadius),
+                                  border: Border.all(
+                                    color: const Color(0xFF3B82F6).withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.fullscreen,
+                                  color: const Color(0xFF3B82F6),
+                                  size: responsive.iconSize,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: responsive.getResponsiveSize(16)),
+                          // Scanner con marco atractivo
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(responsive.borderRadius),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF3B82F6).withOpacity(0.15),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: CustomPaint(
+                              painter: DottedBorder(
+                                color: const Color(0xFF3B82F6),
+                                strokeWidth: 2.5,
+                              ),
+                              child: Container(
+                                height: responsive.getResponsiveSize(220),
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFFF0F9FF),
+                                      const Color(0xFFF8FAFC),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(responsive.borderRadius - 6),
+                                  child: Stack(
+                                    children: [
+                                      MobileScanner(
+                                        controller: cameraController,
+                                        onDetect: (capture) {
+                                          for (final barcode in capture.barcodes) {
+                                            final code = barcode.rawValue;
+                                            if (code != null && code.isNotEmpty) {
+                                              print('📱 Código detectado: $code');
+                                              _searchOrderByCode(code);
+                                            }
+                                          }
+                                        },
+                                      ),
+                                      // Overlay con líneas de escaneo
+                                      Center(
+                                        child: Container(
+                                          width: responsive.getResponsiveSize(220),
+                                          height: responsive.getResponsiveSize(120),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: const Color(0xFF10B981).withOpacity(0.5),
+                                              width: 2,
+                                            ),
+                                            borderRadius: BorderRadius.circular(responsive.borderRadius - 6),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(8)),
+                    // Botones de acción
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FlashlightButton(
+                            label: 'Linterna',
+                            controller: cameraController,
+                          ),
+                        ),
+                        SizedBox(width: responsive.getResponsiveSize(12)),
+                        Expanded(
+                          child: _ActionChip(
+                            icon: Icons.keyboard,
+                            label: 'Ingresar\ncódigo',
+                            onTap: _showManualCodeDialog,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (_scannedOrder != null)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.getResponsiveSize(16),
+                    vertical: responsive.getResponsiveSize(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Encabezado con badge
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Orden encontrada',
+                            style: TextStyle(
+                              fontSize: responsive.headingMediumFontSize,
+                              color: const Color(0xFF0F172A),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: responsive.getResponsiveSize(12),
+                              vertical: responsive.getResponsiveSize(6),
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFF10B981),
+                                  const Color(0xFF059669),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: responsive.iconSize * 0.7,
+                                ),
+                                SizedBox(width: responsive.getResponsiveSize(4)),
+                                Text(
+                                  'Lista para confirmar',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize * 0.85,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: responsive.getResponsiveSize(12)),
+                      // Tarjeta de orden
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(responsive.borderRadius),
+                          border: Border.all(
+                            color: const Color(0xFF10B981).withOpacity(0.3),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withOpacity(0.1),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Encabezado de orden
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _scannedOrder!.fullname,
+                                        style: TextStyle(
+                                          fontSize: responsive.headingSmallFontSize,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      SizedBox(height: responsive.getResponsiveSize(4)),
+                                      Text(
+                                        _scannedOrder!.orderNumber,
+                                        style: TextStyle(
+                                          fontSize: responsive.bodyMediumFontSize,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF3B82F6),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.all(responsive.getResponsiveSize(8)),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0FDF4),
+                                    borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
+                                    border: Border.all(
+                                      color: const Color(0xFF10B981).withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.local_shipping,
+                                    color: const Color(0xFF10B981),
+                                    size: responsive.iconSize,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: responsive.getResponsiveSize(12)),
+                            // Detalles
+                            Divider(
+                              color: const Color(0xFFE2E8F0),
+                              thickness: 1,
+                              height: responsive.getResponsiveSize(20),
+                            ),
+                            Text(
+                              'Detalles del envío',
+                              style: TextStyle(
+                                fontSize: responsive.bodyMediumFontSize,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF0F172A),
+                              ),
+                            ),
+                            SizedBox(height: responsive.getResponsiveSize(8)),
+                            _buildDetailRow(
+                              context,
+                              Icons.inventory_2,
+                              'Producto',
+                              _scannedOrder!.product ?? 'N/A',
+                            ),
+                            SizedBox(height: responsive.getResponsiveSize(6)),
+                            _buildDetailRow(
+                              context,
+                              Icons.location_on,
+                              'Zona',
+                              _scannedOrder!.district,
+                            ),
+                            SizedBox(height: responsive.getResponsiveSize(6)),
+                            _buildDetailRow(
+                              context,
+                              Icons.attach_money,
+                              'Dirección',
+                              _scannedOrder!.address,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: _isConfirming ? null : _confirmScanOrder,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              color: _isConfirming ? const Color(0xFF94A3B8) : const Color(0xFF2563EB),
-                              borderRadius: BorderRadius.circular(10),
+                      SizedBox(height: responsive.getResponsiveSize(16)),
+                      // Botón de confirmación
+                      SizedBox(
+                        width: double.infinity,
+                        height: responsive.buttonHeight,
+                        child: ElevatedButton(
+                          onPressed: _isConfirming ? null : _confirmScanOrder,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            disabledBackgroundColor: const Color(0xFF10B981).withOpacity(0.5),
+                            elevation: 4,
+                            shadowColor: const Color(0xFF10B981).withOpacity(0.4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(responsive.borderRadius),
                             ),
-                            child: Center(
-                              child: _isConfirming
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Confirmar escaneo',
+                          ),
+                          child: _isConfirming
+                              ? SizedBox(
+                                  height: responsive.buttonHeight * 0.5,
+                                  width: responsive.buttonHeight * 0.5,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                      size: responsive.iconSize,
+                                    ),
+                                    SizedBox(width: responsive.getResponsiveSize(8)),
+                                    Text(
+                                      'Confirmar y marcar en transporte',
                                       style: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w700,
+                                        fontSize: responsive.headingSmallFontSize,
+                                        fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
                                     ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      SizedBox(height: responsive.getResponsiveSize(12)),
+                      // Botón secundario
+                      SizedBox(
+                        width: double.infinity,
+                        height: responsive.buttonHeight * 0.9,
+                        child: OutlinedButton(
+                          onPressed: _isConfirming
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _scannedOrder = null;
+                                  });
+                                  _codeController.clear();
+                                },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: Color(0xFFE2E8F0),
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(responsive.borderRadius),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancelar y escanear otra',
+                            style: TextStyle(
+                              fontSize: responsive.bodyMediumFontSize,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF475569),
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Al confirmar, la orden cambiará a estado "En transporte" dentro de tu ruta.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                )
+              else
+                Padding(
+                  padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        SizedBox(height: responsive.getResponsiveSize(20)),
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          size: responsive.iconSize * 2,
+                          color: const Color(0xFFCBD5E1),
+                        ),
+                        SizedBox(height: responsive.getResponsiveSize(16)),
+                        Text(
+                          'Escanea una orden',
+                          style: TextStyle(
+                            fontSize: responsive.bodyMediumFontSize,
+                            color: const Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  // Helper para mostrar detalles en filas
+  Widget _buildDetailRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    final responsive = context.responsive;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              icon,
+              size: responsive.iconSize * 0.8,
+              color: const Color(0xFF64748B),
+            ),
+            SizedBox(width: responsive.getResponsiveSize(8)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: responsive.bodySmallFontSize,
+                    color: const Color(0xFF64748B),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        SizedBox(width: responsive.getResponsiveSize(12)),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: responsive.bodyMediumFontSize,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF0F172A),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -737,33 +1054,35 @@ class _FlashlightButtonState extends State<FlashlightButton> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    
     return Material(
       color: _isFlashlightOn
-          ? const Color(0xFF2563EB)
-          : const Color(0xFFF1F5F9),
-      borderRadius: BorderRadius.circular(10),
+          ? const Color(0xFF3B82F6)
+          : const Color(0xFFF0F9FF),
+      borderRadius: BorderRadius.circular(responsive.borderRadius - 2),
       child: InkWell(
         onTap: _toggleFlashlight,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(responsive.borderRadius - 2),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(12)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.flash_on,
-                color: _isFlashlightOn ? Colors.white : const Color(0xFF2563EB),
-                size: 20,
+                color: _isFlashlightOn ? Colors.white : const Color(0xFF3B82F6),
+                size: responsive.iconSize * 0.75,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: responsive.getResponsiveSize(8)),
               Text(
                 widget.label,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: responsive.bodySmallFontSize,
                   fontWeight: FontWeight.w700,
                   color: _isFlashlightOn
                       ? Colors.white
-                      : const Color(0xFF2563EB),
+                      : const Color(0xFF3B82F6),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -796,25 +1115,27 @@ class _ActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    
     return Material(
-      color: const Color(0xFFF1F5F9),
-      borderRadius: BorderRadius.circular(10),
+      color: const Color(0xFFF0FDF4),
+      borderRadius: BorderRadius.circular(responsive.borderRadius - 2),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(responsive.borderRadius - 2),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(12)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: const Color(0xFF2563EB), size: 20),
-              const SizedBox(width: 8),
+              Icon(icon, color: const Color(0xFF059669), size: responsive.iconSize * 0.75),
+              SizedBox(width: responsive.getResponsiveSize(8)),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 15,
+                style: TextStyle(
+                  fontSize: responsive.bodySmallFontSize,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF2563EB),
+                  color: const Color(0xFF059669),
                 ),
                 textAlign: TextAlign.center,
               ),

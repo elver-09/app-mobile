@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/constants/route_status.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/route_model.dart';
+import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/screens/route_orders_screen.dart';
 import '../widgets/choose_sede/sede_header.dart';
 import '../widgets/choose_sede/pie_chart_widget.dart';
@@ -167,12 +168,14 @@ class _ChooseSedeState extends State<ChooseSede> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -180,7 +183,7 @@ class _ChooseSedeState extends State<ChooseSede> {
                 SedeHeader(
                   formattedDate: _getFormattedDate(),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: responsive.getResponsiveSize(5)),
                 // Charts section
                 FutureBuilder<List<RouteItem>>(
                   future: _routesFuture.then(_getRoutesWithOrders),
@@ -191,12 +194,12 @@ class _ChooseSedeState extends State<ChooseSede> {
 
                     final routes = snapshot.data ?? [];
                     final routeStats = _getRouteStatistics(routes);
-
+                    
                     return Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(responsive.borderRadius),
                         border: Border.all(
                           color: const Color(0xFFE2E8F0),
                           width: 1.5,
@@ -209,88 +212,163 @@ class _ChooseSedeState extends State<ChooseSede> {
                           ),
                         ],
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: PieChartWidget(
-                              title: 'Estados de rutas',
-                              data: [
-                                ChartData(
-                                  'Por validar',
-                                  routeStats['por_validar'] ?? 0,
-                                  const Color(0xFFF59E0B),
+                      child: responsive.screenWidth < 300
+                          ? Column(
+                              children: [
+                                PieChartWidget(
+                                  title: 'Estados de rutas',
+                                  data: [
+                                    ChartData(
+                                      'Por validar',
+                                      routeStats['por_validar'] ?? 0,
+                                      const Color(0xFFF59E0B),
+                                    ),
+                                    ChartData(
+                                      'En ruta',
+                                      routeStats['en_ruta'] ?? 0,
+                                      const Color(0xFF3B82F6),
+                                    ),
+                                    ChartData(
+                                      'Terminado',
+                                      routeStats['terminado'] ?? 0,
+                                      const Color(0xFF10B981),
+                                    ),
+                                  ],
                                 ),
-                                ChartData(
-                                  'En ruta',
-                                  routeStats['en_ruta'] ?? 0,
-                                  const Color(0xFF3B82F6),
+                                SizedBox(height: responsive.getResponsiveSize(20)),
+                                FutureBuilder<Map<String, int>>(
+                                  future: _getOrderStatistics(routes),
+                                  builder: (context, orderSnapshot) {
+                                    if (orderSnapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      );
+                                    }
+
+                                    final orderStats = orderSnapshot.data ?? {};
+
+                                    return PieChartWidget(
+                                      title: 'Estados de órdenes',
+                                      data: [
+                                        ChartData(
+                                          'Pendiente',
+                                          orderStats['pendiente'] ?? 0,
+                                          Colors.grey,
+                                        ),
+                                        ChartData(
+                                          'Transporte',
+                                          orderStats['enTransporte'] ?? 0,
+                                          const Color(0xFF3B82F6),
+                                        ),
+                                        ChartData(
+                                          'En curso',
+                                          orderStats['enCurso'] ?? 0,
+                                          const Color(0xFFFCD34D),
+                                        ),
+                                        ChartData(
+                                          'Entregado',
+                                          orderStats['entregado'] ?? 0,
+                                          Colors.green,
+                                        ),
+                                        ChartData(
+                                          'Rechazado',
+                                          orderStats['rechazado'] ?? 0,
+                                          Colors.red,
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
-                                ChartData(
-                                  'Terminado',
-                                  routeStats['terminado'] ?? 0,
-                                  const Color(0xFF10B981),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: PieChartWidget(
+                                    title: 'Estados de rutas',
+                                    data: [
+                                      ChartData(
+                                        'Por validar',
+                                        routeStats['por_validar'] ?? 0,
+                                        const Color(0xFFF59E0B),
+                                      ),
+                                      ChartData(
+                                        'En ruta',
+                                        routeStats['en_ruta'] ?? 0,
+                                        const Color(0xFF3B82F6),
+                                      ),
+                                      ChartData(
+                                        'Terminado',
+                                        routeStats['terminado'] ?? 0,
+                                        const Color(0xFF10B981),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(width: responsive.getResponsiveSize(20)),
+                                Expanded(
+                                  child: FutureBuilder<Map<String, int>>(
+                                    future: _getOrderStatistics(routes),
+                                    builder: (context, orderSnapshot) {
+                                      if (orderSnapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        );
+                                      }
+
+                                      final orderStats = orderSnapshot.data ?? {};
+
+                                      return PieChartWidget(
+                                        title: 'Estados de órdenes',
+                                        data: [
+                                          ChartData(
+                                            'Pendiente',
+                                            orderStats['pendiente'] ?? 0,
+                                            Colors.grey,
+                                          ),
+                                          ChartData(
+                                            'Transporte',
+                                            orderStats['enTransporte'] ?? 0,
+                                            const Color(0xFF3B82F6),
+                                          ),
+                                          ChartData(
+                                            'En curso',
+                                            orderStats['enCurso'] ?? 0,
+                                            const Color(0xFFFCD34D),
+                                          ),
+                                          ChartData(
+                                            'Entregado',
+                                            orderStats['entregado'] ?? 0,
+                                            Colors.green,
+                                          ),
+                                          ChartData(
+                                            'Rechazado',
+                                            orderStats['rechazado'] ?? 0,
+                                            Colors.red,
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: FutureBuilder<Map<String, int>>(
-                              future: _getOrderStatistics(routes),
-                              builder: (context, orderSnapshot) {
-                                if (orderSnapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  );
-                                }
-
-                                final orderStats = orderSnapshot.data ?? {};
-
-                                return PieChartWidget(
-                                  title: 'Estados de órdenes',
-                                  data: [
-                                    ChartData(
-                                      'Pendiente',
-                                      orderStats['pendiente'] ?? 0,
-                                      Colors.grey,
-                                    ),
-                                    ChartData(
-                                      'Transporte',
-                                      orderStats['enTransporte'] ?? 0,
-                                      const Color(0xFF3B82F6), // Azul
-                                    ),
-                                    ChartData(
-                                      'En curso',
-                                      orderStats['enCurso'] ?? 0,
-                                      const Color(0xFFFCD34D), // Amarillo
-                                    ),
-                                    ChartData(
-                                      'Entregado',
-                                      orderStats['entregado'] ?? 0,
-                                      Colors.green,
-                                    ),
-                                    ChartData(
-                                      'Rechazado',
-                                      orderStats['rechazado'] ?? 0,
-                                      Colors.red,
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
                     );
                   },
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: responsive.getResponsiveSize(32)),
                 // Routes section
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+                  padding: EdgeInsets.symmetric(
+                    vertical: responsive.getResponsiveSize(14),
+                    horizontal: responsive.getResponsiveSize(18),
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -300,7 +378,7 @@ class _ChooseSedeState extends State<ChooseSede> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(responsive.borderRadius),
                     border: Border.all(
                       color: const Color(0xFFE2E8F0),
                       width: 1.5,
@@ -317,49 +395,49 @@ class _ChooseSedeState extends State<ChooseSede> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
-                        children: const [
+                        children: [
                           Icon(
                             Icons.route,
-                            size: 22,
-                            color: Color(0xFF3B82F6),
+                            size: responsive.iconSize,
+                            color: const Color(0xFF3B82F6),
                           ),
-                          SizedBox(width: 10),
+                          SizedBox(width: responsive.getResponsiveSize(10)),
                           Text(
                             'Rutas de hoy',
                             style: TextStyle(
-                              fontSize: 22,
+                              fontSize: responsive.headingMediumFontSize,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
+                              color: const Color(0xFF0F172A),
                             ),
                           ),
                         ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: responsive.getResponsiveSize(10),
+                          vertical: responsive.getResponsiveSize(6),
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
                           border: Border.all(
                             color: const Color(0xFFE2E8F0),
                             width: 1,
                           ),
                         ),
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(
                               Icons.sort,
-                              size: 16,
-                              color: Color(0xFF64748B),
+                              size: responsive.iconSize * 0.7,
+                              color: const Color(0xFF64748B),
                             ),
-                            SizedBox(width: 6),
+                            SizedBox(width: responsive.getResponsiveSize(6)),
                             Text(
                               'Por inicio',
                               style: TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF64748B),
+                                fontSize: responsive.bodySmallFontSize,
+                                color: const Color(0xFF64748B),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -369,7 +447,7 @@ class _ChooseSedeState extends State<ChooseSede> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: responsive.getResponsiveSize(20)),
                 // Route cards - Loaded from Odoo
                 FutureBuilder<List<RouteItem>>(
                   future: _routesFuture.then(_getRoutesWithOrders),
@@ -425,11 +503,11 @@ class _ChooseSedeState extends State<ChooseSede> {
                                 },
                               ),
                               if (entry.key < routes.length - 1)
-                                const SizedBox(height: 16),
+                                SizedBox(height: responsive.getResponsiveSize(16)),
                             ],
                           );
                         }),
-                        const SizedBox(height: 24),
+                        SizedBox(height: responsive.getResponsiveSize(24)),
                       ],
                     );
                   },
