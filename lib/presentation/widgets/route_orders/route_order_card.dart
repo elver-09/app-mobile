@@ -137,8 +137,8 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                 ),
               ),
             ),
-            // Botón "Iniciar" para órdenes pendientes
-            if (widget.order.planningStatus == 'pending') ...[
+            // Botón "Iniciar" solo para órdenes en transporte
+            if (widget.order.planningStatus == 'in_transport') ...[
               const SizedBox(height: 8),
               StartOrderButton(
                 orderId: widget.order.id,
@@ -267,11 +267,14 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
 
   Color _statusColor(String status) {
     final normalized = status.toLowerCase();
-    if (normalized.contains('curso')) return const Color(0xFFF59E0B);
-    if (normalized.contains('pendiente')) return const Color(0xFF3B82F6);
-    if (normalized.contains('entregado')) return const Color(0xFF10B981);
-    if (normalized.contains('rechaz')) return const Color(0xFFEF4444);
-    if (normalized.contains('no dispo')) return const Color(0xFFF59E0B);
+    if (normalized.contains('pendiente')) return const Color(0xFF8B95A4); // gris/plomo
+    if (normalized.contains('transporte')) return const Color(0xFF3B82F6); // azul
+    if (normalized.contains('en curso')) return const Color(0xFFF59E0B); // amarillo
+    if (normalized.contains('entregado')) return const Color(0xFF10B981); // verde
+    if (normalized.contains('rechazado')) return const Color(0xFFEF4444); // rojo
+    if (normalized.contains('por validar')) return const Color(0xFFF59E0B);
+    if (normalized.contains('en ruta')) return const Color(0xFF3B82F6);
+    if (normalized.contains('terminado')) return const Color(0xFF10B981);
     return const Color(0xFF94A3B8);
   }
 }

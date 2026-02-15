@@ -8,6 +8,7 @@ class RouteItem {
   final String? fleet;
   final String? rutaDate;
   final int ordersQty;
+  final String? stateRoute;
   // Campos para compatibilidad (se calculan internamente si es necesario)
   final int planned;
   final int confirmed;
@@ -22,6 +23,7 @@ class RouteItem {
     this.fleet,
     this.rutaDate,
     required this.ordersQty,
+    this.stateRoute,
     this.planned = 0,
     this.confirmed = 0,
     this.delivered = 0,
@@ -37,6 +39,7 @@ class RouteItem {
       fleet: json['fleet'] as String?,
       rutaDate: json['ruta_date'] as String?,
       ordersQty: json['orders_qty'] as int? ?? 0,
+      stateRoute: json['state_route'] as String?,
     );
   }
 
@@ -66,17 +69,29 @@ class RouteItem {
 
   /// Calcula el estado de la ruta basado en las órdenes
   RouteStatus get status {
+    if (stateRoute != null && stateRoute!.isNotEmpty) {
+      switch (stateRoute) {
+        case 'to_validate':
+          return RouteStatus.toValidate;
+        case 'in_route':
+          return RouteStatus.inRoute;
+        case 'finished':
+          return RouteStatus.finished;
+        default:
+          break;
+      }
+    }
     if (orders.isEmpty) {
-      return RouteStatus.pending;
+      return RouteStatus.toValidate;
     }
 
     final completedOrders =
         orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
 
     if (completedOrders >= orders.length && orders.isNotEmpty) {
-      return RouteStatus.completed;
+      return RouteStatus.finished;
     }
-    return RouteStatus.pending;
+    return RouteStatus.toValidate;
   }
 
   /// Obtiene el color basado en el estado
@@ -86,6 +101,9 @@ class RouteItem {
 
   /// Retorna si hay órdenes completadas (no pendientes)
   bool get inProgress {
+    if (stateRoute != null && stateRoute!.isNotEmpty) {
+      return status == RouteStatus.inRoute;
+    }
     final completedOrders =
         orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
     return completedOrders > 0;
@@ -118,6 +136,9 @@ class RouteItem {
   }
 
   String get statusDisplay {
+    if (stateRoute != null && stateRoute!.isNotEmpty) {
+      return status.label;
+    }
     final completedOrders =
         orders.where((order) => _isCompletedStatus(order.planningStatus)).length;
     return 'Terminado · $completedOrders/$ordersQty';

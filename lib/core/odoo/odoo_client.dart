@@ -12,6 +12,7 @@ class RouteOrdersResponse {
   final String? routeStartAddress;
   final double? routeStartLatitude;
   final double? routeStartLongitude;
+  final String? routeStatus;
 
   RouteOrdersResponse({
     required this.orders,
@@ -20,6 +21,7 @@ class RouteOrdersResponse {
     this.routeStartAddress,
     this.routeStartLatitude,
     this.routeStartLongitude,
+    this.routeStatus,
   });
 }
 
@@ -197,6 +199,7 @@ class OdooClient {
       routeStartAddress: result['route_start_address'] as String?,
       routeStartLatitude: result['route_start_latitude'] as double?,
       routeStartLongitude: result['route_start_longitude'] as double?,
+      routeStatus: result['route_status'] as String?,
     );
   }
 
@@ -520,6 +523,69 @@ class OdooClient {
     final List reasonsData = result['reasons'] ?? [];
     print('✅ Razones obtenidas: ${reasonsData.length}');
     return reasonsData.cast<Map<String, dynamic>>();
+  }
+
+  /// Confirmar escaneo de orden (cambiar de in_planification a in_transport)
+  Future<Map<String, dynamic>> scanConfirmOrder({
+    required String token,
+    required int orderId,
+  }) async {
+    print('🟢 ===== ODOO CLIENT: scanConfirmOrder =====');
+    print('🟢 Order ID: $orderId');
+    print('🟢 Token length: ${token.length}');
+    
+    final url = Uri.parse('$baseUrl/driver/order/scan_confirm/$orderId');
+    print('🟢 URL: $url');
+    
+    try {
+      print('🟢 Enviando petición POST...');
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {},
+        }),
+      );
+
+      print('🟢 Respuesta HTTP recibida');
+      print('🟢 Status Code: ${resp.statusCode}');
+      print('🟢 Body: ${resp.body}');
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en scanConfirmOrder: ${resp.statusCode}');
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      print('🟢 JSON decodificado:');
+      print('🟢 Data completo: $data');
+      
+      final result = data['result'];
+      print('🟢 Result extraído: $result');
+      
+      if (result != null && result['success'] == true) {
+        print('✅ ÉXITO en OdooClient: Orden confirmada');
+        print('✅ Nuevo estado reportado por Odoo: ${result['new_status']}');
+        print('✅ Mensaje: ${result['message']}');
+        return result;
+      } else {
+        print('❌ Error en resultado de Odoo');
+        print('❌ Success: ${result?['success']}');
+        print('❌ Error: ${result?['error']}');
+        return result ?? {'success': false, 'error': 'Sin respuesta'};
+      }
+    } catch (e) {
+      print('❌ EXCEPCIÓN en scanConfirmOrder: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
+      return {'success': false, 'error': e.toString()};
+    } finally {
+      print('🟢 ===== FIN ODOO CLIENT: scanConfirmOrder =====');
+    }
   }
 }
 

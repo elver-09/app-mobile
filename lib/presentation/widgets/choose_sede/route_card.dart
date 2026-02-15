@@ -31,19 +31,29 @@ class RouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildStatsRow(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (inProgress) _buildProgressBar(),
           _buildFooter(),
         ],
@@ -55,33 +65,42 @@ class RouteCard extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+              letterSpacing: 0.3,
+            ),
           ),
         ),
+        const SizedBox(width: 12),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: statusColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: statusColor.withOpacity(0.2),
+              width: 1,
+            ),
           ),
           child: Row(
             children: [
               Icon(
-                inProgress ? Icons.play_circle_outline : Icons.pause_circle_outline,
-                size: 16,
+                inProgress ? Icons.play_circle_filled : Icons.circle,
+                size: 14,
                 color: statusColor,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Text(
                 status,
                 style: TextStyle(
                   fontSize: 13,
                   color: statusColor,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -96,22 +115,38 @@ class RouteCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
-            const SizedBox(width: 4),
+            const Icon(
+              Icons.location_on,
+              size: 17,
+              color: Color(0xFF64748B),
+            ),
+            const SizedBox(width: 6),
             Text(
               '$stops paradas',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF475569),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 20),
         Row(
           children: [
-            const Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey),
-            const SizedBox(width: 4),
+            const Icon(
+              Icons.inventory_2,
+              size: 17,
+              color: Color(0xFF64748B),
+            ),
+            const SizedBox(width: 6),
             Text(
               '$orders órdenes',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF475569),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -142,27 +177,42 @@ class RouteCard extends StatelessWidget {
       children: [
         Text(
           progressText,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
         ),
         GestureDetector(
           onTap: onTapDetail,
-          child: Row(
-            children: const [
-              Text(
-                'Ver detalle',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF2563EB),
-                  fontWeight: FontWeight.w600,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFBFDBFE),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: const [
+                Text(
+                  'Ver detalle',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF2563EB),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              SizedBox(width: 4),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 12,
-                color: Color(0xFF2563EB),
-              ),
-            ],
+                SizedBox(width: 6),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12,
+                  color: Color(0xFF2563EB),
+                ),
+              ],
+            ),
           ),
         ),
       ],

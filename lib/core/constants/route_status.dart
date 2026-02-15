@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
 
 enum RouteStatus {
-  pending,
-  completed,
+  toValidate,
+  inRoute,
+  finished,
 }
 
 extension RouteStatusExt on RouteStatus {
   String get label {
     return {
-      RouteStatus.pending: 'Pendiente',
-      RouteStatus.completed: 'Terminado',
+      RouteStatus.toValidate: 'Por validar',
+      RouteStatus.inRoute: 'En ruta',
+      RouteStatus.finished: 'Terminado',
     }[this]!;
   }
 
   Color get color {
     return {
-      RouteStatus.pending: const Color(0xFF9CA3AF),
-      RouteStatus.completed: const Color(0xFF059669),
+      RouteStatus.toValidate: const Color(0xFFF59E0B),
+      RouteStatus.inRoute: const Color(0xFF3B82F6),
+      RouteStatus.finished: const Color(0xFF10B981),
     }[this]!;
   }
 
   int get colorInt {
     return {
-      RouteStatus.pending: 0xFF9CA3AF,
-      RouteStatus.completed: 0xFF059669,
+      RouteStatus.toValidate: 0xFFF59E0B,
+      RouteStatus.inRoute: 0xFF3B82F6,
+      RouteStatus.finished: 0xFF10B981,
     }[this]!;
   }
 }

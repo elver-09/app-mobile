@@ -54,10 +54,13 @@ class OrderItem {
 
   Color get statusColor {
     switch (planningStatus) {
+      case 'in_planification':
+      case 'pending':
+        return const Color(0xFF8B95A4); // gris/plomo - "Pendiente"
+      case 'in_transport':
+        return const Color(0xFF3B82F6); // azul - "En transporte"
       case 'start_of_route':
         return const Color(0xFFF59E0B); // amarillo/naranja - "En curso"
-      case 'pending':
-        return const Color(0xFF2563EB); // azul - "Pendiente"
       case 'delivered':
         return const Color(0xFF10B981); // verde - "Entregado"
       case 'cancelled':
@@ -76,10 +79,13 @@ class OrderItem {
 
   String get statusLabel {
     switch (planningStatus) {
-      case 'start_of_route':
-        return 'En curso';
+      case 'in_planification':
       case 'pending':
         return 'Pendiente';
+      case 'in_transport':
+        return 'Transporte';
+      case 'start_of_route':
+        return 'En curso';
       case 'delivered':
         return 'Entregado';
       case 'cancelled':

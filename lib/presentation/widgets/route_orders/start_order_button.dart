@@ -36,7 +36,10 @@ class _StartOrderButtonState extends State<StartOrderButton> {
   /// Obtiene la próxima orden pendiente que debería iniciarse según planificación
   OrderItem? _getNextPlannedOrder() {
     for (final order in widget.allOrders) {
-      if (order.planningStatus == 'pending' && order.id != widget.orderId) {
+      if ((order.planningStatus == 'in_planification' || 
+          order.planningStatus == 'in_transport' || 
+          order.planningStatus == 'pending') && 
+          order.id != widget.orderId) {
         return order;
       }
     }

@@ -43,30 +43,35 @@ class PieChartWidget extends StatelessWidget {
                 painter: PieChartPainter(data),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: data
                     .map((item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          padding: const EdgeInsets.symmetric(vertical: 2.5),
                           child: Row(
                             children: [
                               Container(
-                                width: 8,
-                                height: 8,
+                                width: 7,
+                                height: 7,
                                 decoration: BoxDecoration(
                                   color: item.color,
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                item.label,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.black87,
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  item.label,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ),
                             ],

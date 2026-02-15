@@ -509,10 +509,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   // Método para obtener el color del estado actual
   Color _getStatusColor() {
     switch (currentOrderStatus) {
+      case 'in_planification':
+      case 'pending':
+        return const Color(0xFF8B95A4); // gris/plomo - "Pendiente"
+      case 'in_transport':
+        return const Color(0xFF3B82F6); // azul - "En transporte"
       case 'start_of_route':
         return const Color(0xFFF59E0B); // amarillo/naranja - "En curso"
-      case 'pending':
-        return const Color(0xFF2563EB); // azul - "Pendiente"
       case 'delivered':
         return const Color(0xFF10B981); // verde - "Entregado"
       case 'cancelled':
@@ -532,10 +535,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   // Método para obtener la etiqueta del estado actual
   String _getStatusLabel() {
     switch (currentOrderStatus) {
-      case 'start_of_route':
-        return 'En curso';
+      case 'in_planification':
       case 'pending':
         return 'Pendiente';
+      case 'in_transport':
+        return 'En transporte';
+      case 'start_of_route':
+        return 'En curso';
       case 'delivered':
         return 'Entregado';
       case 'cancelled':
@@ -772,8 +778,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
             children: [
               // Header
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(color: Color(0xFFEFF6FF)),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: const Color(0xFFE5E7EB),
+                      width: 1,
+                    ),
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -782,7 +796,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                         IconButton(
                           icon: const Icon(
                             Icons.arrow_back,
-                            color: Colors.black,
+                            color: Color(0xFF0F172A),
+                            size: 24,
                           ),
                           onPressed: () => Navigator.pop(context),
                         ),
@@ -793,9 +808,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                               Text(
                                 'Detalle de la orden',
                                 style: TextStyle(
-                                  fontSize: 24,
+                                  fontSize: 26,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                  color: Color(0xFF0F172A),
                                 ),
                               ),
                             ],
@@ -806,11 +821,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Text(
-                          'Hoy · ${widget.routeName ?? ''}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF9CA3AF),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Hoy · ${widget.routeName ?? ''}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF475569),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const Spacer(),
@@ -820,25 +860,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFFBFDBFE),
+                              width: 1,
+                            ),
                           ),
                           child: Row(
                             children: [
+                              const Icon(
+                                Icons.local_shipping,
+                                size: 16,
+                                color: Color(0xFF3B82F6),
+                              ),
+                              const SizedBox(width: 6),
                               const Text(
                                 'Vehículo',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Color(0xFF9CA3AF),
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
                               Text(
                                 '${widget.fleetType ?? ''} · ${widget.fleetLicense ?? ''}',
                                 style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
                                 ),
                               ),
                             ],
@@ -987,6 +1038,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     DeliveryStatusButtons(
                       onEntregadoPressed: _showDeliveryModal,
                       onRechazadoPressed: _showRejectModal,
+                      isOrderInProgress: widget.planningStatus == 'start_of_route',
+                      currentStatus: widget.planningStatus,
                     ),
                     const SizedBox(height: 24),
                     
@@ -1002,6 +1055,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     TextField(
                       controller: _commentController,
                       maxLines: 4,
+                      readOnly: true,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Este comentario se completa automáticamente desde los modales de entrega o rechazo'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
                       decoration: InputDecoration(
                         hintText:
                             'Comentario para la central y el cliente\n(opcional)',
@@ -1010,18 +1072,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                           fontSize: 14,
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: const Color(0xFFF1F5F9),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2),
+                          borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
                         ),
                         contentPadding: const EdgeInsets.all(16),
                       ),

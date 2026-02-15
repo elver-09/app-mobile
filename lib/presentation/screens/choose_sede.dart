@@ -76,6 +76,7 @@ class _ChooseSedeState extends State<ChooseSede> {
           fleet: route.fleet,
           rutaDate: route.rutaDate,
           ordersQty: route.ordersQty,
+          stateRoute: route.stateRoute,
           planned: route.planned,
           confirmed: route.confirmed,
           delivered: route.delivered,
@@ -92,22 +93,23 @@ class _ChooseSedeState extends State<ChooseSede> {
     return routesWithOrders;
   }
   Map<String, int> _getRouteStatistics(List<RouteItem> routes) {
-    int pendiente = 0;
+    int porValidar = 0;
+    int enRuta = 0;
     int terminado = 0;
 
     for (var route in routes) {
-      switch (route.status) {
-        case RouteStatus.completed:
-          terminado++;
-          break;
-        case RouteStatus.pending:
-          pendiente++;
-          break;
+      if (route.status == RouteStatus.finished) {
+        terminado++;
+      } else if (route.status == RouteStatus.inRoute) {
+        enRuta++;
+      } else {
+        porValidar++;
       }
     }
 
     return {
-      'pendiente': pendiente,
+      'por_validar': porValidar,
+      'en_ruta': enRuta,
       'terminado': terminado,
     };
   }
@@ -115,7 +117,8 @@ class _ChooseSedeState extends State<ChooseSede> {
   // Calcula estadísticas de órdenes dinámicamente basadas en las rutas
   Future<Map<String, int>> _getOrderStatistics(List<RouteItem> routes) async {
     int pendiente = 0;
-    int en_curso = 0;
+    int enTransporte = 0;
+    int enCurso = 0;
     int entregado = 0;
     int rechazado = 0;
 
@@ -128,11 +131,15 @@ class _ChooseSedeState extends State<ChooseSede> {
 
         for (var order in orders.orders) {
           switch (order.planningStatus) {
+            case 'in_planification':
             case 'pending':
               pendiente++;
               break;
+            case 'in_transport':
+              enTransporte++;
+              break;
             case 'start_of_route':
-              en_curso++;
+              enCurso++;
               break;
             case 'delivered':
               entregado++;
@@ -151,7 +158,8 @@ class _ChooseSedeState extends State<ChooseSede> {
 
     return {
       'pendiente': pendiente,
-      'en_curso': en_curso,
+      'enTransporte': enTransporte,
+      'enCurso': enCurso,
       'entregado': entregado,
       'rechazado': rechazado,
     };
@@ -185,10 +193,21 @@ class _ChooseSedeState extends State<ChooseSede> {
                     final routeStats = _getRouteStatistics(routes);
 
                     return Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
@@ -197,19 +216,24 @@ class _ChooseSedeState extends State<ChooseSede> {
                               title: 'Estados de rutas',
                               data: [
                                 ChartData(
-                                  'Pendiente',
-                                  routeStats['pendiente'] ?? 0,
-                                  Colors.grey,
+                                  'Por validar',
+                                  routeStats['por_validar'] ?? 0,
+                                  const Color(0xFFF59E0B),
+                                ),
+                                ChartData(
+                                  'En ruta',
+                                  routeStats['en_ruta'] ?? 0,
+                                  const Color(0xFF3B82F6),
                                 ),
                                 ChartData(
                                   'Terminado',
                                   routeStats['terminado'] ?? 0,
-                                  Colors.green,
+                                  const Color(0xFF10B981),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 20),
                           Expanded(
                             child: FutureBuilder<Map<String, int>>(
                               future: _getOrderStatistics(routes),
@@ -234,9 +258,14 @@ class _ChooseSedeState extends State<ChooseSede> {
                                       Colors.grey,
                                     ),
                                     ChartData(
+                                      'Transporte',
+                                      orderStats['enTransporte'] ?? 0,
+                                      const Color(0xFF3B82F6), // Azul
+                                    ),
+                                    ChartData(
                                       'En curso',
-                                      orderStats['en_curso'] ?? 0,
-                                      Colors.blue,
+                                      orderStats['enCurso'] ?? 0,
+                                      const Color(0xFFFCD34D), // Amarillo
                                     ),
                                     ChartData(
                                       'Entregado',
@@ -258,31 +287,89 @@ class _ChooseSedeState extends State<ChooseSede> {
                     );
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 // Routes section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Rutas de hoy',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Row(
-                      children: const [
-                        Icon(Icons.filter_list, size: 18, color: Colors.grey),
-                        SizedBox(width: 4),
-                        Text(
-                          'Ordenadas por inicio',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFF8FAFC),
+                        const Color(0xFFFFFFFF),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B82F6).withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(
+                            Icons.route,
+                            size: 22,
+                            color: Color(0xFF3B82F6),
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            'Rutas de hoy',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFFE2E8F0),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(
+                              Icons.sort,
+                              size: 16,
+                              color: Color(0xFF64748B),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Por inicio',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 // Route cards - Loaded from Odoo
                 FutureBuilder<List<RouteItem>>(
                   future: _routesFuture.then(_getRoutesWithOrders),
@@ -317,8 +404,8 @@ class _ChooseSedeState extends State<ChooseSede> {
                                 progress: route.progressValue,
                                 statusColor: statusColor,
                                 inProgress: route.inProgress,
-                                onTapDetail: () {
-                                  Navigator.push(
+                                onTapDetail: () async {
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => RouteOrdersScreen(
@@ -329,10 +416,16 @@ class _ChooseSedeState extends State<ChooseSede> {
                                       ),
                                     ),
                                   );
+                                  // Recargar datos al regresar
+                                  if (mounted) {
+                                    setState(() {
+                                      _routesFuture = widget.odooClient.fetchTodayRoutes(widget.token);
+                                    });
+                                  }
                                 },
                               ),
                               if (entry.key < routes.length - 1)
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 16),
                             ],
                           );
                         }),
