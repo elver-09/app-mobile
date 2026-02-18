@@ -587,6 +587,56 @@ class OdooClient {
       print('🟢 ===== FIN ODOO CLIENT: scanConfirmOrder =====');
     }
   }
-}
 
+  Future<Map<String, dynamic>> searchOrderGlobal({
+    required String token,
+    required String orderCode,
+  }) async {
+    print('🟢 ===== ODOO CLIENT: searchOrderGlobal =====');
+    print('🟢 Order Code: $orderCode');
+    print('🟢 Token length: ${token.length}');
+    
+    final url = Uri.parse('$baseUrl/driver/order/search_global').replace(
+      queryParameters: {'order_code': orderCode},
+    );
+    print('🟢 URL: $url');
+    
+    try {
+      print('🟢 Enviando petición GET...');
+      final resp = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('🟢 Respuesta HTTP recibida');
+      print('🟢 Status Code: ${resp.statusCode}');
+      print('🟢 Body: ${resp.body}');
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en searchOrderGlobal: ${resp.statusCode}');
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      print('🟢 JSON decodificado: $data');
+      
+      if (data['success'] == true) {
+        print('✅ ÉXITO en OdooClient: Orden encontrada');
+        return data;
+      } else {
+        print('❌ Error en búsqueda: ${data['error']}');
+        return data;
+      }
+    } catch (e) {
+      print('❌ EXCEPCIÓN en searchOrderGlobal: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
+      return {'success': false, 'error': e.toString()};
+    } finally {
+      print('🟢 ===== FIN ODOO CLIENT: searchOrderGlobal =====');
+    }
+  }
+}
 

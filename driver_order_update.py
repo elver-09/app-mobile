@@ -60,6 +60,7 @@ class DriverOrderUpdateController(http.Controller):
             # Guardar evidencia en el modelo de log (trainyl.mobile.log)
             photo_1 = delivery_photos[0] if delivery_photos and len(delivery_photos) > 0 else False
             photo_2 = delivery_photos[1] if delivery_photos and len(delivery_photos) > 1 else False
+            photo_3 = delivery_photos[2] if delivery_photos and len(delivery_photos) > 2 else False
 
             message = 'Entrega confirmada desde app.'
             if recipient_name:
@@ -79,6 +80,7 @@ class DriverOrderUpdateController(http.Controller):
                 reason_for_rejection=False,
                 photo_1=photo_1,
                 photo_2=photo_2,
+                photo_3=photo_3,
             )
             
             # Verificar si la ruta está completa (todas las órdenes entregadas o rechazadas)
@@ -156,6 +158,7 @@ class DriverOrderUpdateController(http.Controller):
             # Guardar evidencia en el modelo de log (trainyl.mobile.log)
             photo_1 = reject_photos[0] if reject_photos and len(reject_photos) > 0 else False
             photo_2 = reject_photos[1] if reject_photos and len(reject_photos) > 1 else False
+            photo_3 = reject_photos[2] if reject_photos and len(reject_photos) > 2 else False
 
             # Construir mensaje descriptivo con la razón y comentario
             message_parts = ['Rechazo registrado desde app.']
@@ -182,6 +185,7 @@ class DriverOrderUpdateController(http.Controller):
                 reason_for_rejection=reject_comment or False,
                 photo_1=photo_1,
                 photo_2=photo_2,
+                photo_3=photo_3,
             )
             
             # Verificar si la ruta está completa (todas las órdenes entregadas o rechazadas)

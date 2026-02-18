@@ -1052,7 +1052,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     // Widget de fotos
                     DeliveryPhotosWidget(
                       photos: deliveryPhotos,
-                      maxPhotos: 2,
+                      maxPhotos: 3,
                       onViewPhotos: _showPhotosDialog,
                       onRemovePhoto: _removePhoto,
                     ),

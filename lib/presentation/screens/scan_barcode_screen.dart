@@ -134,13 +134,145 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
         ),
       );
     } catch (e) {
-      print('❌ Orden no encontrada: $code');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('❌ No se encontró la orden con código: $code'),
-          backgroundColor: const Color(0xFFEF4444),
-        ),
+      print('❌ Orden no encontrada localmente: $code');
+      // Buscar globalmente en el servidor
+      _searchOrderGlobally(code);
+    }
+  }
+
+  Future<void> _searchOrderGlobally(String code) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = widget.token ?? prefs.getString('driver_token') ?? '';
+      
+      if (token.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Token no disponible'),
+            backgroundColor: Color(0xFFEF4444),
+          ),
+        );
+        return;
+      }
+
+      final odooClient = widget.odooClient ?? OdooClient(
+        baseUrl: 'https://trainyl.digilab.pe',
+        db: 'trainyl-prd',
       );
+
+      print('🔵 Buscando orden globalmente: $code');
+      final result = await odooClient.searchOrderGlobal(
+        token: token,
+        orderCode: code,
+      );
+
+      if (!mounted) return;
+
+      if (result['success'] == true && result['found'] == true) {
+        if (result['belongs_to_another_route'] == true) {
+          final routeInfo = result['route_info'];
+          final orderInfo = result['order'];
+          
+          // Mostrar alerta con información de la ruta correcta
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                backgroundColor: const Color(0xFFF9FAFB),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: Row(
+                  children: const [
+                    Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'ORDEN EN OTRA RUTA',
+                        style: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+                content: SingleChildScrollView(
+                  child: ListBody(
+                    children: [
+                      Text(
+                        'Esta orden pertenece a:',
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF374151)),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFFFF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF111827), width: 1),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDetailRow(
+                              context,
+                              Icons.directions_car,
+                              'RUTA:',
+                              routeInfo['route_name'] ?? 'N/A',
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDetailRow(
+                              context,
+                              Icons.person_pin,
+                              'CONDUCTOR:',
+                              routeInfo['driver_name'] ?? 'N/A',
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDetailRow(
+                              context,
+                              Icons.local_shipping,
+                              'ORDEN:',
+                              orderInfo['order_number'] ?? 'N/A',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('CERRAR', style: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              );
+            },
+          );
+
+          print('⚠️ Orden pertenece a otra ruta: ${routeInfo['route_name']}');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('⚠️ Esta orden no está asignada a ninguna ruta'),
+              backgroundColor: Color(0xF59E0B),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? '❌ Orden no encontrada'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error en búsqueda global: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error al buscar la orden'),
+            backgroundColor: Color(0xFFEF4444),
+          ),
+        );
+      }
     }
   }
 
@@ -287,7 +419,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
                   labelText: 'Código de orden',
-                  hintText: 'Ej: PRUEBA 003',
+                  hintText: 'Ej: 0600050704700',
                   prefixIcon: const Icon(Icons.qr_code, color: Color(0xFF2563EB)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(responsive.borderRadius),

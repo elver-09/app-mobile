@@ -127,19 +127,62 @@ class TrainylOrder(models.Model):
 
     reason_rejection_id = fields.Many2one('trainyl.rejection.reason', string='Razón de Rechazo')
     
-    def _create_mobile_log(self, message, driver_id=None, vehicle_id=None, expected_status=None, reason_rejection_id=None, reason_for_rejection=None, photo_1=None, photo_2=None):
+    def _create_mobile_log(self, message, driver_id=None, vehicle_id=None, expected_status=None, reason_rejection_id=None, reason_for_rejection=None, photo_1=None, photo_2=None, photo_3=None):
         """Método helper para crear logs móviles"""
         self.ensure_one()
+        resolved_driver_id = (
+            driver_id
+            or (self.driver_id.id if self.driver_id else False)
+            or (self.route_id.driver_id.id if self.route_id and self.route_id.driver_id else False)
+        )
+        resolved_vehicle_id = (
+            vehicle_id
+            or (self.fleet_id.id if self.fleet_id else False)
+            or (self.route_id.fleet_id.id if self.route_id and self.route_id.fleet_id else False)
+        )
         self.env['trainyl.mobile.log'].create({
             'order_id': self.id,
-            'driver_id': driver_id or self.driver_id.id if self.driver_id else False,
-            'vehicle_id': vehicle_id or self.fleet_id.id if self.fleet_id else False,
+            'driver_id': resolved_driver_id,
+            'vehicle_id': resolved_vehicle_id,
             'expected_status': expected_status or self.expected_status,
             'message': message,
             'reason_rejection_id': reason_rejection_id,
             'reason_for_rejection': reason_for_rejection,
             'photo_1': photo_1,
             'photo_2': photo_2,
+            'photo_3': photo_3,
+        })
+
+    def _create_mobile_log_wrong_route_attempt(self, attempted_driver_id=None, attempted_route_id=None):
+        """Crear log cuando se intenta escanear una orden en una ruta incorrecta"""
+        self.ensure_one()
+        
+        attempted_driver = self.env['hr.employee'].browse(attempted_driver_id) if attempted_driver_id else None
+        attempted_route = self.env['trainyl.routes.extra'].browse(attempted_route_id) if attempted_route_id else None
+        correct_driver = self.route_id.driver_id if self.route_id else None
+        correct_route = self.route_id
+        
+        attempted_route_name = attempted_route.name if attempted_route else 'N/A'
+        attempted_driver_name = attempted_driver.name if attempted_driver else 'N/A'
+        correct_route_name = correct_route.name if correct_route else 'Sin asignar'
+        correct_driver_name = correct_driver.name if correct_driver else 'Sin asignar'
+        
+        message = (
+            f"⚠️ INTENTO DE ESCANEO EN LA RUTA '{attempted_route_name}' CON CONDUCTOR '{attempted_driver_name}' | "
+            f"Orden pertenece a: RUTA '{correct_route_name}' CON CONDUCTOR '{correct_driver_name}'"
+        )
+        
+        self.env['trainyl.mobile.log'].create({
+            'order_id': self.id,
+            'driver_id': attempted_driver_id or False,
+            'vehicle_id': attempted_route.fleet_id.id if attempted_route and attempted_route.fleet_id else False,
+            'expected_status': self.expected_status,
+            'message': message,
+            'reason_rejection_id': False,
+            'reason_for_rejection': False,
+            'photo_1': False,
+            'photo_2': False,
+            'photo_3': False,
         })
     
     def write(self, vals):

@@ -122,6 +122,94 @@ class DriverRouteController(http.Controller):
             'route_status': route.state_route or 'to_validate',
         }
 
+    @http.route('/driver/order/search_global', type='http', auth='public', csrf=False)
+    def driver_order_search_global(self):
+        """Busca una orden globalmente en el sistema y retorna su ruta y conductor si no está en la ruta actual"""
+        import json
+        
+        auth_header = request.httprequest.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return request.make_response(json.dumps({'success': False, 'error': 'Token no proporcionado'}), headers={'Content-Type': 'application/json'})
+        
+        token = auth_header.replace('Bearer ', '').strip()
+        
+        employee = request.env['hr.employee'].sudo().search([
+            ('api_token', '=', token)
+        ], limit=1)
+        
+        if not employee:
+            return request.make_response(json.dumps({'success': False, 'error': 'Token inválido'}), headers={'Content-Type': 'application/json'})
+
+        # Obtener código desde parámetros
+        order_code = request.params.get('order_code', '').strip()
+        
+        if not order_code:
+            return request.make_response(json.dumps({'success': False, 'error': 'Código de orden no proporcionado'}), headers={'Content-Type': 'application/json'})
+
+        # Buscar por número de orden o código único
+        order = request.env['trainyl.order'].sudo().search([
+            '|',
+            ('order_number', '=', order_code),
+            ('unique_code', '=', order_code)
+        ], limit=1)
+        
+        if not order:
+            return request.make_response(json.dumps({'success': False, 'error': f'Orden {order_code} no encontrada en el sistema'}), headers={'Content-Type': 'application/json'})
+        
+        # Obtener la ruta actual del conductor (si existe)
+        today = date.today()
+        current_routes = request.env['trainyl.routes.extra'].sudo().search([
+            ('driver_id', '=', employee.id),
+            ('ruta_date', '=', today),
+        ])
+        
+        current_route = current_routes[0] if current_routes else None
+        
+        # Verificar si está asignada a una ruta
+        if order.route_id:
+            route = order.route_id
+            driver = route.driver_id
+            belongs_to_another_route = bool(not current_route or current_route.id != route.id)
+            
+            # Si la orden pertenece a otra ruta, registrar el intento fallido en el log
+            if belongs_to_another_route:
+                order.sudo()._create_mobile_log_wrong_route_attempt(
+                    attempted_driver_id=employee.id,
+                    attempted_route_id=current_route.id
+                )
+            
+            response_data = {
+                'success': True,
+                'found': True,
+                'belongs_to_another_route': belongs_to_another_route,
+                'order': {
+                    'id': order.id,
+                    'order_number': order.order_number or '',
+                    'fullname': order.fullname or '',
+                },
+                'route_info': {
+                    'route_id': route.id,
+                    'route_name': route.name or '',
+                    'driver_name': driver.name if driver else 'Sin asignar',
+                    'driver_id': driver.id if driver else False,
+                }
+            }
+            return request.make_response(json.dumps(response_data), headers={'Content-Type': 'application/json'})
+        else:
+            response_data = {
+                'success': True,
+                'found': True,
+                'belongs_to_another_route': False,
+                'order': {
+                    'id': order.id,
+                    'order_number': order.order_number or '',
+                    'fullname': order.fullname or '',
+                },
+                'message': 'Esta orden no está asignada a ninguna ruta'
+            }
+            return request.make_response(json.dumps(response_data), headers={'Content-Type': 'application/json'})
+
+
     @http.route('/driver/order/detail/<int:order_id>', type='json', auth='public', csrf=False)
     def driver_order_detail(self, order_id):
         auth_header = request.httprequest.headers.get('Authorization', '')

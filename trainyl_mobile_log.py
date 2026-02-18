@@ -33,3 +33,4 @@ class TrainylMobileLog(models.Model):
     reason_for_rejection = fields.Text(string='Motivo de Rechazo')
     photo_1 = fields.Binary(string='Foto 1', attachment=True)
     photo_2 = fields.Binary(string='Foto 2', attachment=True)
+    photo_3 = fields.Binary(string='Foto 3', attachment=True)
