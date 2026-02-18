@@ -119,13 +119,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         child: Center(
-                          child: Text(
-                            'R',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: responsive.headingLargeFontSize,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: Icon(
+                            Icons.person_outline,
+                            color: Colors.white,
+                            size: responsive.headingLargeFontSize,
                           ),
                         ),
                       ),
@@ -142,11 +139,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: responsive.getResponsiveSize(8)),
                     Align(
                       alignment: Alignment.center,
-                      child: Text(
-                        'Ingrese para elegir sede e\niniciar rutas',
+                        child: Text(
+                        'Ingrese para iniciar rutas',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: responsive.bodySmallFontSize,
+                          fontSize: responsive.headingSmallFontSize,
                           color: const Color(0xFF64748B),
                         ),
                       ),
