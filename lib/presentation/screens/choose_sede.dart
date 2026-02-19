@@ -122,6 +122,7 @@ class _ChooseSedeState extends State<ChooseSede> {
     int enCurso = 0;
     int entregado = 0;
     int rechazado = 0;
+    int bloqueado = 0;
 
     for (var route in routes) {
       try {
@@ -135,6 +136,9 @@ class _ChooseSedeState extends State<ChooseSede> {
             case 'in_planification':
             case 'pending':
               pendiente++;
+              break;
+            case 'blocked':
+              bloqueado++;
               break;
             case 'in_transport':
               enTransporte++;
@@ -163,6 +167,7 @@ class _ChooseSedeState extends State<ChooseSede> {
       'enCurso': enCurso,
       'entregado': entregado,
       'rechazado': rechazado,
+      'bloqueado': bloqueado,
     };
   }
 
@@ -259,6 +264,11 @@ class _ChooseSedeState extends State<ChooseSede> {
                                           Colors.grey,
                                         ),
                                         ChartData(
+                                          'Bloqueado',
+                                          orderStats['bloqueado'] ?? 0,
+                                          const Color(0xFF8B5CF6),
+                                        ),
+                                        ChartData(
                                           'Transporte',
                                           orderStats['enTransporte'] ?? 0,
                                           const Color(0xFF3B82F6),
@@ -331,6 +341,11 @@ class _ChooseSedeState extends State<ChooseSede> {
                                             'Pendiente',
                                             orderStats['pendiente'] ?? 0,
                                             Colors.grey,
+                                          ),
+                                          ChartData(
+                                            'Bloqueado',
+                                            orderStats['bloqueado'] ?? 0,
+                                            const Color(0xFF8B5CF6),
                                           ),
                                           ChartData(
                                             'Transporte',

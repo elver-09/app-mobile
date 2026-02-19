@@ -18,7 +18,8 @@ class StartOptimizedRouteDialog extends StatelessWidget {
           (o) =>
               o.planningStatus == 'in_transport' ||
               o.planningStatus == 'start_of_route' ||
-              o.planningStatus == 'delivered',
+              o.planningStatus == 'delivered' ||
+              o.planningStatus == 'blocked',
         )
         .length;
     final totalOrders = orders.length;

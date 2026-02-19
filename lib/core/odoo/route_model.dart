@@ -50,6 +50,7 @@ class RouteItem {
     'returned',
     'cancelled_origin',
     'hand_to_hand',
+    'blocked',
   };
 
   static const Set<String> _pendingStatuses = {

@@ -562,7 +562,12 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
             // Verificar si todas las órdenes están en transporte (in_transport)
             final allOrdersInTransport = orders.every((order) =>
-              order.planningStatus == 'in_transport');
+              order.planningStatus == 'in_transport' ||
+              order.planningStatus == 'blocked');
+
+            final hasOrdersInTransport = orders.any(
+              (order) => order.planningStatus == 'in_transport',
+            );
 
             // Verificar si hay órdenes entregadas o rechazadas
             final hasOrdersDeliveredOrRejected = orders.any((order) {
@@ -570,11 +575,12 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                 order.planningStatus == 'cancelled' ||
                 order.planningStatus == 'anulled' ||
                 order.planningStatus == 'returned' ||
-                order.planningStatus == 'cancelled_origin';
+                order.planningStatus == 'cancelled_origin' ||
+                order.planningStatus == 'blocked';
             });
 
             // Si no hay órdenes en curso y todas están en transporte, mostrar "Iniciar Ruta"
-            if (!hasOrdersInCourse && allOrdersInTransport) {
+            if (!hasOrdersInCourse && allOrdersInTransport && hasOrdersInTransport) {
               return FloatingActionButton.extended(
                 onPressed: _isLoadingNextOrder ? null : _startRoute,
                 backgroundColor: Colors.green,
@@ -604,7 +610,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             }
 
             // Si hay órdenes en curso o entregadas/rechazadas, mostrar "Siguiente Orden"
-            if (hasOrdersInCourse || hasOrdersDeliveredOrRejected) {
+            if ((hasOrdersInCourse || hasOrdersDeliveredOrRejected) && hasOrdersInTransport) {
               return FloatingActionButton.extended(
                 onPressed: _isLoadingNextOrder ? null : _goToNextOrder,
                 backgroundColor: const Color(0xFF3B82F6),

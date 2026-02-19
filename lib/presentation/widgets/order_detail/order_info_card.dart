@@ -11,6 +11,8 @@ class OrderInfoCard extends StatelessWidget {
   final VoidCallback onMapPressed;
   final String statusLabel;
   final Color statusColor;
+  final bool isBlocked;
+  final bool showRibbon;
 
   const OrderInfoCard({
     super.key,
@@ -24,124 +26,192 @@ class OrderInfoCard extends StatelessWidget {
     required this.onMapPressed,
     this.statusLabel = 'Pendiente',
     this.statusColor = const Color(0xFF2563EB),
+    this.isBlocked = false,
+    this.showRibbon = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  orderNumber,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w600,
+    return Stack(
+      children: [
+        Opacity(
+          opacity: isBlocked ? 0.55 : 1,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFFFF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: AbsorbPointer(
+              absorbing: isBlocked,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          orderNumber,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (!showRibbon)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            statusLabel,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Zona $district',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Producto: ${product ?? 'N/A'}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoRow('Cliente:', clientName),
+                  const SizedBox(height: 12),
+                  _buildInfoRow('Teléfono:', phone),
+                  const SizedBox(height: 12),
+                  _buildInfoRow('Dirección:', address),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: onCallPressed,
+                          icon: const Icon(Icons.phone, size: 18),
+                          label: Text('Llamar a ${clientName.split(' ').first}'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F766E),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: onMapPressed,
+                          icon: const Icon(Icons.map_outlined, size: 18),
+                          label: const Text('Abrir en mapas'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1D4ED8),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+            ),
+          ),
+        ),
+        if (showRibbon)
+          _buildStatusRibbon(
+            label: statusLabel,
+            baseColor: statusColor,
+            isBlocked: isBlocked,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildStatusRibbon({
+    required String label,
+    required Color baseColor,
+    required bool isBlocked,
+  }) {
+    final ribbonColor = baseColor.withOpacity(0.95);
+    final colors = isBlocked
+        ? const [Color(0xFF7C3AED), Color(0xFF8B5CF6)]
+        : [ribbonColor, ribbonColor];
+
+    return Positioned(
+      top: 12,
+      right: -48,
+      child: IgnorePointer(
+        child: Transform.rotate(
+          angle: 0.62,
+          child: Container(
+            width: 190,
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
                 ),
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  statusLabel,
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label.toUpperCase(),
                   style: const TextStyle(
-                    fontSize: 12,
                     color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Zona $district',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Producto: ${product ?? 'N/A'}',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildInfoRow('Cliente:', clientName),
-          const SizedBox(height: 12),
-          _buildInfoRow('Teléfono:', phone),
-          const SizedBox(height: 12),
-          _buildInfoRow('Dirección:', address),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onCallPressed,
-                  icon: const Icon(Icons.phone, size: 18),
-                  label: Text('Llamar a ${clientName.split(' ').first}'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F766E),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onMapPressed,
-                  icon: const Icon(Icons.map_outlined, size: 18),
-                  label: const Text('Abrir en mapas'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1D4ED8),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

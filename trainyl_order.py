@@ -56,7 +56,8 @@ class TrainylOrder(models.Model):
         ('in_planification', 'EN PLANIFICACIÓN'),
         ('sent_do_yango', 'ENVIADO POR YANGO'),
         # REJECTED
-        ('cancelled', 'RECHAZADO'), 
+        ('cancelled', 'RECHAZADO'),
+        ('blocked', 'BLOQUEADO'), 
         ('anulled', 'ANULADO'),
         ('returned', 'DEVUELTO A TIENDA'),
         ('hand_to_hand', 'MANO A MANO'),
@@ -972,6 +973,67 @@ class TrainylOrder(models.Model):
     def action_print_return_pdf(self):
         self.ensure_one()
         return self.env.ref('trainyl_base.trainyl_return_report_action').report_action(self)
+
+    def action_open_revert_status_wizard(self):
+        """Abre el wizard para revertir el estado de la orden."""
+        self.ensure_one()
+        return {
+            'name': 'Revertir Estado de la Orden',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.revert.order.status',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_order_id': self.id},
+        }
+
+    def action_open_change_route_wizard(self):
+        """Abre el wizard para cambiar la ruta de la orden."""
+        self.ensure_one()
+        return {
+            'name': 'Cambiar Ruta de la Orden',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.change.order.route',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_order_id': self.id},
+        }
+
+    def action_block_orders(self):
+        """
+        Bloquea las órdenes que están en estado 'in_transport' y las cambia a 'blocked'.
+        Se ejecuta desde la acción de menú en la vista lista.
+        """
+        blocked_count = 0
+        for order in self:
+            if order.expected_status == 'in_transport':
+                order.expected_status = 'blocked'
+                order._log_change(f"Orden {order.order_number} bloqueada desde el menú de acciones.")
+                blocked_count += 1
+                _logger.info(f"Orden {order.order_number} cambiada a estado BLOQUEADO.")
+        
+        # Retorna notificación al usuario
+        if blocked_count > 0:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Órdenes Bloqueadas',
+                    'message': f'{blocked_count} orden(es) bloqueada(s) exitosamente.',
+                    'sticky': False,
+                    'type': 'success',
+                }
+            }
+        else:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Sin cambios',
+                    'message': 'No hay órdenes en estado "EN TRANSPORTE" para bloquear.',
+                    'sticky': False,
+                    'type': 'warning',
+                }
+            }
 
     def action_send_to_yango(self):
         """

@@ -169,7 +169,7 @@ class DriverRouteController(http.Controller):
         if order.route_id:
             route = order.route_id
             driver = route.driver_id
-            belongs_to_another_route = bool(not current_route or current_route.id != route.id)
+            belongs_to_another_route = bool(current_route and current_route.id != route.id)
             
             # Si la orden pertenece a otra ruta, registrar el intento fallido en el log
             if belongs_to_another_route:

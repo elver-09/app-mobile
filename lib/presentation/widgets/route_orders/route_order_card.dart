@@ -41,45 +41,60 @@ class RouteOrderCard extends StatefulWidget {
 class _RouteOrderCardState extends State<RouteOrderCard> {
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: widget.isDisabled ? 0.5 : 1.0,
-      child: GestureDetector(
-        onTap: widget.isDisabled ? null : (widget.onTap ?? () => _navigateToOrderDetail(context)),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+    final isBlocked = widget.order.planningStatus == 'blocked';
+    final opacity = isBlocked ? 0.55 : (widget.isDisabled ? 0.5 : 1.0);
+
+    return GestureDetector(
+      onTap: widget.isDisabled
+          ? null
+          : (widget.onTap ?? () => _navigateToOrderDetail(context)),
+      child: Stack(
+        children: [
+          Opacity(
+            opacity: opacity,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: widget.isActive 
-                ? const Color(0xFFFEF3C7) // Amarillo suave si está activa
-                : const Color(0xFFF6F8FB),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: widget.isActive 
-                  ? const Color(0xFFF59E0B) // Borde amarillo si está activa
-                  : const Color(0xFFE5E7EB), 
-                width: widget.isActive ? 2 : 1,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: widget.isActive 
+                    ? const Color(0xFFFEF3C7) // Amarillo suave si está activa
+                    : const Color(0xFFF6F8FB),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: widget.isActive 
+                      ? const Color(0xFFF59E0B) // Borde amarillo si está activa
+                      : const Color(0xFFE5E7EB), 
+                    width: widget.isActive ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildOrderHeader(),
+                    const SizedBox(height: 12),
+                    _buildContactInfo(),
+                  ],
+                ),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildOrderHeader(),
-                const SizedBox(height: 12),
-                _buildContactInfo(),
-              ],
-            ),
           ),
-        ),
+          if (widget.order.planningStatus != 'in_transport')
+            _buildStatusRibbon(
+              label: widget.order.statusLabel,
+              baseColor: _statusColor(widget.order.statusLabel),
+              isBlocked: isBlocked,
+            ),
+        ],
       ),
     );
   }
@@ -121,22 +136,23 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _statusColor(widget.order.statusLabel),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Text(
-                widget.order.statusLabel,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+            if (widget.order.planningStatus == 'in_transport')
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _statusColor(widget.order.statusLabel),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  widget.order.statusLabel,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
-            ),
             // Botón "Iniciar" solo para órdenes en transporte
             if (widget.order.planningStatus == 'in_transport') ...[
               const SizedBox(height: 8),
@@ -265,9 +281,60 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
     );
   }
 
+  Widget _buildStatusRibbon({
+    required String label,
+    required Color baseColor,
+    required bool isBlocked,
+  }) {
+    final ribbonColor = baseColor.withOpacity(0.95);
+    final colors = isBlocked
+        ? const [Color(0xFF7C3AED), Color(0xFF8B5CF6)]
+        : [ribbonColor, ribbonColor];
+
+    return Positioned(
+      top: 10,
+      right: -48,
+      child: IgnorePointer(
+        child: Transform.rotate(
+          angle: 0.62,
+          child: Container(
+            width: 170,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Color _statusColor(String status) {
     final normalized = status.toLowerCase();
     if (normalized.contains('pendiente')) return const Color(0xFF8B95A4); // gris/plomo
+    if (normalized.contains('bloqueado')) return const Color(0xFF8B5CF6); // morado
     if (normalized.contains('transporte')) return const Color(0xFF3B82F6); // azul
     if (normalized.contains('en curso')) return const Color(0xFFF59E0B); // amarillo
     if (normalized.contains('entregado')) return const Color(0xFF10B981); // verde

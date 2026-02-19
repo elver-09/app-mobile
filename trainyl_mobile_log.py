@@ -23,6 +23,7 @@ class TrainylMobileLog(models.Model):
         ('sent_do_yango', 'ENVIADO POR YANGO'),
         # REJECTED
         ('cancelled', 'RECHAZADO'), 
+        ('blocked', 'BLOQUEADO'),
         ('anulled', 'ANULADO'),
         ('returned', 'DEVUELTO A TIENDA'),
         ('hand_to_hand', 'MANO A MANO'),

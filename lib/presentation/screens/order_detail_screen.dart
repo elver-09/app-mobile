@@ -513,6 +513,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       case 'in_planification':
       case 'pending':
         return const Color(0xFF8B95A4); // gris/plomo - "Pendiente"
+      case 'blocked':
+        return const Color(0xFF8B5CF6); // morado - "Bloqueado"
       case 'in_transport':
         return const Color(0xFF3B82F6); // azul - "En transporte"
       case 'start_of_route':
@@ -539,6 +541,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       case 'in_planification':
       case 'pending':
         return 'Pendiente';
+      case 'blocked':
+        return 'Bloqueado';
       case 'in_transport':
         return 'En transporte';
       case 'start_of_route':
@@ -769,6 +773,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isBlocked = currentOrderStatus == 'blocked';
     final responsive = context.responsive;
     final origin = _resolveOriginLatLng();
     
@@ -920,10 +925,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       address: widget.address,
                       district: widget.district,
                       product: widget.product,
-                      onCallPressed: () => _makePhoneCall(widget.phone),
-                      onMapPressed: _openRouteInMaps,
+                      onCallPressed: isBlocked ? () {} : () => _makePhoneCall(widget.phone),
+                      onMapPressed: isBlocked ? () {} : _openRouteInMaps,
                       statusLabel: _getStatusLabel(),
                       statusColor: _getStatusColor(),
+                      isBlocked: currentOrderStatus == 'blocked',
+                      showRibbon: currentOrderStatus != 'in_transport',
                     ),
                     SizedBox(height: responsive.getResponsiveSize(24)),
                     // Location section
@@ -1018,84 +1025,96 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       ),
                     ),
                     SizedBox(height: responsive.getResponsiveSize(24)),
-                    // Delivery status
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Estado de la entrega',
-                          style: TextStyle(
-                            fontSize: responsive.headingSmallFontSize,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF0F172A),
+                    if (!isBlocked) ...[
+                      // Delivery status
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Estado de la entrega',
+                            style: TextStyle(
+                              fontSize: responsive.headingSmallFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF0F172A),
+                            ),
                           ),
-                        ),
-                        Text(
-                          'Elige solo una opción',
-                          style: TextStyle(
-                            fontSize: responsive.bodySmallFontSize,
-                            color: const Color(0xFF94A3B8),
+                          Text(
+                            'Elige solo una opción',
+                            style: TextStyle(
+                              fontSize: responsive.bodySmallFontSize,
+                              color: const Color(0xFF94A3B8),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: responsive.getResponsiveSize(12)),
-                    // Status buttons
-                    DeliveryStatusButtons(
-                      onEntregadoPressed: _showDeliveryModal,
-                      onRechazadoPressed: _showRejectModal,
-                      isOrderInProgress: widget.planningStatus == 'start_of_route',
-                      currentStatus: widget.planningStatus,
-                    ),
-                    SizedBox(height: responsive.getResponsiveSize(24)),
+                        ],
+                      ),
+                      SizedBox(height: responsive.getResponsiveSize(12)),
+                      // Status buttons
+                      DeliveryStatusButtons(
+                        onEntregadoPressed: _showDeliveryModal,
+                        onRechazadoPressed: _showRejectModal,
+                        isOrderInProgress: widget.planningStatus == 'start_of_route',
+                        currentStatus: widget.planningStatus,
+                      ),
+                      SizedBox(height: responsive.getResponsiveSize(24)),
+                    ],
                     
                     // Widget de fotos
-                    DeliveryPhotosWidget(
-                      photos: deliveryPhotos,
-                      maxPhotos: 3,
-                      onViewPhotos: _showPhotosDialog,
-                      onRemovePhoto: _removePhoto,
+                    Opacity(
+                      opacity: isBlocked ? 0.55 : 1,
+                      child: AbsorbPointer(
+                        absorbing: isBlocked,
+                        child: DeliveryPhotosWidget(
+                          photos: deliveryPhotos,
+                          maxPhotos: 3,
+                          onViewPhotos: _showPhotosDialog,
+                          onRemovePhoto: _removePhoto,
+                        ),
+                      ),
                     ),
                     SizedBox(height: responsive.getResponsiveSize(16)),
                     // Comment field
-                    TextField(
-                      controller: _commentController,
-                      maxLines: 4,
-                      readOnly: true,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Este comentario se completa automáticamente desde los modales de entrega o rechazo'),
-                            duration: Duration(seconds: 2),
+                    Opacity(
+                      opacity: isBlocked ? 0.55 : 1,
+                      child: AbsorbPointer(
+                        absorbing: isBlocked,
+                        child: TextField(
+                          controller: _commentController,
+                          maxLines: 4,
+                          readOnly: true,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Este comentario se completa automáticamente desde los modales de entrega o rechazo'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          decoration: InputDecoration(
+                            hintText:
+                                'Comentario para la central y el cliente\n(opcional)',
+                            hintStyle: TextStyle(
+                              color: const Color(0xFF94A3B8),
+                              fontSize: responsive.bodySmallFontSize,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF1F5F9),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
+                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
+                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
+                              borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
+                            ),
+                            contentPadding: EdgeInsets.all(responsive.getResponsiveSize(16)),
                           ),
-                        );
-                      },
-                      decoration: InputDecoration(
-                        hintText:
-                            'Comentario para la central y el cliente\n(opcional)',
-                        hintStyle: TextStyle(
-                          color: const Color(0xFF94A3B8),
-                          fontSize: responsive.bodySmallFontSize,
                         ),
-                        filled: true,
-                        fillColor: const Color(0xFFF1F5F9),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                          borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
-                        ),
-                        contentPadding: EdgeInsets.all(responsive.getResponsiveSize(16)),
                       ),
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(24)),
-                    
                     SizedBox(height: responsive.getResponsiveSize(24)),
                   ],
                 ),

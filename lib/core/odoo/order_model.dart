@@ -57,6 +57,8 @@ class OrderItem {
       case 'in_planification':
       case 'pending':
         return const Color(0xFF8B95A4); // gris/plomo - "Pendiente"
+      case 'blocked':
+        return const Color(0xFF8B5CF6); // morado - "Bloqueado"
       case 'in_transport':
         return const Color(0xFF3B82F6); // azul - "En transporte"
       case 'start_of_route':
@@ -82,6 +84,8 @@ class OrderItem {
       case 'in_planification':
       case 'pending':
         return 'Pendiente';
+      case 'blocked':
+        return 'Bloqueado';
       case 'in_transport':
         return 'Transporte';
       case 'start_of_route':
