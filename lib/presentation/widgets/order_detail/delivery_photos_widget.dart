@@ -51,21 +51,7 @@ class DeliveryPhotosWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ...List.generate(
-                  maxPhotos,
-                  (index) => Padding(
-                    padding: EdgeInsets.only(right: index < maxPhotos - 1 ? 12 : 0),
-                    child: SizedBox(
-                      width: 150,
-                      child: _buildPhotoBox(context, index),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: _buildPhotoGrid(context),
           ),
           const SizedBox(height: 16),
           if (photos.isNotEmpty)
@@ -86,6 +72,55 @@ class DeliveryPhotosWidget extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPhotoGrid(BuildContext context) {
+    final photoBoxes = List.generate(
+      maxPhotos,
+      (index) => SizedBox(
+        width: 150,
+        child: _buildPhotoBox(context, index),
+      ),
+    );
+
+    if (maxPhotos <= 2) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (int i = 0; i < photoBoxes.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            photoBoxes[i],
+          ],
+        ],
+      );
+    }
+
+    if (maxPhotos == 3) {
+      return Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              photoBoxes[0],
+              const SizedBox(width: 12),
+              photoBoxes[1],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [photoBoxes[2]],
+          ),
+        ],
+      );
+    }
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      alignment: WrapAlignment.center,
+      children: photoBoxes,
     );
   }
 

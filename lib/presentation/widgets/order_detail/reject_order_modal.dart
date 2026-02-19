@@ -49,17 +49,17 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
     
     if (needsNote) {
       return _commentController.text.trim().isNotEmpty &&
-            evidencePhotos.length >= 2;
+            evidencePhotos.length >= 3;
     }
     // Para otros motivos, solo se necesita motivo y evidencia
-    return evidencePhotos.length >= 2;
+    return evidencePhotos.length >= 3;
   }
 
   void _confirmReject() {
     if (!_canConfirm()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor completa los campos y captura 2 fotos'),
+          content: Text('Por favor completa los campos y captura 3 fotos'),
           backgroundColor: Colors.red,
         ),
       );
@@ -252,7 +252,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           ),
                         ),
                         Text(
-                          '2 fotos obligatorias',
+                          '3 fotos obligatorias',
                           style: TextStyle(
                             fontSize: 13,
                             color: const Color(0xFF94A3B8),
@@ -274,106 +274,160 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           evidencePhotos.removeAt(index);
                         });
                       },
-                      maxPhotos: 2,
+                      maxPhotos: 3,
                       emptyMessage: 'No hay fotos para ver',
                     ),
                     const SizedBox(height: 12),
                     // Preview de fotos en grid 2 columnas
                     if (evidencePhotos.isNotEmpty) ...[
-                      Row(
+                      Column(
                         children: [
-                          if (evidencePhotos.isNotEmpty)
-                            Expanded(
-                              child: Container(
-                                height: 150,
-                                margin: EdgeInsets.only(right: evidencePhotos.length > 1 ? 8 : 0),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.file(
-                                        evidencePhotos[0],
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        fit: BoxFit.cover,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 150,
+                                  margin: EdgeInsets.only(right: evidencePhotos.length > 1 ? 8 : 0),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(
+                                          evidencePhotos[0],
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
-                                    ),
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: GestureDetector(
-                                        onTap: () => setState(() {
-                                          evidencePhotos.removeAt(0);
-                                        }),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.close,
-                                            size: 18,
-                                            color: Colors.white,
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: GestureDetector(
+                                          onTap: () => setState(() {
+                                            evidencePhotos.removeAt(0);
+                                          }),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.close,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (evidencePhotos.length > 1)
-                            Expanded(
-                              child: Container(
-                                height: 150,
-                                margin: const EdgeInsets.only(left: 8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
+                              if (evidencePhotos.length > 1)
+                                Expanded(
+                                  child: Container(
+                                    height: 150,
+                                    margin: const EdgeInsets.only(left: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
                                       borderRadius: BorderRadius.circular(12),
-                                      child: Image.file(
-                                        evidencePhotos[1],
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        fit: BoxFit.cover,
-                                      ),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
                                     ),
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: GestureDetector(
-                                        onTap: () => setState(() {
-                                          evidencePhotos.removeAt(1);
-                                        }),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.close,
-                                            size: 18,
-                                            color: Colors.white,
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(
+                                            evidencePhotos[1],
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            fit: BoxFit.cover,
                                           ),
                                         ),
-                                      ),
+                                        Positioned(
+                                          top: 8,
+                                          right: 8,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              evidencePhotos.removeAt(1);
+                                            }),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 18,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                            ],
+                          ),
+                          if (evidencePhotos.length > 2) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.file(
+                                            evidencePhotos[2],
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 8,
+                                          right: 8,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              evidencePhotos.removeAt(2);
+                                            }),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 18,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 8),
