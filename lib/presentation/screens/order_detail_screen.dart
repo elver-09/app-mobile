@@ -23,6 +23,9 @@ import '../widgets/order_detail/delivery_status_buttons.dart';
 import '../widgets/order_detail/reject_order_modal.dart';
 import '../widgets/order_detail/delivery_confirmation_modal.dart';
 
+import '../widgets/order_detail/reprogram_modal.dart';
+import '../widgets/order_detail/reprogram_button.dart';
+
 // Odoo client
 import '../../core/odoo/odoo_client.dart';
 
@@ -1116,9 +1119,54 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       ),
                     ),
                     SizedBox(height: responsive.getResponsiveSize(24)),
+                    // Reprogramar: botón visible solo cuando la orden está en estado 'cancelled'
+                    if (currentOrderStatus == 'cancelled')
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(0)),
+                        child: Column(
+                          children: [
+                            ReprogramButton(
+                              onPressed: () async {
+                                final result = await showDialog<Map<String, dynamic>?>(
+                                  context: context,
+                                  builder: (_) => const ReprogramModal(),
+                                );
+                                if (result != null && mounted) {
+                                  final date = result['date'] as String?;
+                                  final comment = result['comment'] as String? ?? '';
+                                  // Llamar al backend para guardar la reprogramación
+                                  final success = await widget.odooClient.reprogramOrder(
+                                    token: widget.token,
+                                    orderId: widget.orderId,
+                                    deliveryDateIso: date ?? DateTime.now().toIso8601String(),
+                                    comment: comment,
+                                  );
+                                  if (success) {
+                                    if (mounted) {
+                                      setState(() {
+                                        currentOrderStatus = 'reprogrammed';
+                                      });
+                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Reprogramación registrada: ${date ?? 'N/A'}')),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Error al sincronizar la reprogramación')),
+                                    );
+                                  }
+                                  
+                                }
+                              },
+                            ),
+                            SizedBox(height: responsive.getResponsiveSize(24)),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
+              
             ],
           ),
         ),

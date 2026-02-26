@@ -299,6 +299,58 @@ class OdooClient {
     }
   }
 
+  /// Envía una reprogramación de orden al backend
+  Future<bool> reprogramOrder({
+    required String token,
+    required int orderId,
+    required String deliveryDateIso,
+    String? comment,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/reprogram');
+
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_id': orderId,
+            'delivery_date': deliveryDateIso,
+            'comment': comment ?? '',
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en reprogramOrder: ${resp.statusCode}');
+        print('   Body: ${resp.body}');
+        return false;
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo reprogramOrder: $data');
+      final result = data['result'];
+
+      if (result != null && result['success'] == true) {
+        print('✅ Reprogramación sincronizada con Odoo');
+        return true;
+      } else {
+        print('❌ Error al sincronizar reprogramación');
+        print('   result: $result');
+        print('   error: ${result?['error']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception en reprogramOrder: $e');
+      return false;
+    }
+  }
+
   /// Actualizar estado de orden a RECHAZADA
   Future<bool> updateOrderRejected({
     required String token,
