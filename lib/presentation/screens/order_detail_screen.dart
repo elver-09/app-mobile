@@ -76,7 +76,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     with WidgetsBindingObserver {
   GoogleMapController? routeMapController;
 
-  final String GOOGLE_MAPS_API_KEY = 'AIzaSyCxTlk0WgcQzu_Odxmk2ROu6peiUOX-8Wk';
+  // GOOGLE_MAPS_API_KEY eliminado: no se usa en este archivo
 
   List<LatLng> routePoints = [];
   bool isLoadingRoute = true;
