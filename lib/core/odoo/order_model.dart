@@ -44,7 +44,7 @@ class OrderItem {
       address: json['address'] as String? ?? '',
       product: json['product'] as String?,
       phone: json['phone'] as String?,
-      planningStatus: json['planning_status'] as String? ?? 'planned',
+      planningStatus: json['new_status_orders'] as String? ?? json['planning_status'] as String? ?? 'planned',
       latitude: json['latitude'] as double?,
       longitude: json['longitude'] as double?,
       sequence: json['sequence'] as int?,

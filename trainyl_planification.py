@@ -51,7 +51,7 @@ class TrainylPlanificationExtra(models.Model):
             ('order_type_id', '=', self.service_type_id.id),
             ('route_id', '=', False),
             ('driver_id', '=', False),
-            ('expected_status', '=', 'pending')
+            ('new_status_orders', '=', 'in_trainyl')
         ])
 
         # Separar órdenes con zona y sin zona
@@ -66,7 +66,7 @@ class TrainylPlanificationExtra(models.Model):
                 _logger.warning(f"Orden sin zona asignada: {order.order_number} (ID: {order.id})")
                 order._create_mobile_log(
                     message=f"Orden sin zona asignada al intentar planificar automáticamente. Fecha: {self.fecha_planificacion}, Tipo de servicio: {self.service_type_id.name}",
-                    expected_status='pending'
+                    new_status_orders='in_trainyl'
                 )
 
         if not orders_with_zone:
@@ -104,9 +104,9 @@ class TrainylPlanificationExtra(models.Model):
                     'ruta_date': self.fecha_planificacion,
                 })
 
-            _logger.info(f"Ruta {route.name}: planificando {len(zone_orders)} órdenes nuevas en estado PENDING")
+            _logger.info(f"Ruta {route.name}: planificando {len(zone_orders)} órdenes nuevas en estado IN_TRAINYL")
 
-            # 🔗 ORDENAR ÓRDENES PENDING POR DISTANCIA DESDE EL PICKUP_ORIGIN
+            # 🔗 ORDENAR ÓRDENES IN_TRAINYL POR DISTANCIA DESDE EL PICKUP_ORIGIN
             if self.service_type_id.pickup_origin_id:
                 pickup = self.service_type_id.pickup_origin_id
                 pickup_lat = float(pickup.latitude) if pickup.latitude else 0
@@ -135,13 +135,13 @@ class TrainylPlanificationExtra(models.Model):
                         'route_id': route.id,
                         'route_sequence': next_sequence,
                         'distance_from_pickup': distance if distance != float('inf') else 0,
-                        'expected_status': 'in_planification'
+                        'new_status_orders': 'in_planification'
                     })
                     order._create_mobile_log(
                         message=f"Orden planificada automáticamente en ruta '{route.name}' - Secuencia: {next_sequence}, Distancia: {distance:.2f} km - Estado cambiado a EN PLANIFICACIÓN",
                         driver_id=route.driver_id.id if route.driver_id else False,
                         vehicle_id=route.fleet_id.id if route.fleet_id else False,
-                        expected_status='in_planification'
+                        new_status_orders='in_planification'
                     )
                     _logger.info(f"Orden {order.order_number} actualizada en ruta con secuencia {next_sequence}, distancia: {distance} km, estado: in_planification")
                     next_sequence += 1
@@ -149,13 +149,13 @@ class TrainylPlanificationExtra(models.Model):
                 for order in zone_orders:
                     order.write({
                         'route_id': route.id,
-                        'expected_status': 'in_planification'
+                        'new_status_orders': 'in_planification'
                     })
                     order._create_mobile_log(
                         message=f"Orden planificada automáticamente en ruta '{route.name}' - Estado cambiado a EN PLANIFICACIÓN",
                         driver_id=route.driver_id.id if route.driver_id else False,
                         vehicle_id=route.fleet_id.id if route.fleet_id else False,
-                        expected_status='in_planification'
+                        new_status_orders='in_planification'
                     )
 
         return {

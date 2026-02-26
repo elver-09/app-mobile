@@ -92,7 +92,7 @@ class DriverRouteController(http.Controller):
                     products.append(line.product_des)
             
             product_description = ', '.join(products) if products else 'N/A'
-            status = order.expected_status or 'in_planification'
+            status = order.new_status_orders or 'in_planification'
             
             orders_with_data.append({
                 'id': order.id,
@@ -238,7 +238,7 @@ class DriverRouteController(http.Controller):
                 products.append(line.product_des)
         
         product_description = ', '.join(products) if products else 'N/A'
-        status = order.expected_status or 'in_planification'
+        status = order.new_status_orders or 'in_planification'
         
         return {
             'success': True, 
@@ -280,7 +280,7 @@ class DriverRouteController(http.Controller):
             return {'success': False, 'error': 'Ruta no encontrada'}
         
         # Verificar si ya hay una orden en curso (start_of_route)
-        orders_in_progress = route.order_ids.filtered(lambda o: o.expected_status == 'start_of_route')
+        orders_in_progress = route.order_ids.filtered(lambda o: o.new_status_orders == 'start_of_route')
         if orders_in_progress:
             return {
                 'success': False, 
@@ -289,33 +289,33 @@ class DriverRouteController(http.Controller):
             }
         
         # Buscar órdenes en estado in_transport (siguientes a iniciar)
-        in_transport_orders = route.order_ids.filtered(lambda o: o.expected_status == 'in_transport')
+        in_transport_orders = route.order_ids.filtered(lambda o: o.new_status_orders == 'in_transport')
         
         if not in_transport_orders:
             return {'success': False, 'error': 'No hay órdenes en transporte para iniciar'}
         
         # Registrar logs para órdenes sin escanear (que quedaron en in_planification)
-        unscanned_orders = route.order_ids.filtered(lambda o: o.expected_status == 'in_planification')
+        unscanned_orders = route.order_ids.filtered(lambda o: o.new_status_orders == 'in_planification')
         for unscanned_order in unscanned_orders:
                 unscanned_order.sudo().write({'not_scanned': True})
                 unscanned_order.sudo()._create_mobile_log(
                     message=f"Ruta iniciada sin escanear esta orden. Quedó en estado 'Planificado'",
                     driver_id=employee.id,
                     vehicle_id=route.fleet_id.id if route.fleet_id else False,
-                    expected_status='in_planification'
+                    new_status_orders='in_planification'
                 )
         
         # Ordenar por route_sequence y seleccionar la primera
         in_transport_orders = in_transport_orders.sorted(key=lambda o: o.route_sequence or 0)
         next_order = in_transport_orders[0]
-        next_order.sudo().write({'expected_status': 'start_of_route'})
+        next_order.sudo().write({'new_status_orders': 'start_of_route'})
         
         # Crear log para la orden que se está iniciando
         next_order.sudo()._create_mobile_log(
             message=f"Orden iniciada como primera de la ruta",
             driver_id=employee.id,
             vehicle_id=route.fleet_id.id if route.fleet_id else False,
-            expected_status='start_of_route'
+            new_status_orders='start_of_route'
         )
 
         if route.state_route != 'in_route':
@@ -355,7 +355,7 @@ class DriverRouteController(http.Controller):
             return {'success': False, 'error': 'Ruta no encontrada'}
         
         # Verificar si ya hay una orden en curso (start_of_route)
-        orders_in_progress = route.order_ids.filtered(lambda o: o.expected_status == 'start_of_route')
+        orders_in_progress = route.order_ids.filtered(lambda o: o.new_status_orders == 'start_of_route')
         if orders_in_progress:
             return {
                 'success': False, 
@@ -373,7 +373,7 @@ class DriverRouteController(http.Controller):
         
         # Obtener órdenes pendientes (in_planification o in_transport) ordenadas por secuencia
         pending_orders = route.order_ids.filtered(
-            lambda o: o.expected_status in ['in_planification', 'in_transport']
+            lambda o: o.new_status_orders in ['in_planification', 'in_transport']
         ).sorted(key=lambda o: o.route_sequence or 0)
         
         if not pending_orders:
@@ -384,7 +384,7 @@ class DriverRouteController(http.Controller):
         skipped_sequence = planned_order.id != selected_order.id
         
         # Actualizar estado de la orden seleccionada
-        selected_order.sudo().write({'expected_status': 'start_of_route'})
+        selected_order.sudo().write({'new_status_orders': 'start_of_route'})
 
         if route.state_route != 'in_route':
             route.sudo().write({'state_route': 'in_route'})
@@ -409,7 +409,7 @@ class DriverRouteController(http.Controller):
             message=message,
             driver_id=employee.id,
             vehicle_id=route.fleet_id.id if route.fleet_id else False,
-            expected_status='start_of_route',
+            new_status_orders='start_of_route',
             reason_rejection_id=False,
             reason_for_rejection=False,
             photo_1=False,
@@ -458,7 +458,7 @@ class DriverRouteController(http.Controller):
         
         # Obtener órdenes en estado in_transport
         in_transport_orders = route.order_ids.filtered(
-            lambda o: o.expected_status == 'in_transport'
+            lambda o: o.new_status_orders == 'in_transport'
         )
         
         if not in_transport_orders:
@@ -467,7 +467,7 @@ class DriverRouteController(http.Controller):
         # Ordenar por route_sequence y seleccionar la primera
         in_transport_orders = in_transport_orders.sorted(key=lambda o: o.route_sequence or 0)
         next_order = in_transport_orders[0]
-        next_order.sudo().write({'expected_status': 'start_of_route'})
+        next_order.sudo().write({'new_status_orders': 'start_of_route'})
 
         if route.state_route != 'in_route':
             route.sudo().write({'state_route': 'in_route'})
@@ -521,20 +521,20 @@ class DriverRouteController(http.Controller):
             return {'success': False, 'error': 'Orden no encontrada'}
         
         _logger.info("✅ Orden encontrada: %s (ID: %s)", order.order_number, order.id)
-        _logger.info("🔵 Estado ANTES del cambio: %s", order.expected_status)
+        _logger.info("🔵 Estado ANTES del cambio: %s", order.new_status_orders)
         
         # Validar que la orden esté en estado in_planification
-        if order.expected_status != 'in_planification':
-            _logger.warning("❌ Orden NO está en in_planification. Estado actual: %s", order.expected_status)
+        if order.new_status_orders != 'in_planification':
+            _logger.warning("❌ Orden NO está en in_planification. Estado actual: %s", order.new_status_orders)
             return {
                 'success': False, 
-                'error': f'La orden debe estar en estado EN PLANIFICACIÓN. Estado actual: {order.expected_status}'
+                'error': f'La orden debe estar en estado EN PLANIFICACIÓN. Estado actual: {order.new_status_orders}'
             }
         
         # Cambiar estado a in_transport
         _logger.info("🔵 Intentando cambiar estado a in_transport...")
         try:
-            order.sudo().write({'expected_status': 'in_transport', 'scanned': True, 'not_scanned': False})
+            order.sudo().write({'new_status_orders': 'in_transport', 'scanned': True, 'not_scanned': False})
             request.env.cr.commit()  # Forzar commit de la transacción
             _logger.info("✅ write() ejecutado exitosamente")
         except Exception as error:
@@ -544,13 +544,13 @@ class DriverRouteController(http.Controller):
         # Verificar que el cambio se aplicó
         request.env.invalidate_all()  # Limpiar cache del environment
         order = request.env['trainyl.order'].sudo().browse(order_id)  # Recargar desde BD
-        _logger.info("🔵 Estado DESPUÉS del cambio (recargado): %s", order.expected_status)
+        _logger.info("🔵 Estado DESPUÉS del cambio (recargado): %s", order.new_status_orders)
         
-        if order.expected_status != 'in_transport':
-            _logger.error("❌ ¡PROBLEMA! El estado NO cambió. Sigue siendo: %s", order.expected_status)
+        if order.new_status_orders != 'in_transport':
+            _logger.error("❌ ¡PROBLEMA! El estado NO cambió. Sigue siendo: %s", order.new_status_orders)
             return {
                 'success': False,
-                'error': f'El estado no se actualizó. Estado actual: {order.expected_status}'
+                'error': f'El estado no se actualizó. Estado actual: {order.new_status_orders}'
             }
         
         _logger.info("✅ Estado confirmado como in_transport")
@@ -566,7 +566,7 @@ class DriverRouteController(http.Controller):
                 message=f"Orden escaneada/confirmada por conductor {employee.name}. Estado cambiado de EN PLANIFICACIÓN a EN TRANSPORTE",
                 driver_id=employee.id,
                 vehicle_id=vehicle_id,
-                expected_status='in_transport'
+                new_status_orders='in_transport'
             )
             _logger.info("✅ Log de trazabilidad creado")
         except Exception as e:

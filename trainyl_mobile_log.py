@@ -9,26 +9,15 @@ class TrainylMobileLog(models.Model):
     date_time = fields.Datetime(string='Fecha y Hora', default=fields.Datetime.now, readonly=True)
     driver_id = fields.Many2one('hr.employee', string='Conductor Asignado', readonly=True)
     vehicle_id = fields.Many2one('trainyl.fleet', string='Vehículo Asignado', readonly=True)
-    expected_status = fields.Selection([
+    new_status_orders = fields.Selection([
         ('draft', 'BORRADOR'),
-        ('in_trainyl', 'EN TRAINYL'),  
-        ('ready_for_drivin', 'LISTO PARA DRIVIN'),  
-        ('pending', 'PISTOLEADO'),
-        # PENDIENTE
-        ('start_of_route', 'INICIO DE RUTA'),
-        ('in_planification', 'EN PLANIFICACIÓN'),
-        ('in_transport', 'EN TRANSPORTE'),
-        # DELIVERED
-        ('delivered', 'ENTREGADO'),
-        ('sent_do_yango', 'ENVIADO POR YANGO'),
-        # REJECTED
-        ('cancelled', 'RECHAZADO'), 
+        ('reprogrammed', 'REPROGRAMADO'),
+        ('in_trainyl', 'EN TRAINYL'),
+        ('in_planification', 'PLANIFICADO'),
         ('blocked', 'BLOQUEADO'),
-        ('anulled', 'ANULADO'),
-        ('returned', 'DEVUELTO A TIENDA'),
-        ('hand_to_hand', 'MANO A MANO'),
-        ('cancelled_origin', 'CANCELADO DESDE ORIGEN'),
-    ], string='Estado de Envio', default='draft')
+        ('in_transport', 'EN TRANSPORTE'),
+        ('delivered', 'ENTREGADO'),
+        ('cancelled', 'RECHAZADO')], string='Nuevo Estado', default='draft', readonly=True)
     message = fields.Text(string='Mensaje', required=True)
     reason_rejection_id = fields.Many2one('trainyl.rejection.reason', string='Razón de Rechazo')
     reason_for_rejection = fields.Text(string='Motivo de Rechazo')

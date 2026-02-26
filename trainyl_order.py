@@ -65,8 +65,9 @@ class TrainylOrder(models.Model):
     ], string='Estado de Envio', default='draft')
     new_status_orders = fields.Selection([
         ('draft', 'BORRADOR'),
+        ('reprogrammed', 'REPROGRAMADO'),
         ('in_trainyl', 'EN TRAINYL'),
-        ('planned', 'PLANIFICADO'),
+        ('in_planification', 'PLANIFICADO'),
         ('blocked', 'BLOQUEADO'),
         ('in_transport', 'EN TRANSPORTE'),
         ('delivered', 'ENTREGADO'),
@@ -141,8 +142,14 @@ class TrainylOrder(models.Model):
     reason_rejection_id = fields.Many2one('trainyl.rejection.reason', string='Razón de Rechazo')
     scanned = fields.Boolean(string='Orden escaneada', default=False, readonly=True)
     not_scanned = fields.Boolean(string='Orden sin escanear', default=False, readonly=True)
+
+    def action_set_in_trainyl(self):
+        for record in self:
+            if record.new_status_orders == 'draft':
+                record.new_status_orders = 'in_trainyl'
+                record._log_change("Estado cambiado de 'BORRADOR' a 'EN TRAINYL' por acción manual.")
     
-    def _create_mobile_log(self, message, driver_id=None, vehicle_id=None, expected_status=None, reason_rejection_id=None, reason_for_rejection=None, photo_1=None, photo_2=None, photo_3=None):
+    def _create_mobile_log(self, message, driver_id=None, vehicle_id=None, new_status_orders=None, reason_rejection_id=None, reason_for_rejection=None, photo_1=None, photo_2=None, photo_3=None):
         """Método helper para crear logs móviles"""
         self.ensure_one()
         resolved_driver_id = (
@@ -159,7 +166,7 @@ class TrainylOrder(models.Model):
             'order_id': self.id,
             'driver_id': resolved_driver_id,
             'vehicle_id': resolved_vehicle_id,
-            'expected_status': expected_status or self.expected_status,
+            'new_status_orders': new_status_orders or self.new_status_orders,
             'message': message,
             'reason_rejection_id': reason_rejection_id,
             'reason_for_rejection': reason_for_rejection,
@@ -191,7 +198,7 @@ class TrainylOrder(models.Model):
             'order_id': self.id,
             'driver_id': attempted_driver_id or False,
             'vehicle_id': attempted_route.fleet_id.id if attempted_route and attempted_route.fleet_id else False,
-            'expected_status': self.expected_status,
+            'new_status_orders': self.new_status_orders,
             'message': message,
             'reason_rejection_id': False,
             'reason_for_rejection': False,
@@ -291,15 +298,15 @@ class TrainylOrder(models.Model):
                     )
             
             # Detectar cambio de estado
-            if 'expected_status' in vals and vals['expected_status'] != order.expected_status:
-                status_labels = dict(order._fields['expected_status'].selection)
-                old_status = status_labels.get(order.expected_status, order.expected_status)
-                new_status = status_labels.get(vals['expected_status'], vals['expected_status'])
+            if 'new_status_orders' in vals and vals['new_status_orders'] != order.new_status_orders:
+                status_labels = dict(order._fields['new_status_orders'].selection)
+                old_status = status_labels.get(order.new_status_orders, order.new_status_orders)
+                new_status = status_labels.get(vals['new_status_orders'], vals['new_status_orders'])
                 order._create_mobile_log(
                     message=f"Estado cambiado de '{old_status}' a '{new_status}'",
                     driver_id=order.driver_id.id if order.driver_id else False,
                     vehicle_id=order.fleet_id.id if order.fleet_id else False,
-                    expected_status=vals['expected_status']
+                    new_status_orders=vals['new_status_orders']
                 )
             
             # Detectar cambio de razón de rechazo
@@ -1019,8 +1026,8 @@ class TrainylOrder(models.Model):
         """
         blocked_count = 0
         for order in self:
-            if order.expected_status == 'in_transport':
-                order.expected_status = 'blocked'
+            if order.new_status_orders == 'in_transport':
+                order.new_status_orders = 'blocked'
                 order._log_change(f"Orden {order.order_number} bloqueada desde el menú de acciones.")
                 blocked_count += 1
                 _logger.info(f"Orden {order.order_number} cambiada a estado BLOQUEADO.")

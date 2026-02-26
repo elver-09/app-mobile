@@ -54,7 +54,7 @@ class DriverOrderUpdateController(http.Controller):
             
             # Actualizar estado en la orden
             order.sudo().write({
-                'expected_status': 'delivered',
+                'new_status_orders': 'delivered',
             })
 
             # Guardar evidencia en el modelo de log (trainyl.mobile.log)
@@ -75,7 +75,7 @@ class DriverOrderUpdateController(http.Controller):
                 message=message,
                 driver_id=driver_id,
                 vehicle_id=vehicle_id,
-                expected_status='delivered',
+                new_status_orders='delivered',
                 reason_rejection_id=False,
                 reason_for_rejection=False,
                 photo_1=photo_1,
@@ -85,7 +85,7 @@ class DriverOrderUpdateController(http.Controller):
             
             # Verificar si la ruta está completa (todas las órdenes entregadas o rechazadas)
             if route:
-                pending_orders = route.order_ids.filtered(lambda o: o.expected_status in ['in_planification', 'in_transport', 'start_of_route'])
+                pending_orders = route.order_ids.filtered(lambda o: o.new_status_orders in ['in_planification', 'in_transport', 'start_of_route'])
                 if not pending_orders:
                     # No hay más órdenes pendientes, marcar ruta como terminada
                     route.sudo().write({'state_route': 'finished'})
@@ -151,7 +151,7 @@ class DriverOrderUpdateController(http.Controller):
             
             # Actualizar estado en la orden - DESPUÉS de obtener reason_rejection_id_value
             order.sudo().write({
-                'expected_status': 'cancelled',
+                'new_status_orders': 'cancelled',
                 'reason_rejection_id': reason_rejection_id_value if reason_rejection_id_value else False,
             })
 
@@ -180,7 +180,7 @@ class DriverOrderUpdateController(http.Controller):
                 message=message,
                 driver_id=driver_id,
                 vehicle_id=vehicle_id,
-                expected_status='cancelled',
+                new_status_orders='cancelled',
                 reason_rejection_id=reason_rejection_id_value,
                 reason_for_rejection=reject_comment or False,
                 photo_1=photo_1,
@@ -190,7 +190,7 @@ class DriverOrderUpdateController(http.Controller):
             
             # Verificar si la ruta está completa (todas las órdenes entregadas o rechazadas)
             if route:
-                pending_orders = route.order_ids.filtered(lambda o: o.expected_status in ['in_planification', 'in_transport', 'start_of_route'])
+                pending_orders = route.order_ids.filtered(lambda o: o.new_status_orders in ['in_planification', 'in_transport', 'start_of_route'])
                 if not pending_orders:
                     # No hay más órdenes pendientes, marcar ruta como terminada
                     route.sudo().write({'state_route': 'finished'})
