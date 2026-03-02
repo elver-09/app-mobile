@@ -86,6 +86,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     LatLng? _originLatLng;
   List<File> deliveryPhotos = [];
   List<Map<String, dynamic>> rejectionReasons = [];
+  int? selectedRejectionReasonId; // ← ID de la razón seleccionada
+  bool canReprogramAfterRejection = false; // ← Flag para mostrar botón de reprogramación
 
   // Estado actual de la orden
   late String currentOrderStatus;
@@ -159,6 +161,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       if (details != null && mounted) {
         setState(() {
           currentOrderStatus = details.planningStatus;
+          
+          // Si la orden está rechazada y tiene una razón, validar si permite reprogramar
+          if (details.planningStatus == 'cancelled' && details.reasonRejectionId != null) {
+            final rejectedReason = rejectionReasons.firstWhere(
+              (r) => r['id'] == details.reasonRejectionId,
+              orElse: () => {},
+            );
+            canReprogramAfterRejection = rejectedReason['reprogramed'] ?? false;
+            selectedRejectionReasonId = details.reasonRejectionId;
+            print('🔄 Orden rechazada con razón ID: ${details.reasonRejectionId}, permite reprogramar: $canReprogramAfterRejection');
+          }
         });
       }
     } on SocketException catch (e) {
@@ -603,6 +616,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       print('   Comentario: ${result['comment']}');
       print('   Fotos: ${result['photos'].length}');
 
+      // Validar si la razón seleccionada permite reprogramación
+      final selectedReason = rejectionReasons.firstWhere(
+        (r) => r['id'] == result['reasonId'],
+        orElse: () => {},
+      );
+      final allowsReprogramming = selectedReason['reprogramed'] ?? false;
+      print('🔴 Razón permite reprogramación: $allowsReprogramming');
+
       // Mostrar indicador de envío
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -633,6 +654,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
             setState(() {
               deliveryPhotos.addAll(result['photos'] as List<File>);
               currentOrderStatus = 'cancelled'; // Actualizar estado a rechazado
+              selectedRejectionReasonId = result['reasonId'] as int?;
+              canReprogramAfterRejection = allowsReprogramming;
               _commentController.text = 'Recibido por: ${result['recipient']}';              // Si es "Otro motivo", mostrar el comentario; si no, mostrar la razón
               if (result['reason'] == 'Otro motivo') {
                 _commentController.text = 'Motivo: ${result['comment']}';
@@ -1119,13 +1142,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       ),
                     ),
                     SizedBox(height: responsive.getResponsiveSize(24)),
-                    // Reprogramar: botón visible solo cuando la orden está en estado 'cancelled'
-                    if (currentOrderStatus == 'cancelled')
+                    // Reprogramar: botón visible solo cuando la orden está en estado 'cancelled' Y la razón seleccionada tiene reprogramed=true
+                    if (currentOrderStatus == 'cancelled' && canReprogramAfterRejection)
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(0)),
                         child: Column(
                           children: [
                             ReprogramButton(
+                              visible: true,
                               onPressed: () async {
                                 final result = await showDialog<Map<String, dynamic>?>(
                                   context: context,

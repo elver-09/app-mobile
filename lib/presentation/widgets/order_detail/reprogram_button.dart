@@ -3,11 +3,17 @@ import 'package:flutter/material.dart';
 class ReprogramButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool enabled;
+  final bool visible;
 
-  const ReprogramButton({Key? key, this.onPressed, this.enabled = true}) : super(key: key);
+  const ReprogramButton({Key? key, this.onPressed, this.enabled = true, this.visible = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Si no es visible, retornar widget vacío
+    if (!visible) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Theme.of(context);
     // Opción C - Gris elegante
     const primaryColor = Color(0xFF374151); // fondo

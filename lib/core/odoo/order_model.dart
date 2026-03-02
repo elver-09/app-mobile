@@ -14,6 +14,7 @@ class OrderItem {
   final double? longitude;
   final int? sequence;
   final int? routeSequence;
+  final int? reasonRejectionId;
 
   OrderItem({
     required this.id,
@@ -29,6 +30,7 @@ class OrderItem {
     this.longitude,
     this.sequence,
     this.routeSequence,
+    this.reasonRejectionId,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -49,6 +51,7 @@ class OrderItem {
       longitude: json['longitude'] as double?,
       sequence: json['sequence'] as int?,
       routeSequence: json['route_sequence'] as int?,
+      reasonRejectionId: json['reason_rejection_id'] as int?,
     );
   }
 
