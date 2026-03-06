@@ -140,3 +140,71 @@ class OrderItem {
     );
   }
 }
+
+// Modelo para agrupar órdenes por cliente y dirección
+class GroupedOrder {
+  final String clientName;
+  final String address;
+  final String? phone;
+  final List<OrderItem> orders;
+  final double? latitude;
+  final double? longitude;
+
+  GroupedOrder({
+    required this.clientName,
+    required this.address,
+    this.phone,
+    required this.orders,
+    this.latitude,
+    this.longitude,
+  });
+
+  /// Cuenta órdenes por estado
+  int get totalOrders => orders.length;
+  
+  int get deliveredCount => orders.where((o) => o.planningStatus == 'delivered').length;
+  
+  int get rejectedCount => orders.where((o) => 
+    o.planningStatus == 'cancelled' ||
+    o.planningStatus == 'anulled' ||
+    o.planningStatus == 'returned' ||
+    o.planningStatus == 'cancelled_origin'
+  ).length;
+  
+  int get pendingCount => orders.where((o) =>
+    o.planningStatus == 'in_transport' ||
+    o.planningStatus == 'start_of_route' ||
+    o.planningStatus == 'blocked'
+  ).length;
+
+  /// Retorna órdenes pendientes
+  List<OrderItem> get pendingOrders => orders.where((o) =>
+    o.planningStatus == 'in_transport' ||
+    o.planningStatus == 'start_of_route' ||
+    o.planningStatus == 'blocked'
+  ).toList();
+
+  /// Agrupa órdenes por cliente y dirección
+  static List<GroupedOrder> groupOrders(List<OrderItem> orders) {
+    final Map<String, GroupedOrder> groupedMap = {};
+
+    for (final order in orders) {
+      final key = '${order.fullname}|${order.address}';
+      
+      if (groupedMap.containsKey(key)) {
+        groupedMap[key]!.orders.add(order);
+      } else {
+        groupedMap[key] = GroupedOrder(
+          clientName: order.fullname,
+          address: order.address,
+          phone: order.phone,
+          orders: [order],
+          latitude: order.latitude,
+          longitude: order.longitude,
+        );
+      }
+    }
+
+    return groupedMap.values.toList();
+  }
+}

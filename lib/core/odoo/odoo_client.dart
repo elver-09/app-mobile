@@ -690,5 +690,124 @@ class OdooClient {
       print('🟢 ===== FIN ODOO CLIENT: searchOrderGlobal =====');
     }
   }
+
+  /// Actualizar múltiples órdenes a ENTREGADAS con las mismas fotos
+  Future<bool> updateMultipleDelivered({
+    required String token,
+    required List<int> orderIds,
+    required String recipientName,
+    required List<String> photoBase64List,
+    String? deliveryComment,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/update_multiple_delivered');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_ids': orderIds,
+            'recipient_name': recipientName,
+            'delivery_photos': photoBase64List,
+            'delivery_comment': deliveryComment ?? '',
+            'delivery_date': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en updateMultipleDelivered: ${resp.statusCode}');
+        print('   Body: ${resp.body}');
+        return false;
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo updateMultipleDelivered: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ ${orderIds.length} órdenes entregadas sincronizadas con Odoo');
+        final processedCount = (result['processed_orders'] as List?)?.length ?? 0;
+        final failedCount = (result['failed_orders'] as List?)?.length ?? 0;
+        print('   Procesadas: $processedCount, Fallidas: $failedCount');
+        return true;
+      } else {
+        print('❌ Error al sincronizar entrega múltiple');
+        print('   result: $result');
+        print('   error: ${result?['error']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception en updateMultipleDelivered: $e');
+      return false;
+    }
+  }
+
+  /// Actualizar múltiples órdenes a RECHAZADAS con las mismas fotos
+  Future<bool> updateMultipleRejected({
+    required String token,
+    required List<int> orderIds,
+    required int reasonId,
+    required String reason,
+    required String comment,
+    required List<String> photoBase64List,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/update_multiple_rejected');
+    
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_ids': orderIds,
+            'reject_reason_id': reasonId,
+            'reject_reason': reason,
+            'reject_comment': comment,
+            'reject_photos': photoBase64List,
+            'rejection_date': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ Error HTTP en updateMultipleRejected: ${resp.statusCode}');
+        print('   Body: ${resp.body}');
+        return false;
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta Odoo updateMultipleRejected: $data');
+      final result = data['result'];
+      
+      if (result != null && result['success'] == true) {
+        print('✅ ${orderIds.length} órdenes rechazadas sincronizadas con Odoo');
+        final processedCount = (result['processed_orders'] as List?)?.length ?? 0;
+        final failedCount = (result['failed_orders'] as List?)?.length ?? 0;
+        print('   Procesadas: $processedCount, Fallidas: $failedCount');
+        return true;
+      } else {
+        print('❌ Error al sincronizar rechazo múltiple');
+        print('   result: $result');
+        print('   error: ${result?['error']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception en updateMultipleRejected: $e');
+      return false;
+    }
+  }
 }
+
 
