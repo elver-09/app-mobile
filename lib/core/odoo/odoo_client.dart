@@ -62,6 +62,17 @@ class OdooClient {
   OdooClient({required String baseUrl, required this.db})
       : baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), '');
 
+  String _asString(dynamic value, {String fallback = ''}) {
+    if (value == null || value == false) return fallback;
+    return value.toString();
+  }
+
+  int _asInt(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
   Future<OdooAuthResult?> login({
     required String login,
     required String password,
@@ -98,17 +109,17 @@ class OdooClient {
       throw Exception('Datos de conductor faltantes en la respuesta');
     }
 
-    final token = result['token'] as String?;
-    if (token == null || token.isEmpty) {
+    final token = _asString(result['token']);
+    if (token.isEmpty) {
       throw Exception('Token no recibido del servidor');
     }
 
     final driver = DriverInfo(
-      employeeId: driverData['employee_id'] as int,
-      name: driverData['name'] as String,
-      email: driverData['email'] as String? ?? '',
-      phone: driverData['phone'] as String? ?? '',
-      job: driverData['job'] as String? ?? '',
+      employeeId: _asInt(driverData['employee_id']),
+      name: _asString(driverData['name']),
+      email: _asString(driverData['email']),
+      phone: _asString(driverData['phone']),
+      job: _asString(driverData['job']),
       routeId: 0,
       routeName: null,
     );
