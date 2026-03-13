@@ -416,13 +416,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             ],
           );
         }),
-        SizedBox(height: responsive.getResponsiveSize(20)),
+        SizedBox(height: responsive.getResponsiveSize(8)),
         // Botón de iniciar ruta optimizada (solo si no todas están escaneadas y la ruta no está en progreso)
         if (!allOrdersScanned && !routeInProgress) ...[
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
+          Center(
             child: Container(
-              width: double.infinity,
               decoration: BoxDecoration(
                 color: const Color(0xFF3B82F6),
                 borderRadius: BorderRadius.circular(responsive.borderRadius),
@@ -434,9 +432,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                   onTap: () => _showStartOptimizedRouteDialog(allOrders),
                   child: Padding(
                     padding: EdgeInsets.symmetric(
-                      vertical: responsive.getResponsiveSize(16),
+                      horizontal: responsive.getResponsiveSize(14),
+                      vertical: responsive.getResponsiveSize(8),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
@@ -460,7 +460,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
               ),
             ),
           ),
-          SizedBox(height: responsive.getResponsiveSize(16)),
+          SizedBox(height: responsive.getResponsiveSize(6)),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
             child: Text(
@@ -473,7 +473,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
               textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: responsive.getResponsiveSize(20)),
+          SizedBox(height: responsive.getResponsiveSize(8)),
         ],
       ],
     );
@@ -1186,10 +1186,8 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                           }),
                           SizedBox(height: responsive.getResponsiveSize(20)),
                           if (!allOrdersScanned && !routeInProgress) ...[
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
+                            Center(
                               child: Container(
-                                width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3B82F6),
                                   borderRadius: BorderRadius.circular(responsive.borderRadius),
@@ -1201,9 +1199,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                     onTap: () => _showStartOptimizedRouteDialog(orders),
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        vertical: responsive.getResponsiveSize(16),
+                                        horizontal: responsive.getResponsiveSize(14),
+                                        vertical: responsive.getResponsiveSize(8),
                                       ),
                                       child: Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
@@ -1228,7 +1228,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                 ),
                               ),
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(16)),
+                            SizedBox(height: responsive.getResponsiveSize(6)),
                             Padding(
                               padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
                               child: Text(
@@ -1241,7 +1241,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                 textAlign: TextAlign.center,
                               ),
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(20)),
+                            SizedBox(height: responsive.getResponsiveSize(8)),
                           ],
                         ],
                       ),

@@ -111,7 +111,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
               Text(
                 widget.order.fullname,
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
                   letterSpacing: -0.2,
@@ -121,7 +121,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
               Text(
                 widget.order.orderNumber,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 10,
                   color: Color(0xFF94A3B8),
                   letterSpacing: 0.2,
                   fontWeight: FontWeight.w600,
@@ -146,7 +146,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                 child: Text(
                   widget.order.statusLabel,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
@@ -190,7 +190,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                 child: Text(
                   widget.order.address,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 11,
                     color: Color(0xFF4B5563),
                     fontWeight: FontWeight.w600,
                     height: 1.3,
@@ -206,15 +206,6 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              widget.order.fullname,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF0F172A),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -227,7 +218,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                 Text(
                   widget.order.phone ?? 'Sin teléfono',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 11,
                     color: Color(0xFF6B7280),
                     fontWeight: FontWeight.w600,
                   ),
@@ -244,7 +235,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
     return Text(
       'Producto: ${widget.order.product ?? 'N/A'} · Zona ${widget.order.district}',
       style: const TextStyle(
-        fontSize: 13,
+        fontSize: 11,
         color: Color(0xFF8B95A1),
         fontWeight: FontWeight.w700,
         height: 1.3,
@@ -318,7 +309,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                   label.toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.0,
                   ),
