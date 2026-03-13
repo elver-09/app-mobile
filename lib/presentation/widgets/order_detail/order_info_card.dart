@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class OrderInfoCard extends StatelessWidget {
+  final int? routeSequence;
   final String orderNumber;
   final String clientName;
   final String phone;
@@ -16,6 +17,7 @@ class OrderInfoCard extends StatelessWidget {
 
   const OrderInfoCard({
     super.key,
+    this.routeSequence,
     required this.orderNumber,
     required this.clientName,
     required this.phone,
@@ -37,7 +39,7 @@ class OrderInfoCard extends StatelessWidget {
         Opacity(
           opacity: isBlocked ? 0.55 : 1,
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(12),
@@ -59,14 +61,44 @@ class OrderInfoCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(
-                          orderNumber,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            if (routeSequence != null && routeSequence! > 0) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDBEAFE),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: const Color(0xFF93C5FD),
+                                  ),
+                                ),
+                                child: Text(
+                                  '# $routeSequence',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF1D4ED8),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            Expanded(
+                              child: Text(
+                                orderNumber,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       if (!showRibbon)
@@ -82,7 +114,7 @@ class OrderInfoCard extends StatelessWidget {
                           child: Text(
                             statusLabel,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 10,
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                             ),
@@ -90,66 +122,80 @@ class OrderInfoCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Zona $district',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                   Text(
                     'Producto: ${product ?? 'N/A'}',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: Color(0xFF64748B),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   _buildInfoRow('Cliente:', clientName),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   _buildInfoRow('Teléfono:', phone),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   _buildInfoRow('Dirección:', address),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onCallPressed,
-                          icon: const Icon(Icons.phone, size: 18),
-                          label: Text('Llamar a ${clientName.split(' ').first}'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F766E),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.center,
+                    child: FractionallySizedBox(
+                      widthFactor: 0.92,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: onCallPressed,
+                              icon: const Icon(Icons.phone, size: 14),
+                              label: Text(
+                                'Llamar a ${clientName.split(' ').first}',
+                                style: const TextStyle(fontSize: 10.8),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0F766E),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 7),
+                                minimumSize: const Size(0, 34),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: onMapPressed,
-                          icon: const Icon(Icons.map_outlined, size: 18),
-                          label: const Text('Abrir en mapas'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1D4ED8),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: onMapPressed,
+                              icon: const Icon(Icons.map_outlined, size: 14),
+                              label: const Text(
+                                'Abrir en mapas',
+                                style: TextStyle(fontSize: 10.8),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1D4ED8),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 7),
+                                minimumSize: const Size(0, 34),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -203,7 +249,7 @@ class OrderInfoCard extends StatelessWidget {
                   label.toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
                   ),
@@ -221,11 +267,11 @@ class OrderInfoCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 90,
+          width: 78,
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               color: Color(0xFF64748B),
               fontWeight: FontWeight.w500,
             ),
@@ -236,7 +282,7 @@ class OrderInfoCard extends StatelessWidget {
           child: Text(
             value,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Color(0xFF0F172A),
             ),

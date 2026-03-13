@@ -269,6 +269,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
         MaterialPageRoute(
           builder: (context) => OrderDetailScreen(
             orderId: detail.id,
+            routeSequence: detail.routeSequence ?? detail.sequence ?? order.routeSequence ?? order.sequence,
             orderNumber: detail.orderNumber,
             clientName: detail.fullname,
             phone: detail.phone ?? '',
@@ -1293,29 +1294,32 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
             // Si no hay órdenes en curso y todas están en transporte, mostrar "Iniciar Ruta"
             if (!hasOrdersInCourse && allOrdersInTransport && hasOrdersInTransport) {
-              return FloatingActionButton.extended(
-                onPressed: _isLoadingNextOrder ? null : _startRoute,
-                backgroundColor: Colors.green,
-                icon: _isLoadingNextOrder
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
+              return Transform.scale(
+                scale: 0.88,
+                child: FloatingActionButton.extended(
+                  onPressed: _isLoadingNextOrder ? null : _startRoute,
+                  backgroundColor: Colors.green,
+                  icon: _isLoadingNextOrder
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.play_arrow,
+                          size: 16,
                           color: Colors.white,
-                          strokeWidth: 2,
                         ),
-                      )
-                    : const Icon(
-                        Icons.play_arrow,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                label: Text(
-                  _isLoadingNextOrder ? 'Iniciando...' : 'Iniciar Ruta',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                  label: Text(
+                    _isLoadingNextOrder ? 'Iniciando...' : 'Iniciar Ruta',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               );
@@ -1323,29 +1327,32 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
             // Si hay órdenes en curso o entregadas/rechazadas, mostrar "Siguiente Orden"
             if ((hasOrdersInCourse || hasOrdersDeliveredOrRejected) && hasOrdersInTransport) {
-              return FloatingActionButton.extended(
-                onPressed: _isLoadingNextOrder ? null : _goToNextOrder,
-                backgroundColor: const Color(0xFF3B82F6),
-                icon: _isLoadingNextOrder
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
+              return Transform.scale(
+                scale: 0.88,
+                child: FloatingActionButton.extended(
+                  onPressed: _isLoadingNextOrder ? null : _goToNextOrder,
+                  backgroundColor: const Color(0xFF3B82F6),
+                  icon: _isLoadingNextOrder
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.arrow_forward,
+                          size: 16,
                           color: Colors.white,
-                          strokeWidth: 2,
                         ),
-                      )
-                    : const Icon(
-                        Icons.arrow_forward,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                label: Text(
-                  _isLoadingNextOrder ? 'Cargando...' : 'Siguiente Orden',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                  label: Text(
+                    _isLoadingNextOrder ? 'Cargando...' : 'Siguiente Orden',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               );

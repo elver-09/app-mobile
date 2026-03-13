@@ -26,11 +26,11 @@ class DeliveryStatusButtons extends StatelessWidget {
           print('🔘 Botón presionado: $label');
           onPressed();
         } : null,
-        icon: Icon(icon, size: 20),
+        icon: Icon(icon, size: 16),
         label: Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 13),
+          style: const TextStyle(fontSize: 11),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
@@ -38,9 +38,10 @@ class DeliveryStatusButtons extends StatelessWidget {
           disabledBackgroundColor: Colors.grey[300],
           disabledForegroundColor: Colors.grey[600],
           elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          minimumSize: const Size(0, 36),
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
       ),
@@ -111,22 +112,28 @@ class DeliveryStatusButtons extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
-        Row(
-          children: [
-            _buildStatusButton(
-              label: 'Entregado',
-              icon: Icons.check_circle_outline,
-              backgroundColor: const Color(0xFF0F766E),
-              onPressed: onEntregadoPressed,
+        Align(
+          alignment: Alignment.center,
+          child: FractionallySizedBox(
+            widthFactor: 0.92,
+            child: Row(
+              children: [
+                _buildStatusButton(
+                  label: 'Entregado',
+                  icon: Icons.check_circle_outline,
+                  backgroundColor: const Color(0xFF0F766E),
+                  onPressed: onEntregadoPressed,
+                ),
+                const SizedBox(width: 8),
+                _buildStatusButton(
+                  label: 'Rechazado',
+                  icon: Icons.cancel_outlined,
+                  backgroundColor: const Color(0xFFB91C1C),
+                  onPressed: onRechazadoPressed,
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            _buildStatusButton(
-              label: 'Rechazado',
-              icon: Icons.cancel_outlined,
-              backgroundColor: const Color(0xFFB91C1C),
-              onPressed: onRechazadoPressed,
-            ),
-          ],
+          ),
         ),
       ],
     );

@@ -108,14 +108,40 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                widget.order.fullname,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                  letterSpacing: -0.2,
-                ),
+              Row(
+                children: [
+                  if ((widget.order.routeSequence ?? widget.order.sequence ?? 0) > 0) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDBEAFE),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: const Color(0xFF93C5FD)),
+                      ),
+                      child: Text(
+                        '# ${widget.order.routeSequence ?? widget.order.sequence}',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1D4ED8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Expanded(
+                    child: Text(
+                      widget.order.fullname,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111827),
+                        letterSpacing: -0.2,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -254,6 +280,7 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
       MaterialPageRoute(
         builder: (context) => OrderDetailScreen(
           orderId: widget.order.id,
+          routeSequence: widget.order.routeSequence ?? widget.order.sequence,
           orderNumber: widget.order.orderNumber,
           clientName: widget.order.fullname,
           phone: widget.order.phone ?? '',

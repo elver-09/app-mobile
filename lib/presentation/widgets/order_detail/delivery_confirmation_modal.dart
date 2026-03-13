@@ -52,18 +52,18 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 700),
+        constraints: const BoxConstraints(maxHeight: 660),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(14),
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.only(
@@ -80,16 +80,16 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                         const Text(
                           'Confirmar entrega de la orden',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           '${widget.orderNumber} · ${widget.clientName}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -108,7 +108,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -119,7 +119,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                         const Text(
                           'Evidencia de entrega',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
@@ -127,13 +127,13 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                         Text(
                           'Mínimo 3 fotos',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 11,
                             color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     // Botones de foto
                     PhotoCaptureWidget(
                       photos: deliveryPhotos,
@@ -150,7 +150,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                       maxPhotos: 3,
                       emptyMessage: 'No hay fotos para ver',
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     // Preview de fotos en grid
                     if (deliveryPhotos.isNotEmpty) ...[
                       Column(
@@ -314,11 +314,11 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                     Text(
                       'Incluye fachada del lugar y bultos entregados.',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 11,
                         color: const Color(0xFF64748B),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 10),
                     // Confirmación del receptor
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -326,28 +326,21 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                         const Text(
                           'Confirmación del receptor',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        Text(
-                          'Opcional para el conductor',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: const Color(0xFF94A3B8),
-                          ),
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
                     TextField(
                       controller: _recipientController,
                       decoration: InputDecoration(
                         hintText: 'Nombre / firma de quien recibe (opcional)',
                         hintStyle: const TextStyle(
                           color: Color(0xFF94A3B8),
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                         filled: true,
                         fillColor: const Color(0xFFF8FAFC),
@@ -363,24 +356,24 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
                           borderRadius: BorderRadius.circular(8),
                           borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2),
                         ),
-                        contentPadding: const EdgeInsets.all(12),
+                        contentPadding: const EdgeInsets.all(8),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 10),
                     // Resumen
                     const Text(
                       'Resumen',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'La orden ${widget.orderNumber} quedará como Entregada y se cargará la siguiente parada optimizada en tu ruta.',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Color(0xFF475569),
                       ),
                     ),
@@ -390,30 +383,37 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
             ),
             // Footer con botón
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 border: Border(
                   top: BorderSide(color: Color(0xFFE2E8F0)),
                 ),
               ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _canConfirm() ? _confirmDelivery : null,
-                  icon: const Icon(Icons.check_circle, size: 20),
-                  label: const Text('Confirmar entrega y continuar ruta'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _canConfirm() 
-                        ? const Color(0xFF0F766E) 
-                        : const Color(0xFFE2E8F0),
-                    foregroundColor: _canConfirm() 
-                        ? Colors.white 
-                        : const Color(0xFF94A3B8),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              child: Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 210,
+                  child: ElevatedButton.icon(
+                    onPressed: _canConfirm() ? _confirmDelivery : null,
+                    icon: const Icon(Icons.check_circle, size: 14),
+                    label: const Text(
+                      'Confirmar',
+                      style: TextStyle(fontSize: 11),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _canConfirm() 
+                          ? const Color(0xFF0F766E) 
+                          : const Color(0xFFE2E8F0),
+                      foregroundColor: _canConfirm() 
+                          ? Colors.white 
+                          : const Color(0xFF94A3B8),
+                      elevation: 0,
+                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9),
+                      ),
                     ),
                   ),
                 ),

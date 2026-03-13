@@ -419,6 +419,9 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                 decoration: InputDecoration(
                   labelText: 'Código de orden',
                   hintText: 'Ej: 0600050704700',
+                  hintStyle: TextStyle(
+                    fontSize: responsive.bodySmallFontSize * 0.85,
+                  ),
                   prefixIcon: const Icon(Icons.qr_code, color: Color(0xFF2563EB)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(responsive.borderRadius),
@@ -504,14 +507,14 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                     ),
                   ],
                 ),
-                padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
+                padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Container(
-                          padding: EdgeInsets.all(responsive.getResponsiveSize(8)),
+                          padding: EdgeInsets.all(responsive.getResponsiveSize(6)),
                           decoration: BoxDecoration(
                             color: const Color(0xFF3B82F6).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(responsive.borderRadius),
@@ -527,7 +530,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                             constraints: const BoxConstraints(),
                           ),
                         ),
-                        SizedBox(width: responsive.getResponsiveSize(12)),
+                        SizedBox(width: responsive.getResponsiveSize(8)),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,12 +538,12 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                               Text(
                                 'Escanear códigos',
                                 style: TextStyle(
-                                  fontSize: responsive.headingLargeFontSize,
+                                  fontSize: responsive.getResponsiveFontSize(18),
                                   fontWeight: FontWeight.bold,
                                   color: const Color(0xFF0F172A),
                                 ),
                               ),
-                              SizedBox(height: responsive.getResponsiveSize(4)),
+                              SizedBox(height: responsive.getResponsiveSize(2)),
                               Text(
                                 'Apunta al código para marcar "En transporte"',
                                 style: TextStyle(
@@ -558,96 +561,80 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
               ),
               // Información de ruta y vehículo
               Padding(
-                padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getResponsiveSize(8),
+                  responsive.getResponsiveSize(8),
+                  responsive.getResponsiveSize(8),
+                  responsive.getResponsiveSize(6),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Hoy • ${widget.routeName}',
-                              style: TextStyle(
-                                fontSize: responsive.bodyMediumFontSize,
-                                color: const Color(0xFF475569),
-                                fontWeight: FontWeight.w600,
-                              ),
+                        Expanded(
+                          child: Text(
+                            'Hoy • ${widget.routeName}',
+                            style: TextStyle(
+                              fontSize: responsive.bodyMediumFontSize,
+                              color: const Color(0xFF475569),
+                              fontWeight: FontWeight.w600,
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(2)),
-                            Row(
-                              children: [
-                                Text(
-                                  'Estado de ruta',
-                                  style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize,
-                                    color: const Color(0xFF64748B),
-                                  ),
-                                ),
-                                SizedBox(width: responsive.getResponsiveSize(8)),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: responsive.getResponsiveSize(12),
-                                    vertical: responsive.getResponsiveSize(4),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        const Color(0xFFFFA726),
-                                        const Color(0xFFFF9800),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFFFFA726).withOpacity(0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    'Por validar',
-                                    style: TextStyle(
-                                      fontSize: responsive.bodySmallFontSize * 0.8,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        SizedBox(width: responsive.getResponsiveSize(6)),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Vehículo',
+                              'Estado de ruta',
                               style: TextStyle(
                                 fontSize: responsive.bodySmallFontSize,
                                 color: const Color(0xFF64748B),
                               ),
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(2)),
-                            Text(
-                              '${widget.fleetType} • ${widget.fleetLicense}',
-                              style: TextStyle(
-                                fontSize: responsive.bodyMediumFontSize,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF0F172A),
+                            SizedBox(width: responsive.getResponsiveSize(6)),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: responsive.getResponsiveSize(12),
+                                vertical: responsive.getResponsiveSize(4),
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFFA726),
+                                    Color(0xFFFF9800),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFA726).withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                'Por validar',
+                                style: TextStyle(
+                                  fontSize: responsive.bodySmallFontSize * 0.8,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(12)),
+                    SizedBox(height: responsive.getResponsiveSize(6)),
                     // Sección de escaneo
                     Container(
-                      padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                      padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(responsive.borderRadius),
@@ -680,7 +667,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                       color: const Color(0xFF0F172A),
                                     ),
                                   ),
-                                  SizedBox(height: responsive.getResponsiveSize(4)),
+                                  SizedBox(height: responsive.getResponsiveSize(2)),
                                   Text(
                                     'Alinea el código dentro del recuadro',
                                     style: TextStyle(
@@ -691,7 +678,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                 ],
                               ),
                               Container(
-                                padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
+                                padding: EdgeInsets.all(responsive.getResponsiveSize(8)),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
@@ -712,7 +699,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: responsive.getResponsiveSize(16)),
+                          SizedBox(height: responsive.getResponsiveSize(8)),
                           // Scanner con marco atractivo
                           Container(
                             decoration: BoxDecoration(
@@ -783,7 +770,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(8)),
+                    SizedBox(height: responsive.getResponsiveSize(6)),
                     // Botones de acción
                     Row(
                       children: [
@@ -793,7 +780,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                             controller: cameraController,
                           ),
                         ),
-                        SizedBox(width: responsive.getResponsiveSize(12)),
+                        SizedBox(width: responsive.getResponsiveSize(8)),
                         Expanded(
                           child: _ActionChip(
                             icon: Icons.keyboard,
@@ -809,8 +796,8 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
               if (_scannedOrder != null)
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: responsive.getResponsiveSize(16),
-                    vertical: responsive.getResponsiveSize(16),
+                    horizontal: responsive.getResponsiveSize(8),
+                    vertical: responsive.getResponsiveSize(8),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -822,15 +809,15 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                           Text(
                             'Orden encontrada',
                             style: TextStyle(
-                              fontSize: responsive.headingMediumFontSize,
+                              fontSize: responsive.getResponsiveFontSize(13),
                               color: const Color(0xFF0F172A),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: responsive.getResponsiveSize(12),
-                              vertical: responsive.getResponsiveSize(6),
+                              horizontal: responsive.getResponsiveSize(10),
+                              vertical: responsive.getResponsiveSize(4),
                             ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -854,13 +841,13 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                 Icon(
                                   Icons.check_circle,
                                   color: Colors.white,
-                                  size: responsive.iconSize * 0.7,
+                                  size: responsive.iconSize * 0.6,
                                 ),
                                 SizedBox(width: responsive.getResponsiveSize(4)),
                                 Text(
                                   'Lista para confirmar',
                                   style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize * 0.85,
+                                    fontSize: responsive.bodySmallFontSize * 0.75,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),
@@ -870,11 +857,11 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: responsive.getResponsiveSize(12)),
+                      SizedBox(height: responsive.getResponsiveSize(6)),
                       // Tarjeta de orden
                       Container(
                         width: double.infinity,
-                        padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                        padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(responsive.borderRadius),
@@ -905,7 +892,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                       Text(
                                         _scannedOrder!.fullname,
                                         style: TextStyle(
-                                          fontSize: responsive.headingSmallFontSize,
+                                          fontSize: responsive.getResponsiveFontSize(13),
                                           fontWeight: FontWeight.bold,
                                           color: const Color(0xFF0F172A),
                                         ),
@@ -914,7 +901,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                       Text(
                                         _scannedOrder!.orderNumber,
                                         style: TextStyle(
-                                          fontSize: responsive.bodyMediumFontSize,
+                                          fontSize: responsive.getResponsiveFontSize(11),
                                           fontWeight: FontWeight.w600,
                                           color: const Color(0xFF3B82F6),
                                         ),
@@ -923,7 +910,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                   ),
                                 ),
                                 Container(
-                                  padding: EdgeInsets.all(responsive.getResponsiveSize(8)),
+                                  padding: EdgeInsets.all(responsive.getResponsiveSize(6)),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF0FDF4),
                                     borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
@@ -934,41 +921,41 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                   child: Icon(
                                     Icons.local_shipping,
                                     color: const Color(0xFF10B981),
-                                    size: responsive.iconSize,
+                                    size: responsive.iconSize * 0.8,
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(12)),
+                            SizedBox(height: responsive.getResponsiveSize(6)),
                             // Detalles
                             Divider(
                               color: const Color(0xFFE2E8F0),
                               thickness: 1,
-                              height: responsive.getResponsiveSize(20),
+                              height: responsive.getResponsiveSize(14),
                             ),
                             Text(
                               'Detalles del envío',
                               style: TextStyle(
-                                fontSize: responsive.bodyMediumFontSize,
+                                fontSize: responsive.getResponsiveFontSize(12),
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF0F172A),
                               ),
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(8)),
+                            SizedBox(height: responsive.getResponsiveSize(6)),
                             _buildDetailRow(
                               context,
                               Icons.inventory_2,
                               'Producto',
                               _scannedOrder!.product ?? 'N/A',
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(6)),
+                            SizedBox(height: responsive.getResponsiveSize(4)),
                             _buildDetailRow(
                               context,
                               Icons.location_on,
                               'Zona',
                               _scannedOrder!.district,
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(6)),
+                            SizedBox(height: responsive.getResponsiveSize(4)),
                             _buildDetailRow(
                               context,
                               Icons.attach_money,
@@ -978,101 +965,95 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(height: responsive.getResponsiveSize(16)),
-                      // Botón de confirmación
-                      SizedBox(
-                        width: double.infinity,
-                        height: responsive.buttonHeight,
-                        child: ElevatedButton(
-                          onPressed: _isConfirming ? null : _confirmScanOrder,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            disabledBackgroundColor: const Color(0xFF10B981).withOpacity(0.5),
-                            elevation: 4,
-                            shadowColor: const Color(0xFF10B981).withOpacity(0.4),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(responsive.borderRadius),
-                            ),
-                          ),
-                          child: _isConfirming
-                              ? SizedBox(
-                                  height: responsive.buttonHeight * 0.5,
-                                  width: responsive.buttonHeight * 0.5,
-                                  child: const CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      SizedBox(height: responsive.getResponsiveSize(8)),
+                      // Botones de acción
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: responsive.buttonHeight * 0.8,
+                              child: ElevatedButton(
+                                onPressed: _isConfirming ? null : _confirmScanOrder,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF10B981),
+                                  disabledBackgroundColor: const Color(0xFF10B981).withOpacity(0.5),
+                                  elevation: 2,
+                                  shadowColor: const Color(0xFF10B981).withOpacity(0.25),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(responsive.borderRadius),
                                   ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.white,
-                                      size: responsive.iconSize,
-                                    ),
-                                    SizedBox(width: responsive.getResponsiveSize(8)),
-                                    Text(
-                                      'Confirmar y marcar en transporte',
-                                      style: TextStyle(
-                                        fontSize: responsive.headingSmallFontSize,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
                                 ),
-                        ),
-                      ),
-                      SizedBox(height: responsive.getResponsiveSize(12)),
-                      // Botón secundario
-                      SizedBox(
-                        width: double.infinity,
-                        height: responsive.buttonHeight * 0.9,
-                        child: OutlinedButton(
-                          onPressed: _isConfirming
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _scannedOrder = null;
-                                  });
-                                  _codeController.clear();
-                                },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: Color(0xFFE2E8F0),
-                              width: 1.5,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(responsive.borderRadius),
+                                child: _isConfirming
+                                    ? SizedBox(
+                                        height: responsive.buttonHeight * 0.35,
+                                        width: responsive.buttonHeight * 0.35,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : Text(
+                                        'Confirmar',
+                                        style: TextStyle(
+                                          fontSize: responsive.bodySmallFontSize,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                              ),
                             ),
                           ),
-                          child: Text(
-                            'Cancelar y escanear otra',
-                            style: TextStyle(
-                              fontSize: responsive.bodyMediumFontSize,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF475569),
+                          SizedBox(width: responsive.getResponsiveSize(8)),
+                          Expanded(
+                            child: SizedBox(
+                              height: responsive.buttonHeight * 0.8,
+                              child: OutlinedButton(
+                                onPressed: _isConfirming
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _scannedOrder = null;
+                                        });
+                                        _codeController.clear();
+                                      },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: Color(0xFFE2E8F0),
+                                    width: 1.5,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(responsive.borderRadius),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Cancelar',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
                 )
               else
                 Padding(
-                  padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                  padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
                   child: Center(
                     child: Column(
                       children: [
-                        SizedBox(height: responsive.getResponsiveSize(20)),
+                        SizedBox(height: responsive.getResponsiveSize(8)),
                         Icon(
                           Icons.camera_alt_outlined,
                           size: responsive.iconSize * 2,
                           color: const Color(0xFFCBD5E1),
                         ),
-                        SizedBox(height: responsive.getResponsiveSize(16)),
+                        SizedBox(height: responsive.getResponsiveSize(8)),
                         Text(
                           'Escanea una orden',
                           style: TextStyle(

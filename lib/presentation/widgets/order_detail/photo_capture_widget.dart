@@ -87,7 +87,7 @@ class _PhotoCaptureWidgetState extends State<PhotoCaptureWidget> {
             onPressed: _takePhoto,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: _buildActionButton(
             label: 'Ver foto',
@@ -115,20 +115,20 @@ class _PhotoCaptureWidgetState extends State<PhotoCaptureWidget> {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 9),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   icon,
-                  size: 18,
+                  size: 15,
                   color: const Color(0xFF2563EB),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: Color(0xFF2563EB),
                     fontWeight: FontWeight.w600,
                   ),

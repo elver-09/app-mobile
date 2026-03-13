@@ -89,7 +89,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(8),
@@ -100,7 +100,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
         child: Text(
           reasonName,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: isSelected ? const Color(0xFF0F766E) : const Color(0xFF334155),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -120,18 +120,18 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.all(16),
+      insetPadding: const EdgeInsets.all(12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 700),
+        constraints: const BoxConstraints(maxHeight: 660),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(14),
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.only(
@@ -148,16 +148,16 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                         const Text(
                           'Confirmar rechazo de la orden',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           '${widget.orderNumber} · ${widget.clientName}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -176,7 +176,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -187,7 +187,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                         const Text(
                           'Motivo del rechazo',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
@@ -195,19 +195,19 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                         Text(
                           'Elige o escribe un motivo',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 11,
                             color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 6,
+                      runSpacing: 6,
                       children: widget.rejectionReasons.map((reason) => _buildReasonChip(reason)).toList(),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     // Campo de texto - Mostrar solo si se requiere nota por la razón
                     if (_selectedReasonNeedsNote()) ...[
                       TextField(
@@ -217,7 +217,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                           hintText: _getTextFieldHint(),
                           hintStyle: const TextStyle(
                             color: Color(0xFF94A3B8),
-                            fontSize: 14,
+                            fontSize: 12,
                           ),
                           filled: true,
                           fillColor: const Color(0xFFF8FAFC),
@@ -233,11 +233,11 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2),
                           ),
-                          contentPadding: const EdgeInsets.all(12),
+                          contentPadding: const EdgeInsets.all(8),
                         ),
                         onChanged: (_) => setState(() {}),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
                     ],
                     // Evidencia del intento
                     Row(
@@ -246,7 +246,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                         const Text(
                           'Evidencia del intento',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
@@ -254,13 +254,13 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                         Text(
                           '3 fotos obligatorias',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 11,
                             color: const Color(0xFF94A3B8),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     // Botones de foto
                     PhotoCaptureWidget(
                       photos: evidencePhotos,
@@ -277,7 +277,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                       maxPhotos: 3,
                       emptyMessage: 'No hay fotos para ver',
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     // Preview de fotos en grid 2 columnas
                     if (evidencePhotos.isNotEmpty) ...[
                       Column(
@@ -435,25 +435,25 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
                     Text(
                       'Muestra puerta cerrada, timbre o señalización del lugar.',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 11,
                         color: const Color(0xFF64748B),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 10),
                     // Resumen
                     const Text(
                       'Resumen',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'La orden ${widget.orderNumber} quedará como Rechazada y se cargará la siguiente parada optimizada.',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Color(0xFF475569),
                       ),
                     ),
@@ -463,7 +463,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
             ),
             // Footer con botón
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 border: Border(
@@ -473,32 +473,36 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
               child: Column(
                 children: [
                   SizedBox(
-                    width: double.infinity,
+                    width: 220,
                     child: ElevatedButton.icon(
                       onPressed: _canConfirm() ? _confirmReject : null,
-                      icon: const Icon(Icons.cancel, size: 20),
-                      label: const Text('Confirmar rechazo y continuar ruta'),
+                      icon: const Icon(Icons.cancel, size: 14),
+                      label: const Text(
+                        'Confirmar rechazo',
+                        style: TextStyle(fontSize: 11),
+                      ),
                       style: ElevatedButton.styleFrom(
-                            backgroundColor: _canConfirm() 
-                              ? const Color(0xFFB91C1C) 
-                              : const Color(0xFFE2E8F0),
+                        backgroundColor: _canConfirm() 
+                            ? const Color(0xFFB91C1C) 
+                            : const Color(0xFFE2E8F0),
                         foregroundColor: _canConfirm() 
                             ? Colors.white 
-                              : const Color(0xFF94A3B8),
+                            : const Color(0xFF94A3B8),
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        minimumSize: const Size(0, 36),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(9),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   const Text(
                     'Esta acción no se puede deshacer desde la app del conductor.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       color: Color(0xFF9CA3AF),
                     ),
                   ),

@@ -31,6 +31,7 @@ import '../../core/odoo/odoo_client.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
+  final int? routeSequence;
   final String orderNumber;
   final String clientName;
   final String phone;
@@ -52,6 +53,7 @@ class OrderDetailScreen extends StatefulWidget {
   const OrderDetailScreen({
     super.key,
     required this.orderId,
+    this.routeSequence,
     required this.orderNumber,
     required this.clientName,
     required this.phone,
@@ -812,7 +814,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
             children: [
               // Header
               Container(
-                padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.getResponsiveSize(10),
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border(
@@ -822,129 +826,49 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.arrow_back,
-                            color: const Color(0xFF0F172A),
-                            size: responsive.iconSize,
-                          ),
-                          onPressed: () => Navigator.pop(context),
+                child: SizedBox(
+                  height: responsive.getResponsiveSize(44),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: const Color(0xFF0F172A),
+                          size: responsive.iconSize,
                         ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Detalle de la orden',
-                                style: TextStyle(
-                                  fontSize: responsive.headingLargeFontSize,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF0F172A),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: responsive.getResponsiveSize(16)),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: responsive.getResponsiveSize(12),
-                              vertical: responsive.getResponsiveSize(6),
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today,
-                                  size: responsive.iconSize * 0.6,
-                                  color: const Color(0xFF64748B),
-                                ),
-                                SizedBox(width: responsive.getResponsiveSize(6)),
-                                Text(
-                                  'Hoy · ${widget.routeName ?? ''}',
-                                  style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize,
-                                    color: const Color(0xFF475569),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: responsive.getResponsiveSize(12)),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: responsive.getResponsiveSize(12),
-                              vertical: responsive.getResponsiveSize(6),
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                              border: Border.all(
-                                color: const Color(0xFFBFDBFE),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.local_shipping,
-                                  size: responsive.iconSize * 0.65,
-                                  color: const Color(0xFF3B82F6),
-                                ),
-                                SizedBox(width: responsive.getResponsiveSize(6)),
-                                Text(
-                                  'Vehículo',
-                                  style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize * 0.9,
-                                    color: const Color(0xFF64748B),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(width: responsive.getResponsiveSize(6)),
-                                Text(
-                                  '${widget.fleetType ?? ''} · ${widget.fleetLicense ?? ''}',
-                                  style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        onPressed: () => Navigator.pop(context),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
-                    ),
-                  ],
+                      SizedBox(width: responsive.getResponsiveSize(8)),
+                      Expanded(
+                        child: Text(
+                          'Detalle de la orden',
+                          style: TextStyle(
+                            fontSize: responsive.headingMediumFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               // Order details card
               Padding(
-                padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getResponsiveSize(10),
+                  responsive.getResponsiveSize(4),
+                  responsive.getResponsiveSize(10),
+                  responsive.getResponsiveSize(10),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Order info card
                     OrderInfoCard(
+                      routeSequence: widget.routeSequence,
                       orderNumber: widget.orderNumber,
                       clientName: widget.clientName,
                       phone: widget.phone,
@@ -958,22 +882,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       isBlocked: currentOrderStatus == 'blocked',
                       showRibbon: currentOrderStatus != 'in_transport',
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(24)),
+                    SizedBox(height: responsive.getResponsiveSize(12)),
                     // Location section
                     Text(
                       'Ubicación de entrega',
                       style: TextStyle(
-                        fontSize: responsive.headingSmallFontSize,
+                        fontSize: responsive.bodyMediumFontSize,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(12)),
+                    SizedBox(height: responsive.getResponsiveSize(8)),
                     // Map preview - Full width
                     ClipRRect(
                       borderRadius: BorderRadius.circular(responsive.borderRadius),
                       child: SizedBox(
-                        height: responsive.getResponsiveSize(220),
+                        height: responsive.getResponsiveSize(190),
                         child: (origin == null ||
                           widget.latitude == null ||
                           widget.longitude == null)

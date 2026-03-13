@@ -20,7 +20,7 @@ class DeliveryPhotosWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(12),
@@ -30,38 +30,50 @@ class DeliveryPhotosWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Evidencia de entrega',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+              const Expanded(
+                child: Text(
+                  'Evidencia de entrega',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Text(
-                'Obligatoria para finalizar',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF94A3B8),
+              const SizedBox(width: 8),
+              const Flexible(
+                child: Text(
+                  'Obligatoria para finalizar',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Center(
             child: _buildPhotoGrid(context),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           if (photos.isNotEmpty)
             Center(
               child: OutlinedButton.icon(
                 onPressed: onViewPhotos,
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Ver fotos'),
+                icon: const Icon(Icons.photo_library_outlined, size: 16),
+                label: const Text(
+                  'Ver fotos',
+                  style: TextStyle(fontSize: 12),
+                ),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   side: const BorderSide(color: Color(0xFF1D4ED8)),
                   foregroundColor: const Color(0xFF1D4ED8),
                   shape: RoundedRectangleBorder(
@@ -79,7 +91,7 @@ class DeliveryPhotosWidget extends StatelessWidget {
     final photoBoxes = List.generate(
       maxPhotos,
       (index) => SizedBox(
-        width: 150,
+        width: 132,
         child: _buildPhotoBox(context, index),
       ),
     );
@@ -89,7 +101,7 @@ class DeliveryPhotosWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           for (int i = 0; i < photoBoxes.length; i++) ...[
-            if (i > 0) const SizedBox(width: 12),
+            if (i > 0) const SizedBox(width: 8),
             photoBoxes[i],
           ],
         ],
@@ -103,11 +115,11 @@ class DeliveryPhotosWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               photoBoxes[0],
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               photoBoxes[1],
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [photoBoxes[2]],
@@ -117,8 +129,8 @@ class DeliveryPhotosWidget extends StatelessWidget {
     }
 
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: 8,
+      runSpacing: 8,
       alignment: WrapAlignment.center,
       children: photoBoxes,
     );
@@ -148,7 +160,7 @@ class DeliveryPhotosWidget extends StatelessWidget {
                 : const Center(
                     child: Icon(
                       Icons.add_photo_alternate_outlined,
-                      size: 32,
+                      size: 26,
                       color: Color(0xFF94A3B8),
                     ),
                   ),

@@ -51,20 +51,20 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                 ]
               : [
                   Colors.white,
-                  const Color(0xFFF8FAFC),
+                  const Color(0xFFF5F9FF),
                 ],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: allInCourse 
               ? const Color(0xFFF59E0B) // Borde amarillo si está en curso
-              : const Color(0xFFE2E8F0), 
-            width: allInCourse ? 2 : 1.5,
+              : const Color(0xFF93C5FD), 
+            width: allInCourse ? 2.2 : 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF3B82F6).withOpacity(0.08),
-              blurRadius: 12,
+              color: const Color(0xFF3B82F6).withOpacity(0.14),
+              blurRadius: 14,
               offset: const Offset(0, 4),
               spreadRadius: 0,
             ),
@@ -94,7 +94,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                   ),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
-                padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -113,7 +113,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                             size: 20,
                           ),
                         ),
-                        SizedBox(width: responsive.getResponsiveSize(12)),
+                        SizedBox(width: responsive.getResponsiveSize(10)),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +151,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                             ],
                           ),
                         ),
-                        SizedBox(width: responsive.getResponsiveSize(12)),
+                        SizedBox(width: responsive.getResponsiveSize(8)),
                         Icon(
                           _isExpanded ? Icons.expand_less : Icons.expand_more,
                           color: const Color(0xFF3B82F6),
@@ -159,11 +159,11 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     // Indicadores de estado
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 4,
+                      runSpacing: 4,
                       children: [
                         _buildStatusBadge(
                           label: '${groupedOrder.totalOrders} órdenes',
@@ -205,16 +205,16 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 border: Border(
-                  top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                  top: BorderSide(color: Color(0xFFBFDBFE), width: 1.5),
                 ),
               ),
-              padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+              padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // SECCIÓN 1: Detalles del Cliente
                   _buildClientDetailsSection(groupedOrder, responsive),
-                  SizedBox(height: responsive.getResponsiveSize(24)),
+                  SizedBox(height: responsive.getResponsiveSize(10)),
                   // SECCIÓN 2: Órdenes del Cliente
                   // Título de la sección
                   Row(
@@ -242,12 +242,12 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                       ),
                     ],
                   ),
-                  SizedBox(height: responsive.getResponsiveSize(12)),
+                  SizedBox(height: responsive.getResponsiveSize(6)),
                   // Lista de órdenes
                   ...groupedOrder.orders.map((order) {
                     return _buildOrderItem(order, responsive);
                   }),
-                  SizedBox(height: responsive.getResponsiveSize(16)),
+                  SizedBox(height: responsive.getResponsiveSize(6)),
                   // Separador visual
                   Container(
                     height: 1,
@@ -261,7 +261,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                       ),
                     ),
                   ),
-                  SizedBox(height: responsive.getResponsiveSize(16)),
+                  SizedBox(height: responsive.getResponsiveSize(6)),
                   // Botones de acciones
                   if (!allBlocked)
                     Row(
@@ -271,7 +271,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                           groupedOrder.orders.first.phone!.isNotEmpty)
                         Expanded(
                           child: Container(
-                            height: 48,
+                            height: 42,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -323,7 +323,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                           groupedOrder.orders.first.longitude != null)
                         Expanded(
                           child: Container(
-                            height: 48,
+                            height: 42,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -378,7 +378,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                       if (widget.showManageButton)
                         Expanded(
                           child: Container(
-                            height: 48,
+                            height: 42,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [
@@ -427,7 +427,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                       if (widget.showReprogramButton)
                         Expanded(
                           child: Container(
-                            height: 48,
+                            height: 42,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [
@@ -488,7 +488,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     final firstOrder = groupedOrder.orders.first;
     
     return Container(
-      padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+      padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -523,7 +523,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
               responsive: responsive,
               onTap: () => _launchPhone(firstOrder.phone!),
             ),
-            SizedBox(height: responsive.getResponsiveSize(12)),
+            SizedBox(height: responsive.getResponsiveSize(8)),
           ],
           // Dirección
           _buildDetailRow(
@@ -533,7 +533,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
             responsive: responsive,
             maxLines: 2,
           ),
-          SizedBox(height: responsive.getResponsiveSize(12)),
+          SizedBox(height: responsive.getResponsiveSize(8)),
           // Zona/Comas
           Text(
             firstOrder.district.isNotEmpty ? firstOrder.district.toUpperCase() : 'SIN ZONA',
@@ -651,8 +651,8 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
         Opacity(
           opacity: isBlocked ? 0.55 : 1.0,
           child: Container(
-            margin: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(6)),
-            padding: EdgeInsets.all(responsive.getResponsiveSize(12)),
+            margin: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(4)),
+            padding: EdgeInsets.all(responsive.getResponsiveSize(8)),
             decoration: BoxDecoration(
               color: const Color(0xFFFAFAFC),
               borderRadius: BorderRadius.circular(10),
@@ -672,8 +672,8 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
             children: [
               // Icono decorativo
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: order.statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -681,10 +681,10 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                 child: Icon(
                   _getOrderIcon(order.planningStatus),
                   color: order.statusColor,
-                  size: 20,
+                  size: 18,
                 ),
               ),
-              SizedBox(width: responsive.getResponsiveSize(12)),
+              SizedBox(width: responsive.getResponsiveSize(8)),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,13 +692,39 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            order.orderNumber,
-                            style: TextStyle(
-                              fontSize: responsive.bodySmallFontSize + 1,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0F172A),
-                            ),
+                          child: Row(
+                            children: [
+                              if ((order.routeSequence ?? order.sequence ?? 0) > 0) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDBEAFE),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(color: const Color(0xFF93C5FD)),
+                                  ),
+                                  child: Text(
+                                    '# ${order.routeSequence ?? order.sequence}',
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1D4ED8),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  order.orderNumber,
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize + 1,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         if (!showRibbon)
@@ -726,7 +752,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
                         Icon(
