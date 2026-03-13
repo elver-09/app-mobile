@@ -22,12 +22,13 @@ class PieChartWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           title,
+          textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Colors.black87,
           ),
@@ -37,41 +38,41 @@ class PieChartWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-              width: 80,
-              height: 80,
+              width: 65,
+              height: 65,
               child: CustomPaint(
                 painter: PieChartPainter(data),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: data
                     .map((item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2.5),
+                          padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Row(
                             children: [
                               Container(
-                                width: 7,
-                                height: 7,
+                                width: 6,
+                                height: 6,
                                 decoration: BoxDecoration(
                                   color: item.color,
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 5),
                               Expanded(
                                 child: Text(
                                   item.label,
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     color: Colors.black87,
                                     fontWeight: FontWeight.w500,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                  overflow: TextOverflow.visible,
+                                  softWrap: true,
                                 ),
                               ),
                             ],

@@ -29,20 +29,20 @@ class SedeHeader extends StatelessWidget {
               Text(
                 formattedDate,
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
               Row(
                 children: const [
-                  Icon(Icons.cloud_done_outlined, size: 18, color: Colors.grey),
+                  Icon(Icons.cloud_done_outlined, size: 18, color: Colors.green),
                   SizedBox(width: 6),
                   Text(
                     'Sincronizado',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey,
+                      color: Colors.green,
                     ),
                   ),
                 ],
@@ -58,7 +58,7 @@ class SedeHeader extends StatelessWidget {
                 child: Text(
                   'Resumen de rutas y pedidos asignados',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: Colors.grey,
                   ),
                 ),

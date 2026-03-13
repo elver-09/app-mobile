@@ -180,7 +180,12 @@ class _ChooseSedeState extends State<ChooseSede> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.all(responsive.getResponsiveSize(20)),
+            padding: EdgeInsets.fromLTRB(
+              responsive.getResponsiveSize(10), // izquierda
+              responsive.getResponsiveSize(0),  // arriba
+              responsive.getResponsiveSize(10), // derecha
+              responsive.getResponsiveSize(0),  // abajo
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -542,10 +547,6 @@ class _ChooseSedeState extends State<ChooseSede> {
         selectedItemColor: const Color(0xFF2563EB),
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Hoy',
-          ),
           BottomNavigationBarItem(icon: Icon(Icons.route), label: 'Rutas'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

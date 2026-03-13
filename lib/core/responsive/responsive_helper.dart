@@ -44,8 +44,9 @@ class ResponsiveHelper {
   /// El resultado se ajusta según el ancho de pantalla
   double getResponsiveSize(double baseSize) {
     if (isMobile) {
-      // Mobile: reduce ligeramente
-      return baseSize * (screenWidth / 400);
+      // Mobile: escala proporcional con cap para pantallas pequeñas
+      final scale = (screenWidth / 400).clamp(0.75, 1.0);
+      return baseSize * scale;
     } else if (isTablet) {
       // Tablet: mantiene proporción
       return baseSize * (screenWidth / 600);
@@ -80,7 +81,8 @@ class ResponsiveHelper {
   /// Retorna tamaño de fuente responsivo
   double getResponsiveFontSize(double baseFontSize) {
     if (isMobile) {
-      return baseFontSize * 0.9;
+      final scale = (screenWidth / 400).clamp(0.8, 1.0);
+      return baseFontSize * scale;
     } else if (isTablet) {
       return baseFontSize;
     } else {
@@ -89,19 +91,19 @@ class ResponsiveHelper {
   }
 
   /// Retorna el tamaño de fuente para títulos principales
-  double get headingLargeFontSize => getResponsiveFontSize(28);
+  double get headingLargeFontSize => getResponsiveFontSize(22);
 
   /// Retorna el tamaño de fuente para títulos
-  double get headingMediumFontSize => getResponsiveFontSize(22);
+  double get headingMediumFontSize => getResponsiveFontSize(17);
 
   /// Retorna el tamaño de fuente para subtítulos
-  double get headingSmallFontSize => getResponsiveFontSize(18);
+  double get headingSmallFontSize => getResponsiveFontSize(15);
 
   /// Retorna el tamaño de fuente para texto normal
-  double get bodyMediumFontSize => getResponsiveFontSize(16);
+  double get bodyMediumFontSize => getResponsiveFontSize(13);
 
   /// Retorna el tamaño de fuente para texto pequeño
-  double get bodySmallFontSize => getResponsiveFontSize(14);
+  double get bodySmallFontSize => getResponsiveFontSize(11);
 
   /// Retorna el ancho máximo para contenedores principales
   double get maxContentWidth {
