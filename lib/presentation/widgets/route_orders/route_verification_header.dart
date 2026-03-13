@@ -71,42 +71,42 @@ class RouteVerificationHeader extends StatelessWidget {
         const Text(
           'Confirma las órdenes antes de iniciar ruta',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 14,
             color: Color(0xFF94A3B8),
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 3),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              'Hoy • $routeName',
-              style: const TextStyle(
-                fontSize: 17,
-                color: Color(0xFF94A3B8),
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Text(
+                'Hoy • $routeName',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Text(
-              'Vehículo',
-              style: TextStyle(fontSize: 17, color: Color(0xFF94A3B8)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+            const SizedBox(width: 6),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Estado de ruta',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF94A3B8)),
+                  'Estado ruta',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF94A3B8),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
                     color: _routeStatusColor,
                     borderRadius: BorderRadius.circular(20),
@@ -114,7 +114,7 @@ class RouteVerificationHeader extends StatelessWidget {
                   child: Text(
                     _routeStatusLabel,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1F2937),
                     ),
@@ -122,21 +122,13 @@ class RouteVerificationHeader extends StatelessWidget {
                 ),
               ],
             ),
-            Text(
-              '$fleetType • $fleetLicense',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
-              ),
-            ),
           ],
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 6),
 
         // Scanning section
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -146,7 +138,7 @@ class RouteVerificationHeader extends StatelessWidget {
                 const Color(0xFFDBEAFE),
               ],
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: const Color(0xFFC7D2FE),
               width: 1.5,
@@ -181,14 +173,14 @@ class RouteVerificationHeader extends StatelessWidget {
                               child: const Icon(
                                 Icons.qr_code_2,
                                 color: Color(0xFF3B82F6),
-                                size: 20,
+                                size: 15,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
                             const Text(
                               'Escaneo de órdenes',
                               style: TextStyle(
-                                fontSize: 22,
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF0F172A),
                                 letterSpacing: 0.3,
@@ -198,47 +190,30 @@ class RouteVerificationHeader extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'Escanea el código de barras de cada bulto al\nsubirlo al vehículo para marcarlo como "En\ntransporte".',
+                          'Escanea el código de barras de cada bulto al subirlo al vehículo para marcarlo como "En transporte".',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: Color(0xFF64748B),
-                            height: 1.5,
+                            height: 1.35,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDEEBFF),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFFBFDBFE),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.fullscreen,
-                      color: Color(0xFF3B82F6),
-                      size: 20,
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 6),
 
               // Statistics cards
               Row(
                 children: [
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: const Color(0xFFE5E7EB),
                           width: 1,
@@ -257,25 +232,25 @@ class RouteVerificationHeader extends StatelessWidget {
                           const Text(
                             'Órdenes asignadas',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 12,
                               color: Color(0xFF64748B),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 2),
                           Text(
                             '$_totalOrders',
                             style: const TextStyle(
-                              fontSize: 36,
+                              fontSize: 30,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF0F172A),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 1),
                           const Text(
                             '100% del total',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Color(0xFF9CA3AF),
                               fontWeight: FontWeight.w500,
                             ),
@@ -284,13 +259,13 @@ class RouteVerificationHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: const Color(0xFFBFDBFE),
                           width: 1.5,
@@ -312,14 +287,14 @@ class RouteVerificationHeader extends StatelessWidget {
                               const Text(
                                 'En transporte',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   color: Color(0xFF1E40AF),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 3),
                               Container(
-                                padding: const EdgeInsets.all(4),
+                                padding: const EdgeInsets.all(3),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFDEEBFF),
                                   borderRadius: BorderRadius.circular(6),
@@ -327,28 +302,29 @@ class RouteVerificationHeader extends StatelessWidget {
                                 child: const Icon(
                                   Icons.local_shipping,
                                   color: Color(0xFF3B82F6),
-                                  size: 14,
+                                  size: 12,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 2),
                           Text(
                             '$_scannedOrders',
                             style: const TextStyle(
-                              fontSize: 36,
+                              fontSize: 30,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF1E40AF),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 1),
                           Text(
                             '$_scanPercentage de las asignadas',
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Color(0xFF1E40AF),
                               fontWeight: FontWeight.w500,
                             ),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
@@ -356,14 +332,14 @@ class RouteVerificationHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 6),
 
               // Progress section
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: const Color(0xFFE5E7EB),
                     width: 1,
@@ -378,13 +354,13 @@ class RouteVerificationHeader extends StatelessWidget {
                         const Text(
                           'Progreso de escaneo',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF0F172A),
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
                             color: const Color(0xFF3B82F6),
                             borderRadius: BorderRadius.circular(10),
@@ -392,7 +368,7 @@ class RouteVerificationHeader extends StatelessWidget {
                           child: Text(
                             '$_scannedOrders / $_totalOrders',
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -400,12 +376,12 @@ class RouteVerificationHeader extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 4),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicator(
                         value: _scanProgress,
-                        minHeight: 8,
+                        minHeight: 6,
                         backgroundColor: const Color(0xFFE5E7EB),
                         valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
                       ),
@@ -413,7 +389,7 @@ class RouteVerificationHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 6),
 
               // Scan button
               Material(
@@ -421,38 +397,39 @@ class RouteVerificationHeader extends StatelessWidget {
                 child: InkWell(
                   onTap: onScanTap,
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF3B82F6).withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.qr_code_2,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'Escanear código de barras',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF3B82F6).withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.qr_code_2,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Escanear código',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

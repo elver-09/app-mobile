@@ -69,14 +69,14 @@ class RouteCard extends StatelessWidget {
           child: Text(
             title,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Color(0xFF0F172A),
               letterSpacing: 0.3,
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
@@ -98,7 +98,7 @@ class RouteCard extends StatelessWidget {
               Text(
                 status,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 10,
                   color: statusColor,
                   fontWeight: FontWeight.bold,
                 ),
@@ -124,14 +124,14 @@ class RouteCard extends StatelessWidget {
             Text(
               '$stops paradas',
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: Color(0xFF475569),
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 10),
         Row(
           children: [
             const Icon(
@@ -143,7 +143,7 @@ class RouteCard extends StatelessWidget {
             Text(
               '$orders órdenes',
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: Color(0xFF475569),
                 fontWeight: FontWeight.w500,
               ),
@@ -200,7 +200,7 @@ class RouteCard extends StatelessWidget {
                 Text(
                   'Ver detalle',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 11,
                     color: Color(0xFF2563EB),
                     fontWeight: FontWeight.bold,
                   ),
@@ -208,7 +208,7 @@ class RouteCard extends StatelessWidget {
                 SizedBox(width: 6),
                 Icon(
                   Icons.arrow_forward_ios,
-                  size: 12,
+                  size: 11,
                   color: Color(0xFF2563EB),
                 ),
               ],

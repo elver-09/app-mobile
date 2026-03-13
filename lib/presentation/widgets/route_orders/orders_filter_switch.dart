@@ -18,7 +18,7 @@ class _OrdersFilterSwitchState extends State<OrdersFilterSwitch> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -56,16 +56,19 @@ class _OrdersFilterSwitchState extends State<OrdersFilterSwitch> {
               ),
             ],
           ),
-          Switch(
-            value: _showOnlyActive,
-            onChanged: (value) {
-              setState(() {
-                _showOnlyActive = value;
-              });
-              widget.onFilterChanged(value);
-            },
-            activeColor: const Color(0xFF2563EB),
-            inactiveThumbColor: Colors.grey.shade400,
+          Transform.scale(
+            scale: 0.75,
+            child: Switch(
+              value: _showOnlyActive,
+              onChanged: (value) {
+                setState(() {
+                  _showOnlyActive = value;
+                });
+                widget.onFilterChanged(value);
+              },
+              activeColor: const Color(0xFF2563EB),
+              inactiveThumbColor: Colors.grey.shade400,
+            ),
           ),
         ],
       ),

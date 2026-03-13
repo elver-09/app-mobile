@@ -1087,7 +1087,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                       },
                     ),
                     ],
-                    SizedBox(height: responsive.getResponsiveSize(24)),
+                    SizedBox(height: responsive.getResponsiveSize(12)),
 
                     // Órdenes asignadas title
                     Row(
@@ -1106,7 +1106,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                             '${orders.length} órdenes · ${orders.where((o) => o.planningStatus == 'in_planification').length} por escanear',
                             textAlign: TextAlign.right,
                             style: TextStyle(
-                              fontSize: responsive.bodySmallFontSize,
+                              fontSize: responsive.bodyMediumFontSize,
                               color: const Color(0xFFCBD5E1),
                               fontWeight: FontWeight.w500,
                             ),
@@ -1114,7 +1114,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         ),
                       ],
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(12)),
+                    SizedBox(height: responsive.getResponsiveSize(1)),
 
                     // Switch de filtro
                     OrdersFilterSwitch(
@@ -1126,7 +1126,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         }
                       },
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(12)),
+                    SizedBox(height: responsive.getResponsiveSize(6)),
 
                     // Orders list
                     if (filteredOrders.isEmpty)

@@ -382,7 +382,7 @@ class _ChooseSedeState extends State<ChooseSede> {
                     );
                   },
                 ),
-                SizedBox(height: responsive.getResponsiveSize(32)),
+                SizedBox(height: responsive.getResponsiveSize(10)),
                 // Routes section
                 Container(
                   padding: EdgeInsets.symmetric(
@@ -467,7 +467,7 @@ class _ChooseSedeState extends State<ChooseSede> {
                     ],
                   ),
                 ),
-                SizedBox(height: responsive.getResponsiveSize(20)),
+                SizedBox(height: responsive.getResponsiveSize(10)),
                 // Route cards - Loaded from Odoo
                 FutureBuilder<List<RouteItem>>(
                   future: _routesFuture.then(_getRoutesWithOrders),

@@ -94,7 +94,7 @@ class ResponsiveHelper {
   double get headingLargeFontSize => getResponsiveFontSize(22);
 
   /// Retorna el tamaño de fuente para títulos
-  double get headingMediumFontSize => getResponsiveFontSize(17);
+  double get headingMediumFontSize => getResponsiveFontSize(15);
 
   /// Retorna el tamaño de fuente para subtítulos
   double get headingSmallFontSize => getResponsiveFontSize(15);
