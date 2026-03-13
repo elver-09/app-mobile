@@ -3,7 +3,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DottedBorder extends CustomPainter {
@@ -1159,28 +1158,20 @@ class FlashlightButton extends StatefulWidget {
 
 class _FlashlightButtonState extends State<FlashlightButton> {
   bool _isFlashlightOn = false;
-  static const platform = MethodChannel('com.trainyl/flashlight');
 
   Future<void> _toggleFlashlight() async {
     try {
-      if (_isFlashlightOn) {
-        print('🔦 Apagando linterna...');
-        await platform.invokeMethod('disableFlashlight');
-        print('✅ Linterna apagada exitosamente');
-      } else {
-        print('🔦 Encendiendo linterna...');
-        await platform.invokeMethod('enableFlashlight');
-        print('✅ Linterna encendida exitosamente');
-      }
+      await widget.controller.toggleTorch();
       setState(() {
         _isFlashlightOn = !_isFlashlightOn;
-        print('📊 Estado de linterna: $_isFlashlightOn');
       });
-    } on PlatformException catch (e) {
-      print('❌ Error al controlar la linterna: ${e.message}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al controlar la linterna: ${e.message}')),
-      );
+    } catch (e) {
+      print('❌ Error al controlar la linterna: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al controlar la linterna: $e')),
+        );
+      }
     }
   }
 
@@ -1228,7 +1219,7 @@ class _FlashlightButtonState extends State<FlashlightButton> {
   @override
   void dispose() {
     if (_isFlashlightOn) {
-      platform.invokeMethod('disableFlashlight');
+      widget.controller.toggleTorch();
     }
     super.dispose();
   }
