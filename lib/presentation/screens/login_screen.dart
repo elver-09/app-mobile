@@ -165,6 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _auth.userCtrl,
                       keyboardType: TextInputType.emailAddress,
                       autofillHints: const [AutofillHints.email],
+                      style: TextStyle(fontSize: responsive.bodySmallFontSize + 2),
                       decoration: InputDecoration(
                         labelText: 'Correo Electrónico',
                         prefixIcon: const Icon(Icons.mail_outline, color: Color(0xFF64748B)),
@@ -203,6 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _auth.passCtrl,
                       obscureText: !_showPassword,
+                      style: TextStyle(fontSize: responsive.bodySmallFontSize + 2),
                       decoration: InputDecoration(
                         hintText: '••••••',
                         prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF64748B)),
