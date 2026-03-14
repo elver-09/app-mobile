@@ -313,106 +313,129 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
     bool allOrdersScanned,
     bool routeInProgress,
   ) {
-    // FILTRAR: Solo mostrar grupos con 2 o más órdenes
-    final actualGroups = groupedScannedOrders.where((group) => group.orders.length >= 2).toList();
-    
-    // Obtener IDs de órdenes que están en grupos REALES (2+ órdenes)
-    final groupedOrderIds = actualGroups
-        .expand((group) => group.orders)
-        .map((order) => order.id)
-        .toSet();
+    final filteredIds = filteredOrders.map((o) => o.id).toSet();
 
-    // Filtrar órdenes individuales (no están en grupos de 2+)
-    final individualOrders = filteredOrders.where((order) {
-      return !groupedOrderIds.contains(order.id);
-    }).toList();
+    // Grupos visibles con base en las órdenes filtradas actuales.
+    final visibleGroups = groupedScannedOrders
+        .map((group) {
+          final visibleOrders = group.orders
+              .where((order) => filteredIds.contains(order.id))
+              .toList();
+          if (visibleOrders.length < 2) return null;
+          return GroupedOrder(
+            clientName: group.clientName,
+            address: group.address,
+            phone: group.phone,
+            orders: visibleOrders,
+            latitude: group.latitude,
+            longitude: group.longitude,
+          );
+        })
+        .whereType<GroupedOrder>()
+        .toList();
+
+    // Índice rápido para saber si una orden pertenece a un grupo visible.
+    final Map<int, GroupedOrder> orderToGroup = {};
+    for (final group in visibleGroups) {
+      for (final order in group.orders) {
+        orderToGroup[order.id] = group;
+      }
+    }
+
+    final renderedGroupKeys = <String>{};
+    final orderedWidgets = <Widget>[];
+
+    for (final order in filteredOrders) {
+      final groupedOrder = orderToGroup[order.id];
+      if (groupedOrder != null) {
+        final groupKey = '${groupedOrder.clientName}|${groupedOrder.address}';
+        if (renderedGroupKeys.contains(groupKey)) {
+          continue;
+        }
+        renderedGroupKeys.add(groupKey);
+
+        // Verificar si todas las órdenes están rechazadas y pueden reprogramarse
+        final allRejected = groupedOrder.orders.every((o) => o.planningStatus == 'cancelled');
+        bool allCanReprogramAfterRejection = false;
+        if (allRejected && rejectionReasons.isNotEmpty) {
+          allCanReprogramAfterRejection = groupedOrder.orders.every((o) {
+            if (o.reasonRejectionId == null) return false;
+            final rejectedReason = rejectionReasons.firstWhere(
+              (r) => r['id'] == o.reasonRejectionId,
+              orElse: () => {},
+            );
+            return rejectedReason['reprogramed'] ?? false;
+          });
+        }
+
+        // Mostrar gestionar cuando exista al menos una orden en curso.
+        final inCourseOrders = groupedOrder.orders
+            .where((o) => o.planningStatus == 'start_of_route')
+            .toList();
+        final hasInCourse = inCourseOrders.isNotEmpty;
+
+        final manageableGroup = inCourseOrders.length == groupedOrder.orders.length
+            ? groupedOrder
+            : GroupedOrder(
+                clientName: groupedOrder.clientName,
+                address: groupedOrder.address,
+                phone: groupedOrder.phone,
+                orders: inCourseOrders,
+                latitude: groupedOrder.latitude,
+                longitude: groupedOrder.longitude,
+              );
+
+        final showReprogramButton = allRejected && allCanReprogramAfterRejection;
+        final showManageButton = !showReprogramButton && hasInCourse;
+        final VoidCallback onManageTap = () => _showGroupedOrderOptions(manageableGroup);
+
+        orderedWidgets.add(
+          GroupedOrderCard(
+            groupedOrder: groupedOrder,
+            onTap: onManageTap,
+            showManageButton: showManageButton,
+            showReprogramButton: showReprogramButton,
+            onReprogramTap: showReprogramButton
+                ? () => _showReprogramGroupedOrdersModal(groupedOrder)
+                : null,
+          ),
+        );
+      } else {
+        final isOrderActive = order.planningStatus == 'start_of_route';
+        const isOrderDisabled = false;
+
+        orderedWidgets.add(
+          RouteOrderCard(
+            order: order,
+            token: widget.token,
+            odooClient: widget.odooClient,
+            routeName: widget.routeName,
+            onStartRouteSuccess: _reloadOrders,
+            isActive: isOrderActive,
+            isDisabled: isOrderDisabled,
+            routeId: widget.routeId,
+            routeStartLatitude: routeStartLat,
+            routeStartLongitude: routeStartLng,
+            allOrders: allOrders,
+            onTap: () => _openOrderDetail(
+              order,
+              fleetType,
+              fleetLicense,
+              routeStartLat,
+              routeStartLng,
+            ),
+          ),
+        );
+      }
+    }
 
     return Column(
       children: [
-        // Mostrar SOLO grupos con 2 o más órdenes
-        ...actualGroups.map((groupedOrder) {
-          // Verificar si todas las órdenes están rechazadas y pueden reprogramarse
-          final allRejected = groupedOrder.orders.every((order) => order.planningStatus == 'cancelled');
-          bool allCanReprogramAfterRejection = false;
-          if (allRejected && rejectionReasons.isNotEmpty) {
-            allCanReprogramAfterRejection = groupedOrder.orders.every((order) {
-              if (order.reasonRejectionId == null) return false;
-              final rejectedReason = rejectionReasons.firstWhere(
-                (r) => r['id'] == order.reasonRejectionId,
-                orElse: () => {},
-              );
-              return rejectedReason['reprogramed'] ?? false;
-            });
-          }
-
-          // Mostrar gestionar cuando exista al menos una orden en curso.
-          final inCourseOrders = groupedOrder.orders
-              .where((order) => order.planningStatus == 'start_of_route')
-              .toList();
-          final hasInCourse = inCourseOrders.isNotEmpty;
-
-          // Si el grupo está mixto, gestionar solo las órdenes en curso.
-          final manageableGroup = inCourseOrders.length == groupedOrder.orders.length
-              ? groupedOrder
-              : GroupedOrder(
-                  clientName: groupedOrder.clientName,
-                  address: groupedOrder.address,
-                  phone: groupedOrder.phone,
-                  orders: inCourseOrders,
-                  latitude: groupedOrder.latitude,
-                  longitude: groupedOrder.longitude,
-                );
-
-          // Lógica de botones:
-          // - Si todas están rechazadas Y pueden reprogramar: mostrar SOLO Reprogramar
-          // - Si existe al menos una en curso: mostrar Gestionar
-          final showReprogramButton = allRejected && allCanReprogramAfterRejection;
-          final showManageButton = !showReprogramButton && hasInCourse;
-          final VoidCallback onManageTap = () => _showGroupedOrderOptions(manageableGroup);
-
+        ...orderedWidgets.asMap().entries.map((entry) {
           return Column(
             children: [
-              GroupedOrderCard(
-                groupedOrder: groupedOrder,
-                onTap: onManageTap,
-                showManageButton: showManageButton,
-                showReprogramButton: showReprogramButton,
-                onReprogramTap: showReprogramButton ? () => _showReprogramGroupedOrdersModal(groupedOrder) : null,
-              ),
-              SizedBox(height: responsive.getResponsiveSize(12)),
-            ],
-          );
-        }),
-        
-        // Mostrar órdenes individuales (no escaneadas o sin grupo)
-        ...individualOrders.asMap().entries.map((entry) {
-          final order = entry.value;
-          final isOrderActive = order.planningStatus == 'start_of_route';
-          final isOrderDisabled = false;
-
-          return Column(
-            children: [
-              RouteOrderCard(
-                order: order,
-                token: widget.token,
-                odooClient: widget.odooClient,
-                routeName: widget.routeName,
-                onStartRouteSuccess: _reloadOrders,
-                isActive: isOrderActive,
-                isDisabled: isOrderDisabled,
-                routeId: widget.routeId,
-                routeStartLatitude: routeStartLat,
-                routeStartLongitude: routeStartLng,
-                allOrders: allOrders,
-                onTap: () => _openOrderDetail(
-                  order,
-                  fleetType,
-                  fleetLicense,
-                  routeStartLat,
-                  routeStartLng,
-                ),
-              ),
-              if (entry.key < individualOrders.length - 1)
+              entry.value,
+              if (entry.key < orderedWidgets.length - 1)
                 SizedBox(height: responsive.getResponsiveSize(12)),
             ],
           );
