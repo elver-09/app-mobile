@@ -28,18 +28,20 @@ class RouteOrdersResponse {
 class DriverInfo {
   final int employeeId;
   final String name;
-  final String email;
-  final String phone;
+  final String workEmail;
+  final String workPhone;
   final String job;
+  final String? imageBase64;
   final int routeId;
   final String? routeName;
 
   DriverInfo({
     required this.employeeId,
     required this.name,
-    required this.email,
-    required this.phone,
+    required this.workEmail,
+    required this.workPhone,
     required this.job,
+    this.imageBase64,
     required this.routeId,
     this.routeName,
   });
@@ -117,9 +119,10 @@ class OdooClient {
     final driver = DriverInfo(
       employeeId: _asInt(driverData['employee_id']),
       name: _asString(driverData['name']),
-      email: _asString(driverData['email']),
-      phone: _asString(driverData['phone']),
+      workEmail: _asString(driverData['work_email']),
+      workPhone: _asString(driverData['work_phone']),
       job: _asString(driverData['job']),
+      imageBase64: driverData['image_1920'],
       routeId: 0,
       routeName: null,
     );

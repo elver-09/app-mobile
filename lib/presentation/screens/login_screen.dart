@@ -55,7 +55,13 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context) => ChooseSede(
             token: result.token,
             odooClient: _auth.client,
-            driverName: result.driver.name,
+            driver: {
+              'name': result.driver.name,
+              'work_email': result.driver.workEmail,
+              'work_phone': result.driver.workPhone,
+              'job': result.driver.job,
+              'image_1920': result.driver.imageBase64,
+            },
           ),
         ),
       );

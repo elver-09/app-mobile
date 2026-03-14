@@ -2,10 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/presentation/screens/login_screen.dart';
 
 class DriverProfileScreen extends StatelessWidget {
-  const DriverProfileScreen({super.key});
+  final Map<String, dynamic> driver;
+  const DriverProfileScreen({super.key, required this.driver});
 
   @override
   Widget build(BuildContext context) {
+    final String name = driver['name'] ?? '';
+    final String workEmail = driver['work_email'] ?? '';
+    final String workPhone = driver['work_phone'] ?? '';
+    final String job = driver['job'] ?? '';
+    final String? imageBase64 = driver['image_1920'] ?? driver['imageBase64'];
+
+    ImageProvider? profileImage;
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        profileImage = MemoryImage(
+          Uri.parse('data:image/png;base64,$imageBase64').data!.contentAsBytes(),
+        );
+      } catch (_) {
+        profileImage = null;
+      }
+    }
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
@@ -37,44 +55,39 @@ class DriverProfileScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     CircleAvatar(
                       radius: 30,
-                      backgroundColor: Color(0xFFDBEAFE),
-                      child: Icon(
-                        Icons.person,
-                        size: 32,
-                        color: Color(0xFF1D4ED8),
-                      ),
+                      backgroundColor: const Color(0xFFDBEAFE),
+                      backgroundImage: profileImage,
+                      child: profileImage == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 32,
+                              color: Color(0xFF1D4ED8),
+                            )
+                          : null,
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Juan Pérez Gómez',
-                            style: TextStyle(
+                            name,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF0F172A),
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'Chofer de reparto',
-                            style: TextStyle(
+                            job,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF64748B),
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Foto de perfil (demo)',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF94A3B8),
                             ),
                           ),
                         ],
@@ -86,75 +99,31 @@ class DriverProfileScreen extends StatelessWidget {
               const SizedBox(height: 10),
               _buildSection(
                 title: 'Datos del chofer',
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _ProfileRow(
                       icon: Icons.person,
                       label: 'Nombre',
-                      value: 'Juan',
+                      value: name,
                     ),
-                    SizedBox(height: 9),
-                    _ProfileRow(
-                      icon: Icons.badge_outlined,
-                      label: 'Apellidos',
-                      value: 'Pérez Gómez',
-                    ),
-                    SizedBox(height: 9),
-                    _ProfileRow(
-                      icon: Icons.alternate_email,
-                      label: 'Usuario',
-                      value: 'jperez',
-                    ),
-                    SizedBox(height: 9),
+                    const SizedBox(height: 9),
                     _ProfileRow(
                       icon: Icons.mail_outline,
                       label: 'Correo',
-                      value: 'jperez@empresa.com',
+                      value: workEmail,
                     ),
-                    SizedBox(height: 9),
+                    const SizedBox(height: 9),
                     _ProfileRow(
                       icon: Icons.phone,
                       label: 'Teléfono',
-                      value: '+51 999 888 777',
+                      value: workPhone,
                     ),
-                    SizedBox(height: 9),
+                    const SizedBox(height: 9),
                     _ProfileRow(
-                      icon: Icons.business_outlined,
-                      label: 'Sede',
-                      value: 'Lima Norte',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              _buildSection(
-                title: 'Datos del vehículo',
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _ProfileRow(
-                      icon: Icons.local_shipping,
-                      label: 'Vehículo',
-                      value: 'Camión Isuzu NQR',
-                    ),
-                    SizedBox(height: 9),
-                    _ProfileRow(
-                      icon: Icons.badge,
-                      label: 'Placa',
-                      value: 'ABC-123',
-                    ),
-                    SizedBox(height: 9),
-                    _ProfileRow(
-                      icon: Icons.confirmation_number_outlined,
-                      label: 'Unidad',
-                      value: 'UN-07',
-                    ),
-                    SizedBox(height: 9),
-                    _ProfileRow(
-                      icon: Icons.verified_outlined,
-                      label: 'Licencia',
-                      value: 'A-2B',
+                      icon: Icons.badge_outlined,
+                      label: 'Cargo',
+                      value: job,
                     ),
                   ],
                 ),

@@ -12,13 +12,13 @@ import '../widgets/choose_sede/route_card.dart';
 class ChooseSede extends StatefulWidget {
   final String token;
   final OdooClient odooClient;
-  final String driverName;
+  final Map<String, dynamic> driver;
 
   const ChooseSede({
     super.key,
     required this.token,
     required this.odooClient,
-    required this.driverName,
+    required this.driver,
   });
 
   @override
@@ -539,7 +539,9 @@ class _ChooseSedeState extends State<ChooseSede> {
           ),
         ),
       )
-          : const DriverProfileScreen(),
+          : DriverProfileScreen(
+              driver: widget.driver,
+            ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
