@@ -3,6 +3,7 @@ import 'package:trainyl_2_0/core/constants/route_status.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/route_model.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
+import 'package:trainyl_2_0/presentation/screens/profile_screen.dart';
 import 'package:trainyl_2_0/presentation/screens/route_orders_screen.dart';
 import '../widgets/choose_sede/sede_header.dart';
 import '../widgets/choose_sede/pie_chart_widget.dart';
@@ -25,7 +26,7 @@ class ChooseSede extends StatefulWidget {
 }
 
 class _ChooseSedeState extends State<ChooseSede> {
-  int _selectedIndex = 1; // Rutas tab selected
+  int _selectedIndex = 0; // Rutas tab selected
   late Future<List<RouteItem>> _routesFuture;
 
   @override
@@ -177,7 +178,8 @@ class _ChooseSedeState extends State<ChooseSede> {
     
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
+      body: _selectedIndex == 0
+          ? SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
@@ -536,7 +538,8 @@ class _ChooseSedeState extends State<ChooseSede> {
             ),
           ),
         ),
-      ),
+      )
+          : const DriverProfileScreen(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
