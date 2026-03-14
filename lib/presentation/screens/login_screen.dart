@@ -60,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
               'work_email': result.driver.workEmail,
               'work_phone': result.driver.workPhone,
               'job': result.driver.job,
+              'license_number': result.driver.licenseNumber,
               'image_1920': result.driver.imageBase64,
             },
           ),

@@ -31,6 +31,7 @@ class DriverInfo {
   final String workEmail;
   final String workPhone;
   final String job;
+  final String? licenseNumber;
   final String? imageBase64;
   final int routeId;
   final String? routeName;
@@ -41,6 +42,7 @@ class DriverInfo {
     required this.workEmail,
     required this.workPhone,
     required this.job,
+    this.licenseNumber,
     this.imageBase64,
     required this.routeId,
     this.routeName,
@@ -122,6 +124,7 @@ class OdooClient {
       workEmail: _asString(driverData['work_email']),
       workPhone: _asString(driverData['work_phone']),
       job: _asString(driverData['job']),
+      licenseNumber: _asString(driverData['license_number']),
       imageBase64: driverData['image_1920'],
       routeId: 0,
       routeName: null,
