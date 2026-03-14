@@ -1029,7 +1029,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                         absorbing: isBlocked,
                         child: TextField(
                           controller: _commentController,
-                          maxLines: 4,
+                          minLines: 1,
+                          maxLines: null,
+                          style: TextStyle(
+                            fontSize: responsive.bodyMediumFontSize,
+                            color: const Color(0xFF1F2937),
+                            height: 1.25,
+                          ),
                           readOnly: true,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1060,12 +1066,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                               borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
                               borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
                             ),
-                            contentPadding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: responsive.getResponsiveSize(14),
+                              vertical: responsive.getResponsiveSize(10),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(24)),
+                    SizedBox(height: responsive.getResponsiveSize(5)),
                     // Reprogramar: botón visible solo cuando la orden está en estado 'cancelled' Y la razón seleccionada tiene reprogramed=true
                     if (currentOrderStatus == 'cancelled' && canReprogramAfterRejection)
                       Padding(
@@ -1107,7 +1116,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                 }
                               },
                             ),
-                            SizedBox(height: responsive.getResponsiveSize(24)),
+                            SizedBox(height: responsive.getResponsiveSize(0)),
                           ],
                         ),
                       ),

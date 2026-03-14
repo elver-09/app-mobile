@@ -184,7 +184,7 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(10),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
@@ -205,17 +205,17 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                         const Text(
                           'Entrega parcial',
                           style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           widget.groupedOrder.clientName,
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -234,7 +234,7 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -242,28 +242,28 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                     const Text(
                       'Selecciona qué hacer con cada orden',
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 5),
                     ...widget.groupedOrder.orders.map((order) {
                       final selection = orderSelections[order.id] ?? 'pending';
                       return _buildOrderSelection(order, selection, responsive);
                     }),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     // Fotos de entrega
                     if (_hasDeliveries) ...[
                       const Text(
                         'Evidencia de entregas',
                         style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 5),
                       // Captura de foto (3 obligatorias)
                       _buildPhotoCapture(
                         label: 'Fotos de entrega (3 obligatorias)',
@@ -281,7 +281,7 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                         maxPhotos: 3,
                         responsive: responsive,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 5),
                       TextField(
                         controller: _deliveryCommentController,
                         maxLines: 2,
@@ -312,28 +312,28 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                         ),
                         onChanged: (_) => setState(() {}),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
                     ],
                     // Fotos de rechazo
                     if (_hasRejections) ...[
                       const Text(
                         'Evidencia de rechazos',
                         style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 5),
                       const Text(
                         'Motivo del rechazo',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 3),
                       if (_isLoadingReasons)
                         const Center(child: CircularProgressIndicator())
                       else
@@ -344,39 +344,41 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                               .map((reason) => _buildReasonChip(reason))
                               .toList(),
                         ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _rejectCommentController,
-                        maxLines: 3,
-                        decoration: InputDecoration(
-                          hintText:
-                              'Detalles adicionales del rechazo (obligatorio)',
-                          hintStyle: const TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 14,
+                      const SizedBox(height: 5),
+                      if (_selectedReasonNeedsNote())
+                        TextField(
+                          controller: _rejectCommentController,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText:
+                                'Detalles adicionales del rechazo (obligatorio)',
+                            hintStyle: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 14,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  const BorderSide(color: Color(0xFFE5E7EB)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                  color: Color(0xFFB91C1C), width: 2),
+                            ),
+                            contentPadding: const EdgeInsets.all(12),
                           ),
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide:
-                                const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide:
-                                const BorderSide(color: Color(0xFFE5E7EB)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                                color: Color(0xFFB91C1C), width: 2),
-                          ),
-                          contentPadding: const EdgeInsets.all(12),
+                          onChanged: (_) => setState(() {}),
                         ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 12),
+                      if (_selectedReasonNeedsNote())
+                        const SizedBox(height: 5),
                       _buildPhotoCapture(
                         label: 'Fotos de rechazo (3 obligatorias)',
                         photos: rejectionPhotos,
@@ -400,7 +402,7 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
             ),
             // Footer
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 border: Border(
@@ -411,27 +413,29 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                   bottomRight: Radius.circular(22),
                 ),
               ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _canConfirm ? _confirmPartialDelivery : null,
-                  icon: const Icon(Icons.check, size: 20),
-                  label: const Text('Confirmar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _canConfirm
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFE2E8F0),
-                    foregroundColor: _canConfirm
-                        ? Colors.white
-                        : const Color(0xFF94A3B8),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              child: Center(
+                child: SizedBox(
+                  width: 180,
+                  child: ElevatedButton.icon(
+                    onPressed: _canConfirm ? _confirmPartialDelivery : null,
+                    icon: const Icon(Icons.check, size: 16),
+                    label: const Text('Confirmar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _canConfirm
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFE2E8F0),
+                      foregroundColor: _canConfirm
+                          ? Colors.white
+                          : const Color(0xFF94A3B8),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -449,17 +453,17 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
     ResponsiveHelper responsive,
   ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFF0F172A), width: 2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: const Color(0xFF0F172A).withOpacity(0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -475,17 +479,17 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                     Text(
                       order.orderNumber,
                       style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       order.product ?? 'Sin producto',
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
                         color: Color(0xFF64748B),
                       ),
                     ),
@@ -494,17 +498,19 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 7),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
+              SizedBox(
+                width: 110,
                 child: OutlinedButton.icon(
                   onPressed: () {
                     setState(() {
                       orderSelections[order.id] = 'deliver';
                     });
                   },
-                  icon: const Icon(Icons.check_circle, size: 18),
+                  icon: const Icon(Icons.check_circle, size: 13),
                   label: const Text('Entregar'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: selection == 'deliver'
@@ -514,31 +520,33 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                       color: selection == 'deliver'
                           ? const Color(0xFF10B981)
                           : const Color(0xFFCBD5E1),
-                      width: 1.5,
+                      width: 1.1,
                     ),
                     backgroundColor: selection == 'deliver'
-                        ? const Color(0xFF10B981).withOpacity(0.1)
+                        ? const Color(0xFF10B981).withOpacity(0.08)
                         : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
                     textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
+                    minimumSize: const Size(0, 24),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(22),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 110,
                 child: OutlinedButton.icon(
                   onPressed: () {
                     setState(() {
                       orderSelections[order.id] = 'reject';
                     });
                   },
-                  icon: const Icon(Icons.cancel, size: 18),
+                  icon: const Icon(Icons.cancel, size: 13),
                   label: const Text('Rechazar'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: selection == 'reject'
@@ -548,18 +556,19 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
                       color: selection == 'reject'
                           ? const Color(0xFFEF4444)
                           : const Color(0xFFCBD5E1),
-                      width: 1.5,
+                      width: 1.1,
                     ),
                     backgroundColor: selection == 'reject'
-                        ? const Color(0xFFEF4444).withOpacity(0.1)
+                        ? const Color(0xFFEF4444).withOpacity(0.08)
                         : Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
                     textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
+                    minimumSize: const Size(0, 24),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(22),
                     ),
                   ),
                 ),
@@ -585,8 +594,8 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
             color: Color(0xFF0F172A),
           ),
         ),
@@ -604,10 +613,10 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
               side: const BorderSide(color: Color(0xFF94A3B8), width: 1.4),
               backgroundColor: Colors.white,
               textStyle: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
@@ -744,7 +753,7 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
         child: Text(
           reasonName,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: isSelected
                 ? const Color(0xFF0F766E)
                 : const Color(0xFF334155),

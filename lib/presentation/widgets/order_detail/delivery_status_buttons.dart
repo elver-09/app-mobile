@@ -78,7 +78,7 @@ class DeliveryStatusButtons extends StatelessWidget {
       children: [
         if (!isOrderInProgress) ...[
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(8),
@@ -94,14 +94,14 @@ class DeliveryStatusButtons extends StatelessWidget {
                       ? Icons.check_circle_outline
                       : Icons.info_outline,
                   color: iconColor,
-                  size: 20,
+                  size: 16,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     message,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 11,
                       color: textColor,
                       fontWeight: FontWeight.w500,
                     ),
@@ -110,7 +110,7 @@ class DeliveryStatusButtons extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
         Align(
           alignment: Alignment.center,

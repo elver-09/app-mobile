@@ -182,7 +182,7 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: isDelivery
@@ -207,19 +207,19 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                               ? 'Entregar todas las órdenes'
                               : 'Rechazar todas las órdenes',
                           style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                             color: isDelivery
                                 ? const Color(0xFF166534)
                                 : const Color(0xFF7F1D1D),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           '${widget.groupedOrder.clientName} · ${widget.groupedOrder.orders.length} órdenes',
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
                             color: Color(0xFF64748B),
                           ),
                         ),
@@ -246,30 +246,31 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                     const Text(
                       'Órdenes a procesar:',
                       style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     ...widget.groupedOrder.orders.map((order) {
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: 4),
                         child: Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0F172A).withOpacity(0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                                color: const Color(0xFF0F172A).withOpacity(0.08),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
                               ),
                             ],
                           ),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Icon(
                                 isDelivery
@@ -278,28 +279,27 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                                 color: isDelivery
                                     ? const Color(0xFF10B981)
                                     : const Color(0xFFEF4444),
-                                size: 20,
+                                size: 16,
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 7),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       order.orderNumber,
                                       style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w700,
                                         color: Color(0xFF0F172A),
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 1),
                                     Text(
                                       order.product ?? 'Sin producto',
                                       style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w400,
                                         color: Color(0xFF64748B),
                                       ),
                                     ),
@@ -311,18 +311,18 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                         ),
                       );
                     }),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     // Campos específicos por tipo
                     if (!isDelivery) ...[
                       const Text(
                         'Motivo del rechazo',
                         style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       if (_isLoadingReasons)
                         const Center(child: CircularProgressIndicator())
                       else
@@ -333,7 +333,7 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                               .map((reason) => _buildReasonChip(reason))
                               .toList(),
                         ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       if (_selectedReasonNeedsNote()) ...[
                         TextField(
                           controller: _commentController,
@@ -374,66 +374,73 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                           ? 'Evidencia de entrega'
                           : 'Evidencia del rechazo',
                       style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Text(
                       isDelivery
                           ? '3 fotos obligatorias'
                           : '3 fotos obligatorias',
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w400,
                         color: Color(0xFF94A3B8),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     if (photos.length < 3)
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          await _takePhoto(3);
-                        },
-                        icon: const Icon(Icons.camera_alt),
-                        label: Text(
-                          'Capturar foto (${photos.length}/3)',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: isDelivery
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFFEF4444),
-                          side: BorderSide(
-                            color: isDelivery
+                      SizedBox(
+                        height: 34,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            await _takePhoto(3);
+                          },
+                          icon: const Icon(Icons.camera_alt, size: 18),
+                          label: Text(
+                            'Capturar foto (${photos.length}/3)',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDelivery
                                 ? const Color(0xFF10B981)
                                 : const Color(0xFFEF4444),
-                            width: 1.4,
-                          ),
-                          backgroundColor: Colors.white,
-                          textStyle: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
+                            side: BorderSide(
+                              color: isDelivery
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFEF4444),
+                              width: 1.2,
+                            ),
+                            backgroundColor: Colors.white,
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
                         ),
                       ),
                     if (photos.isNotEmpty) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 6,
+                          crossAxisSpacing: 6,
                           childAspectRatio: 1,
                         ),
                         itemCount: photos.length,
@@ -447,8 +454,8 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.08),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
                                     ),
                                   ],
                                   image: DecorationImage(
@@ -458,8 +465,8 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                                 ),
                               ),
                               Positioned(
-                                top: 4,
-                                right: 4,
+                                top: 3,
+                                right: 3,
                                 child: GestureDetector(
                                   onTap: () {
                                     setState(() {
@@ -467,14 +474,14 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                                     });
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.all(4),
+                                    padding: const EdgeInsets.all(3),
                                     decoration: const BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
                                       Icons.close,
-                                      size: 16,
+                                      size: 13,
                                       color: Colors.white,
                                     ),
                                   ),
@@ -485,24 +492,14 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                         },
                       ),
                     ],
-                    if (!isDelivery)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          'Muestra puerta cerrada, timbre o señalización del lugar.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ),
+                    // Eliminado: texto de muestra puerta cerrada, timbre o señalización del lugar
                   ],
                 ),
               ),
             ),
             // Footer
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 border: Border(
@@ -516,17 +513,10 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
               child: Column(
                 children: [
                   SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed:
-                          _canConfirm ? _confirmMultipleDelivery : null,
-                      icon: Icon(
-                        isDelivery ? Icons.check : Icons.cancel,
-                        size: 20,
-                      ),
-                      label: Text(isDelivery
-                          ? 'Confirmar entrega'
-                          : 'Confirmar rechazo'),
+                    width: 180,
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: _canConfirm ? _confirmMultipleDelivery : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _canConfirm
                             ? (isDelivery
@@ -537,24 +527,24 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                             ? Colors.white
                             : const Color(0xFF94A3B8),
                         elevation: 0,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.zero,
                         textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
+                      child: const Text('Confirmar'),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
                     'Esta acción no se puede deshacer desde la app del conductor.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: Colors.grey.shade600,
                     ),
                   ),

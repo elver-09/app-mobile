@@ -20,32 +20,37 @@ class ReprogramButton extends StatelessWidget {
     const pressedColor = Color(0xFF1F2937);
     const disabledColor = Color(0xFFCBD5E1);
 
-    final bg = MaterialStateProperty.resolveWith<Color?>((states) {
-      if (states.contains(MaterialState.disabled)) return disabledColor;
-      if (states.contains(MaterialState.pressed)) return pressedColor;
+    final bg = WidgetStateProperty.resolveWith<Color?>((states) {
+      if (states.contains(WidgetState.disabled)) return disabledColor;
+      if (states.contains(WidgetState.pressed)) return pressedColor;
       return primaryColor;
     });
 
-    return SizedBox(
-      width: double.infinity,
+    return Center(
       child: ElevatedButton(
         onPressed: enabled ? onPressed : null,
         style: ButtonStyle(
           backgroundColor: bg,
-          foregroundColor: MaterialStateProperty.all<Color?>(Colors.white),
-          padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 14, horizontal: 18)),
-          shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(28))),
-          elevation: MaterialStateProperty.resolveWith<double>((states) => states.contains(MaterialState.disabled) ? 0 : 3),
+          foregroundColor: WidgetStateProperty.all<Color?>(Colors.white),
+          minimumSize: WidgetStateProperty.all(Size.zero),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 9, horizontal: 12)),
+          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+          elevation: WidgetStateProperty.resolveWith<double>((states) => states.contains(WidgetState.disabled) ? 0 : 3),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.schedule, size: 18, color: Colors.white),
-            const SizedBox(width: 8),
+            const Icon(Icons.schedule, size: 15, color: Colors.white),
+            const SizedBox(width: 6),
             Text(
               'REPROGRAMAR',
-              style: theme.textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
             ),
           ],
         ),

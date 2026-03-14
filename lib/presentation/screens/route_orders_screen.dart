@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
@@ -38,6 +39,12 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
   late Future<RouteOrdersResponse> _ordersFuture;
   bool _showOnlyActive = true;
   bool _isLoadingNextOrder = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  final ScrollController _ordersScrollController = ScrollController();
+  final Map<int, GlobalKey> _orderCardKeys = {};
+  int? _focusedOrderId;
+  Timer? _clearFocusTimer;
   List<Map<String, dynamic>> rejectionReasons = [];
 
   @override
@@ -69,8 +76,65 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
   @override
   void dispose() {
+    _clearFocusTimer?.cancel();
+    _searchController.dispose();
+    _ordersScrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  bool _matchesOrderSearch(OrderItem order) {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return true;
+
+    final client = order.fullname.toLowerCase();
+    final orderNumber = order.orderNumber.toLowerCase();
+    return client.contains(query) || orderNumber.contains(query);
+  }
+
+  GlobalKey _getOrderKey(int orderId) {
+    return _orderCardKeys.putIfAbsent(orderId, () => GlobalKey());
+  }
+
+  Future<void> _redirectToOrderInList(OrderItem order) async {
+    if (!mounted) return;
+
+    // Si la orden no está visible por búsqueda, limpiar búsqueda para poder redirigir.
+    if (_searchQuery.trim().isNotEmpty && !_matchesOrderSearch(order)) {
+      setState(() {
+        _searchQuery = '';
+        _searchController.clear();
+      });
+      await Future.delayed(const Duration(milliseconds: 80));
+      if (!mounted) return;
+    }
+
+    setState(() {
+      _focusedOrderId = order.id;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 80));
+    if (!mounted) return;
+
+    final targetKey = _orderCardKeys[order.id];
+    final targetContext = targetKey?.currentContext;
+
+    if (targetContext != null) {
+      await Scrollable.ensureVisible(
+        targetContext,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+        alignment: 0.2,
+      );
+    }
+
+    _clearFocusTimer?.cancel();
+    _clearFocusTimer = Timer(const Duration(milliseconds: 1400), () {
+      if (!mounted) return;
+      setState(() {
+        _focusedOrderId = null;
+      });
+    });
   }
 
   @override
@@ -242,6 +306,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
     String fleetLicense,
     double? routeStartLat,
     double? routeStartLng,
+    bool withArrivalEffect,
   ) async {
     try {
       print('🔍 Obteniendo detalle de orden ID: ${order.id}');
@@ -264,31 +329,73 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
       print('✅ Detalle cargado correctamente');
       if (!mounted) return;
+      final Route<dynamic> route = withArrivalEffect
+          ? PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  OrderDetailScreen(
+                orderId: detail.id,
+                routeSequence: detail.routeSequence ?? detail.sequence ?? order.routeSequence ?? order.sequence,
+                orderNumber: detail.orderNumber,
+                clientName: detail.fullname,
+                phone: detail.phone ?? '',
+                address: detail.address,
+                product: detail.product ?? 'N/A',
+                district: detail.district,
+                token: widget.token,
+                odooClient: widget.odooClient,
+                routeName: widget.routeName,
+                fleetType: fleetType,
+                fleetLicense: fleetLicense,
+                routeStartLatitude: routeStartLat,
+                routeStartLongitude: routeStartLng,
+                latitude: detail.latitude,
+                longitude: detail.longitude,
+                planningStatus: detail.planningStatus,
+                routeId: widget.routeId,
+              ),
+              transitionDuration: const Duration(milliseconds: 360),
+              reverseTransitionDuration: const Duration(milliseconds: 250),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                );
+                return FadeTransition(
+                  opacity: curved,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.96, end: 1.0).animate(curved),
+                    child: child,
+                  ),
+                );
+              },
+            )
+          : MaterialPageRoute(
+              builder: (context) => OrderDetailScreen(
+                orderId: detail.id,
+                routeSequence: detail.routeSequence ?? detail.sequence ?? order.routeSequence ?? order.sequence,
+                orderNumber: detail.orderNumber,
+                clientName: detail.fullname,
+                phone: detail.phone ?? '',
+                address: detail.address,
+                product: detail.product ?? 'N/A',
+                district: detail.district,
+                token: widget.token,
+                odooClient: widget.odooClient,
+                routeName: widget.routeName,
+                fleetType: fleetType,
+                fleetLicense: fleetLicense,
+                routeStartLatitude: routeStartLat,
+                routeStartLongitude: routeStartLng,
+                latitude: detail.latitude,
+                longitude: detail.longitude,
+                planningStatus: detail.planningStatus,
+                routeId: widget.routeId,
+              ),
+            );
+
       final result = await Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => OrderDetailScreen(
-            orderId: detail.id,
-            routeSequence: detail.routeSequence ?? detail.sequence ?? order.routeSequence ?? order.sequence,
-            orderNumber: detail.orderNumber,
-            clientName: detail.fullname,
-            phone: detail.phone ?? '',
-            address: detail.address,
-            product: detail.product ?? 'N/A',
-            district: detail.district,
-            token: widget.token,
-            odooClient: widget.odooClient,
-            routeName: widget.routeName,
-            fleetType: fleetType,
-            fleetLicense: fleetLicense,
-            routeStartLatitude: routeStartLat,
-            routeStartLongitude: routeStartLng,
-            latitude: detail.latitude,
-            longitude: detail.longitude,
-            planningStatus: detail.planningStatus,
-            routeId: widget.routeId,
-          ),
-        ),
+        route,
       );
       if (result is Map && result['updated'] == true) {
         _reloadOrders();
@@ -348,6 +455,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
     for (final order in filteredOrders) {
       final groupedOrder = orderToGroup[order.id];
       if (groupedOrder != null) {
+        final groupAnchorKey = _getOrderKey(groupedOrder.orders.first.id);
+        for (final groupedOrderItem in groupedOrder.orders) {
+          _orderCardKeys[groupedOrderItem.id] = groupAnchorKey;
+        }
+
         final groupKey = '${groupedOrder.clientName}|${groupedOrder.address}';
         if (renderedGroupKeys.contains(groupKey)) {
           continue;
@@ -388,41 +500,83 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
         final showReprogramButton = allRejected && allCanReprogramAfterRejection;
         final showManageButton = !showReprogramButton && hasInCourse;
         final VoidCallback onManageTap = () => _showGroupedOrderOptions(manageableGroup);
+        final isFocusedGroup = groupedOrder.orders.any((o) => o.id == _focusedOrderId);
 
         orderedWidgets.add(
-          GroupedOrderCard(
-            groupedOrder: groupedOrder,
-            onTap: onManageTap,
-            showManageButton: showManageButton,
-            showReprogramButton: showReprogramButton,
-            onReprogramTap: showReprogramButton
-                ? () => _showReprogramGroupedOrdersModal(groupedOrder)
-                : null,
+          KeyedSubtree(
+            key: groupAnchorKey,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: isFocusedGroup
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF3B82F6).withOpacity(0.28),
+                          blurRadius: 18,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: GroupedOrderCard(
+                groupedOrder: groupedOrder,
+                onTap: onManageTap,
+                showManageButton: showManageButton,
+                showReprogramButton: showReprogramButton,
+                onReprogramTap: showReprogramButton
+                    ? () => _showReprogramGroupedOrdersModal(groupedOrder)
+                    : null,
+              ),
+            ),
           ),
         );
       } else {
         final isOrderActive = order.planningStatus == 'start_of_route';
         const isOrderDisabled = false;
+        final orderKey = _getOrderKey(order.id);
+        final isFocusedOrder = _focusedOrderId == order.id;
 
         orderedWidgets.add(
-          RouteOrderCard(
-            order: order,
-            token: widget.token,
-            odooClient: widget.odooClient,
-            routeName: widget.routeName,
-            onStartRouteSuccess: _reloadOrders,
-            isActive: isOrderActive,
-            isDisabled: isOrderDisabled,
-            routeId: widget.routeId,
-            routeStartLatitude: routeStartLat,
-            routeStartLongitude: routeStartLng,
-            allOrders: allOrders,
-            onTap: () => _openOrderDetail(
-              order,
-              fleetType,
-              fleetLicense,
-              routeStartLat,
-              routeStartLng,
+          KeyedSubtree(
+            key: orderKey,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: isFocusedOrder
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF3B82F6).withOpacity(0.28),
+                          blurRadius: 18,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: RouteOrderCard(
+                order: order,
+                token: widget.token,
+                odooClient: widget.odooClient,
+                routeName: widget.routeName,
+                onStartRouteSuccess: _reloadOrders,
+                isActive: isOrderActive,
+                isDisabled: isOrderDisabled,
+                routeId: widget.routeId,
+                routeStartLatitude: routeStartLat,
+                routeStartLongitude: routeStartLng,
+                allOrders: allOrders,
+                onTap: () => _openOrderDetail(
+                  order,
+                  fleetType,
+                  fleetLicense,
+                  routeStartLat,
+                  routeStartLng,
+                  false,
+                ),
+              ),
             ),
           ),
         );
@@ -436,7 +590,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             children: [
               entry.value,
               if (entry.key < orderedWidgets.length - 1)
-                SizedBox(height: responsive.getResponsiveSize(12)),
+                SizedBox(height: responsive.getResponsiveSize(8)),
             ],
           );
         }),
@@ -564,8 +718,8 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
+              FractionallySizedBox(
+                widthFactor: 0.84,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
@@ -614,76 +768,86 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showPartialDeliveryModal(groupedOrder);
-                },
-                icon: const Icon(Icons.list_alt),
-                label: const Text('Entrega parcial'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2563EB),
-                  side: const BorderSide(color: Color(0xFF93C5FD), width: 1.5),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showMultipleDeliveryModal(groupedOrder, 'deliver');
-                },
-                icon: const Icon(Icons.check_circle, color: Colors.white),
-                label: const Text('Entregar todas'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showMultipleDeliveryModal(groupedOrder, 'reject');
-                },
-                icon: const Icon(Icons.cancel, color: Colors.white),
-                label: const Text('Rechazar todas'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFB91C1C),
-                  foregroundColor: Colors.white,
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final buttonWidth = (constraints.maxWidth - 12) / 2;
+                return Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    SizedBox(
+                      width: buttonWidth,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showPartialDeliveryModal(groupedOrder);
+                        },
+                        icon: const Icon(Icons.list_alt, size: 18),
+                        label: const Text('Entrega parcial'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF2563EB),
+                          side: const BorderSide(color: Color(0xFF93C5FD), width: 1.5),
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: buttonWidth,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showMultipleDeliveryModal(groupedOrder, 'deliver');
+                        },
+                        icon: const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        label: const Text('Entregar todas'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: buttonWidth,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showMultipleDeliveryModal(groupedOrder, 'reject');
+                        },
+                        icon: const Icon(Icons.cancel, color: Colors.white, size: 18),
+                        label: const Text('Rechazar todas'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFB91C1C),
+                          foregroundColor: Colors.white,
+                          textStyle: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -1013,8 +1177,8 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             return const Center(child: Text('No hay órdenes en esta ruta'));
           }
 
-          // Filtrar órdenes
-          final filteredOrders = _showOnlyActive
+            // Filtrar órdenes
+            final statusFilteredOrders = _showOnlyActive
               ? orders.where((order) {
                   final status = order.planningStatus;
                   return status == 'in_planification' || 
@@ -1022,6 +1186,10 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         status == 'start_of_route';
                 }).toList()
               : orders;
+
+            final filteredOrders = statusFilteredOrders
+              .where((order) => _matchesOrderSearch(order))
+              .toList();
 
           // Verificar si hay órdenes escaneadas (en_transporte o posterior)
           final scannedOrders = orders.where((order) {
@@ -1046,8 +1214,14 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
           return SafeArea(
             child: SingleChildScrollView(
+              controller: _ordersScrollController,
               child: Padding(
-                padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getResponsiveSize(16),
+                  responsive.getResponsiveSize(4),
+                  responsive.getResponsiveSize(16),
+                  responsive.getResponsiveSize(16),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1074,7 +1248,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         ),
                       ],
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(1)),
+                    SizedBox(height: responsive.getResponsiveSize(0)),
 
                     // Route Verification Header Widget - Mostrar hasta que todas estén escaneadas
                     if (!allOrdersScanned) ...[
@@ -1111,7 +1285,74 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                       },
                     ),
                     ],
-                    SizedBox(height: responsive.getResponsiveSize(12)),
+                    SizedBox(height: responsive.getResponsiveSize(0)),
+
+                    TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        if (!mounted) return;
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'Buscar por Cliente o Número de Órden',
+                        hintStyle: TextStyle(
+                          fontSize: responsive.bodySmallFontSize,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: responsive.iconSize * 0.82,
+                        ),
+                        prefixIconConstraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                        suffixIcon: _searchQuery.trim().isEmpty
+                            ? null
+                            : IconButton(
+                                constraints: const BoxConstraints(
+                                  minWidth: 32,
+                                  minHeight: 32,
+                                ),
+                                padding: EdgeInsets.zero,
+                                onPressed: () {
+                                  if (!mounted) return;
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _searchController.clear();
+                                  });
+                                },
+                                icon: Icon(
+                                  Icons.close,
+                                  size: responsive.iconSize * 0.82,
+                                ),
+                              ),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF3B82F6),
+                            width: 1.6,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(4)),
 
                     // Órdenes asignadas title
                     Row(
@@ -1120,7 +1361,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         Text(
                           'Órdenes asignadas',
                           style: TextStyle(
-                            fontSize: responsive.bodyMediumFontSize,
+                            fontSize: responsive.bodySmallFontSize,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF0F172A),
                           ),
@@ -1130,7 +1371,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                             '${orders.length} órdenes · ${orders.where((o) => o.planningStatus == 'in_planification').length} por escanear',
                             textAlign: TextAlign.right,
                             style: TextStyle(
-                              fontSize: responsive.bodyMediumFontSize,
+                              fontSize: responsive.bodySmallFontSize,
                               color: const Color(0xFFCBD5E1),
                               fontWeight: FontWeight.w500,
                             ),
@@ -1150,7 +1391,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         }
                       },
                     ),
-                    SizedBox(height: responsive.getResponsiveSize(6)),
+                    SizedBox(height: responsive.getResponsiveSize(4)),
 
                     // Orders list
                     if (filteredOrders.isEmpty)
@@ -1158,9 +1399,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(32)),
                           child: Text(
-                            _showOnlyActive
-                                ? 'No hay órdenes pendientes'
-                                : 'No hay órdenes en esta ruta',
+                            _searchQuery.trim().isNotEmpty
+                                ? 'No se encontraron órdenes para "${_searchQuery.trim()}"'
+                                : _showOnlyActive
+                                    ? 'No hay órdenes pendientes'
+                                    : 'No hay órdenes en esta ruta',
                             style: TextStyle(
                               fontSize: responsive.bodyMediumFontSize,
                               color: Colors.grey.shade600,
@@ -1180,31 +1423,53 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                             final isOrderActive =
                                 order.planningStatus == 'start_of_route';
                             final isOrderDisabled = false;
+                            final orderKey = _getOrderKey(order.id);
+                            final isFocusedOrder = _focusedOrderId == order.id;
 
                             return Column(
                               children: [
-                                RouteOrderCard(
-                                  order: order,
-                                  token: widget.token,
-                                  odooClient: widget.odooClient,
-                                  routeName: widget.routeName,
-                                  onStartRouteSuccess: _reloadOrders,
-                                  isActive: isOrderActive,
-                                  isDisabled: isOrderDisabled,
-                                  routeId: widget.routeId,
-                                  routeStartLatitude: routeStartLat,
-                                  routeStartLongitude: routeStartLng,
-                                  allOrders: orders,
-                                  onTap: () => _openOrderDetail(
-                                    order,
-                                    fleetType,
-                                    fleetLicense,
-                                    routeStartLat,
-                                    routeStartLng,
+                                KeyedSubtree(
+                                  key: orderKey,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 320),
+                                    curve: Curves.easeOutCubic,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: isFocusedOrder
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFF3B82F6).withOpacity(0.28),
+                                                blurRadius: 18,
+                                                spreadRadius: 1,
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: RouteOrderCard(
+                                      order: order,
+                                      token: widget.token,
+                                      odooClient: widget.odooClient,
+                                      routeName: widget.routeName,
+                                      onStartRouteSuccess: _reloadOrders,
+                                      isActive: isOrderActive,
+                                      isDisabled: isOrderDisabled,
+                                      routeId: widget.routeId,
+                                      routeStartLatitude: routeStartLat,
+                                      routeStartLongitude: routeStartLng,
+                                      allOrders: orders,
+                                      onTap: () => _openOrderDetail(
+                                        order,
+                                        fleetType,
+                                        fleetLicense,
+                                        routeStartLat,
+                                        routeStartLng,
+                                        false,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 if (entry.key < filteredOrders.length - 1)
-                                  SizedBox(height: responsive.getResponsiveSize(12)),
+                                  SizedBox(height: responsive.getResponsiveSize(8)),
                               ],
                             );
                           }),
@@ -1350,31 +1615,49 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
             // Si hay órdenes en curso o entregadas/rechazadas, mostrar "Siguiente Orden"
             if ((hasOrdersInCourse || hasOrdersDeliveredOrRejected) && hasOrdersInTransport) {
-              return Transform.scale(
-                scale: 0.88,
-                child: FloatingActionButton.extended(
-                  onPressed: _isLoadingNextOrder ? null : _goToNextOrder,
-                  backgroundColor: const Color(0xFF3B82F6),
-                  icon: _isLoadingNextOrder
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
+              final orderInCourse = hasOrdersInCourse
+                  ? orders.firstWhere((order) => order.planningStatus == 'start_of_route')
+                  : null;
+
+              return Transform.translate(
+                offset: const Offset(0, 10),
+                child: Transform.scale(
+                  scale: 0.76,
+                  child: FloatingActionButton.extended(
+                    onPressed: _isLoadingNextOrder
+                        ? null
+                        : () async {
+                            // Si ya existe una orden en curso, redirigir visualmente en esta lista.
+                            if (orderInCourse != null) {
+                              await _redirectToOrderInList(orderInCourse);
+                              return;
+                            }
+
+                            await _goToNextOrder();
+                          },
+                    backgroundColor: const Color(0xFF3B82F6),
+                    extendedPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    icon: _isLoadingNextOrder
+                        ? const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.arrow_forward,
+                            size: 14,
                             color: Colors.white,
-                            strokeWidth: 2,
                           ),
-                        )
-                      : const Icon(
-                          Icons.arrow_forward,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                  label: Text(
-                    _isLoadingNextOrder ? 'Cargando...' : 'Siguiente Orden',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11,
+                    label: Text(
+                      _isLoadingNextOrder ? 'Cargando...' : 'Siguiente Orden',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
