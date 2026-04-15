@@ -15,6 +15,11 @@ class OrderItem {
   final int? sequence;
   final int? routeSequence;
   final int? reasonRejectionId;
+  final bool isMultipack;
+  final int multipackCount;
+  final int expectedPackages;
+  final int scannedPackages;
+  final int remainingPackages;
 
   OrderItem({
     required this.id,
@@ -31,9 +36,38 @@ class OrderItem {
     this.sequence,
     this.routeSequence,
     this.reasonRejectionId,
+    this.isMultipack = false,
+    this.multipackCount = 0,
+    this.expectedPackages = 1,
+    this.scannedPackages = 0,
+    this.remainingPackages = 0,
   });
 
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  static int _toInt(dynamic value, {int defaultValue = 0}) {
+    if (value == null) return defaultValue;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? defaultValue;
+  }
+
   factory OrderItem.fromJson(Map<String, dynamic> json) {
+    final multipackCount = _toInt(json['multipack_count']);
+    final expectedPackages = _toInt(
+      json['expected_packages'],
+      defaultValue: multipackCount > 1 ? multipackCount : 1,
+    );
+    final scannedPackages = _toInt(json['scanned_packages']);
+    final remainingPackages = _toInt(
+      json['remaining_packages'],
+      defaultValue: expectedPackages - scannedPackages,
+    );
+
     return OrderItem(
       id: json['id'] as int? ?? 0,
       orderNumber:
@@ -47,11 +81,16 @@ class OrderItem {
       product: json['product'] as String?,
       phone: json['phone'] as String?,
       planningStatus: json['new_status_orders'] as String? ?? json['planning_status'] as String? ?? 'planned',
-      latitude: json['latitude'] as double?,
-      longitude: json['longitude'] as double?,
-      sequence: json['sequence'] as int?,
-      routeSequence: json['route_sequence'] as int?,
-      reasonRejectionId: json['reason_rejection_id'] as int?,
+      latitude: _toDouble(json['latitude']),
+      longitude: _toDouble(json['longitude']),
+      sequence: _toInt(json['sequence'], defaultValue: -1) >= 0 ? _toInt(json['sequence']) : null,
+      routeSequence: _toInt(json['route_sequence'], defaultValue: -1) >= 0 ? _toInt(json['route_sequence']) : null,
+      reasonRejectionId: _toInt(json['reason_rejection_id'], defaultValue: -1) >= 0 ? _toInt(json['reason_rejection_id']) : null,
+      isMultipack: json['is_multipack'] == true,
+      multipackCount: multipackCount,
+      expectedPackages: expectedPackages,
+      scannedPackages: scannedPackages,
+      remainingPackages: remainingPackages < 0 ? 0 : remainingPackages,
     );
   }
 
@@ -122,6 +161,12 @@ class OrderItem {
     double? longitude,
     int? sequence,
     int? routeSequence,
+    int? reasonRejectionId,
+    bool? isMultipack,
+    int? multipackCount,
+    int? expectedPackages,
+    int? scannedPackages,
+    int? remainingPackages,
   }) {
     return OrderItem(
       id: id ?? this.id,
@@ -137,6 +182,12 @@ class OrderItem {
       longitude: longitude ?? this.longitude,
       sequence: sequence ?? this.sequence,
       routeSequence: routeSequence ?? this.routeSequence,
+      reasonRejectionId: reasonRejectionId ?? this.reasonRejectionId,
+      isMultipack: isMultipack ?? this.isMultipack,
+      multipackCount: multipackCount ?? this.multipackCount,
+      expectedPackages: expectedPackages ?? this.expectedPackages,
+      scannedPackages: scannedPackages ?? this.scannedPackages,
+      remainingPackages: remainingPackages ?? this.remainingPackages,
     );
   }
 }

@@ -14,6 +14,10 @@ class OrderInfoCard extends StatelessWidget {
   final Color statusColor;
   final bool isBlocked;
   final bool showRibbon;
+  final bool isMultipack;
+  final int expectedPackages;
+  final int scannedPackages;
+  final int remainingPackages;
 
   const OrderInfoCard({
     super.key,
@@ -30,6 +34,10 @@ class OrderInfoCard extends StatelessWidget {
     this.statusColor = const Color(0xFF2563EB),
     this.isBlocked = false,
     this.showRibbon = true,
+    this.isMultipack = false,
+    this.expectedPackages = 1,
+    this.scannedPackages = 0,
+    this.remainingPackages = 0,
   });
 
   @override
@@ -139,6 +147,41 @@ class OrderInfoCard extends StatelessWidget {
                       color: Color(0xFF64748B),
                     ),
                   ),
+                  if (isMultipack && expectedPackages > 1) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFED7AA)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.inventory_2_outlined,
+                            color: Color(0xFFEA580C),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Multibulto: $scannedPackages/$expectedPackages escaneados · Faltan $remainingPackages',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF9A3412),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   _buildInfoRow('Cliente:', clientName),
                   const SizedBox(height: 8),

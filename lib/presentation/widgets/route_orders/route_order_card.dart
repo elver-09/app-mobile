@@ -153,6 +153,10 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              if (widget.order.isMultipack && widget.order.expectedPackages > 1) ...[
+                const SizedBox(height: 6),
+                _buildMultipackBadge(),
+              ],
               const SizedBox(height: 8),
               _buildProductInfo(),
             ],
@@ -258,8 +262,11 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
   }
 
   Widget _buildProductInfo() {
+    final showMultipack = widget.order.isMultipack && widget.order.expectedPackages > 1;
     return Text(
-      'Producto: ${widget.order.product ?? 'N/A'} · Zona ${widget.order.district}',
+      showMultipack
+          ? 'Producto: ${widget.order.product ?? 'N/A'} · Zona ${widget.order.district} · Bultos ${widget.order.scannedPackages}/${widget.order.expectedPackages}'
+          : 'Producto: ${widget.order.product ?? 'N/A'} · Zona ${widget.order.district}',
       style: const TextStyle(
         fontSize: 11,
         color: Color(0xFF8B95A1),
@@ -268,6 +275,36 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
       ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildMultipackBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.inventory_2_outlined,
+            size: 12,
+            color: Color(0xFFEA580C),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Multibulto ${widget.order.scannedPackages}/${widget.order.expectedPackages}',
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF9A3412),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

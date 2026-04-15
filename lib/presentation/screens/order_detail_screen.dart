@@ -91,6 +91,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   int? selectedRejectionReasonId; // ← ID de la razón seleccionada
   bool canReprogramAfterRejection = false; // ← Flag para mostrar botón de reprogramación
 
+  // Estado multibulto
+  bool isMultipack = false;
+  int expectedPackages = 1;
+  int scannedPackages = 0;
+  int remainingPackages = 0;
+
   // Estado actual de la orden
   late String currentOrderStatus;
   
@@ -163,6 +169,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       if (details != null && mounted) {
         setState(() {
           currentOrderStatus = details.planningStatus;
+          isMultipack = details.isMultipack;
+          expectedPackages = details.expectedPackages;
+          scannedPackages = details.scannedPackages;
+          remainingPackages = details.remainingPackages;
           
           // Si la orden está rechazada y tiene una razón, validar si permite reprogramar
           if (details.planningStatus == 'cancelled' && details.reasonRejectionId != null) {
@@ -881,6 +891,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       statusColor: _getStatusColor(),
                       isBlocked: currentOrderStatus == 'blocked',
                       showRibbon: currentOrderStatus != 'in_transport',
+                      isMultipack: isMultipack,
+                      expectedPackages: expectedPackages,
+                      scannedPackages: scannedPackages,
+                      remainingPackages: remainingPackages,
                     ),
                     SizedBox(height: responsive.getResponsiveSize(12)),
                     // Location section

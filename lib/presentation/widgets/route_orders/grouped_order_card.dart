@@ -36,6 +36,12 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     // Verificar si todas las órdenes están en curso
     final allInCourse = groupedOrder.orders.every((o) => o.planningStatus == 'start_of_route');
     final allBlocked = groupedOrder.orders.every((o) => o.planningStatus == 'blocked');
+    final multipackOrdersCount = groupedOrder.orders
+      .where((o) => o.isMultipack && o.expectedPackages > 1)
+      .length;
+    final multipackRemainingPackages = groupedOrder.orders
+      .where((o) => o.isMultipack && o.expectedPackages > 1)
+      .fold<int>(0, (acc, o) => acc + o.remainingPackages);
     
     return Opacity(
       opacity: allBlocked ? 0.55 : 1.0,
@@ -190,6 +196,20 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                             label: '${groupedOrder.pendingCount} pendientes',
                             icon: Icons.schedule,
                             color: const Color(0xFFF59E0B),
+                            responsive: responsive,
+                          ),
+                        if (multipackOrdersCount > 0)
+                          _buildStatusBadge(
+                            label: '$multipackOrdersCount multibulto',
+                            icon: Icons.inventory_2,
+                            color: const Color(0xFFEA580C),
+                            responsive: responsive,
+                          ),
+                        if (multipackRemainingPackages > 0)
+                          _buildStatusBadge(
+                            label: '$multipackRemainingPackages bultos faltan',
+                            icon: Icons.hourglass_top,
+                            color: const Color(0xFFB45309),
                             responsive: responsive,
                           ),
                       ],
@@ -774,6 +794,31 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                         ),
                       ],
                     ),
+                    if (order.isMultipack && order.expectedPackages > 1) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.inventory,
+                            size: 14,
+                            color: const Color(0xFFEA580C),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Multibulto: ${order.scannedPackages}/${order.expectedPackages} · Faltan ${order.remainingPackages}',
+                              style: TextStyle(
+                                fontSize: responsive.bodySmallFontSize - 2,
+                                color: const Color(0xFF9A3412),
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -88,6 +88,9 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
   OrderItem? _scannedOrder;
   final TextEditingController _codeController = TextEditingController();
   bool _isConfirming = false;
+  String? _lastDetectedCode;
+  DateTime? _lastDetectedAt;
+  static const Duration _scanCooldown = Duration(seconds: 2);
 
   @override
   void initState() {
@@ -106,7 +109,9 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
   }
 
   void _searchOrderByCode(String code) {
-    if (code.isEmpty) {
+    final normalizedCode = code.trim();
+
+    if (normalizedCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('❌ Por favor ingresa un código'),
@@ -118,14 +123,18 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
 
     try {
       final order = widget.orders.firstWhere(
-        (o) => o.orderNumber.toLowerCase() == code.toLowerCase(),
+        (o) => o.orderNumber.toLowerCase() == normalizedCode.toLowerCase(),
       );
+
+      if (_scannedOrder?.orderNumber == order.orderNumber) {
+        return;
+      }
 
       setState(() {
         _scannedOrder = order;
       });
 
-      print('✅ Orden encontrada: ${order.orderNumber}');
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('✅ Orden encontrada: ${order.orderNumber}'),
@@ -133,10 +142,29 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
         ),
       );
     } catch (e) {
-      print('❌ Orden no encontrada localmente: $code');
+      print('❌ Orden no encontrada localmente: $normalizedCode');
       // Buscar globalmente en el servidor
-      _searchOrderGlobally(code);
+      _searchOrderGlobally(normalizedCode);
     }
+  }
+
+  bool _shouldIgnoreDetection(String code) {
+    final now = DateTime.now();
+    final normalized = code.trim();
+
+    if (normalized.isEmpty) return true;
+
+    final sameCode = _lastDetectedCode == normalized;
+    final inCooldown =
+        _lastDetectedAt != null && now.difference(_lastDetectedAt!) < _scanCooldown;
+
+    if (sameCode && inCooldown) {
+      return true;
+    }
+
+    _lastDetectedCode = normalized;
+    _lastDetectedAt = now;
+    return false;
   }
 
   Future<void> _searchOrderGlobally(String code) async {
@@ -330,6 +358,12 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
       if (result['success'] == true) {
         print('✅ ÉXITO: Orden confirmada en Odoo');
         print('✅ La orden ${_scannedOrder!.orderNumber} cambió a estado: ${result['new_status']}');
+
+        final expectedPackages = (result['expected_packages'] as num?)?.toInt() ?? 1;
+        final scannedPackages = (result['scanned_packages'] as num?)?.toInt() ?? 1;
+        final remainingPackages = (result['remaining_packages'] as num?)?.toInt() ?? 0;
+        final isMultipack = result['is_multipack'] == true;
+        final multipackInProgress = isMultipack && expectedPackages > 1 && remainingPackages > 0;
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -339,7 +373,24 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
           ),
         );
 
-        // Limpiar orden escaneada para permitir escanear otra
+        // Actualizar progreso local para que sea visible en pantalla
+        setState(() {
+          _scannedOrder = _scannedOrder?.copyWith(
+            planningStatus: result['new_status'] as String? ?? _scannedOrder!.planningStatus,
+            isMultipack: isMultipack,
+            expectedPackages: expectedPackages,
+            scannedPackages: scannedPackages,
+            remainingPackages: remainingPackages,
+          );
+        });
+
+        // Si es multibulto y aún faltan bultos, quedarse en la pantalla para volver a escanear
+        if (multipackInProgress) {
+          print('🔁 Multibulto en progreso: $scannedPackages/$expectedPackages');
+          return;
+        }
+
+        // Caso normal o multibulto completo: limpiar y regresar para refrescar
         setState(() {
           _scannedOrder = null;
         });
@@ -741,8 +792,11 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                           for (final barcode in capture.barcodes) {
                                             final code = barcode.rawValue;
                                             if (code != null && code.isNotEmpty) {
-                                              print('📱 Código detectado: $code');
+                                              if (_shouldIgnoreDetection(code)) {
+                                                continue;
+                                              }
                                               _searchOrderByCode(code);
+                                              break;
                                             }
                                           }
                                         },
@@ -962,6 +1016,15 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                               'Dirección',
                               _scannedOrder!.address,
                             ),
+                            if (_scannedOrder!.isMultipack && _scannedOrder!.expectedPackages > 1) ...[
+                              SizedBox(height: responsive.getResponsiveSize(4)),
+                              _buildDetailRow(
+                                context,
+                                Icons.inventory_2,
+                                'Multibulto',
+                                '${_scannedOrder!.scannedPackages}/${_scannedOrder!.expectedPackages} · Faltan ${_scannedOrder!.remainingPackages}',
+                              ),
+                            ],
                           ],
                         ),
                       ),
