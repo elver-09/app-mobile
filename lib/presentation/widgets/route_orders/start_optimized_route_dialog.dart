@@ -32,68 +32,72 @@ class StartOptimizedRouteDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       backgroundColor: Colors.white,
-      contentPadding: const EdgeInsets.all(24),
+      contentPadding: const EdgeInsets.all(20),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                '¿Iniciar ruta\noptimizada?',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                  height: 1.2,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFA726),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: const Text(
-                  'Órdenes sin\nescanear',
+              const Expanded(
+                child: Text(
+                  '¿Iniciar ruta\noptimizada?',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
                     height: 1.2,
                   ),
-                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFA726),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: const Text(
+                    'Órdenes sin\nescanear',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             'Se está dejando $unscannedOrders órdenes sin escanear, ¿deseas iniciar la ruta optimizada?',
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: Color(0xFF1E293B),
               fontWeight: FontWeight.w500,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             'Si continúas, estas órdenes quedarán como "Planificado" y no estarán marcadas como "En transporte".',
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Color(0xFF64748B),
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(16),
@@ -105,44 +109,62 @@ class StartOptimizedRouteDialog extends StatelessWidget {
             child: Column(
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Órdenes escaneadas',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF475569),
+                    const Expanded(
+                      child: Text(
+                        'Órdenes escaneadas',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF475569),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text(
-                      '$scannedOrders de $totalOrders ($percentage%)',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w700,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '$scannedOrders de $totalOrders ($percentage%)',
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Órdenes sin escanear',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF475569),
+                    const Expanded(
+                      child: Text(
+                        'Órdenes sin escanear',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF475569),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text(
-                      '$unscannedOrders pendientes',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w700,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '$unscannedOrders pendientes',
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -150,14 +172,14 @@ class StartOptimizedRouteDialog extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -167,26 +189,17 @@ class StartOptimizedRouteDialog extends StatelessWidget {
                     ),
                     backgroundColor: Colors.white,
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.refresh_rounded,
-                        size: 22,
-                        color: Color(0xFF1E293B),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Seguir\nescaneando',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1E293B),
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                  child: const Text(
+                    'Seguir\nescaneando',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E293B),
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
@@ -199,43 +212,34 @@ class StartOptimizedRouteDialog extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                     shadowColor: const Color(0xFF2563EB).withOpacity(0.3),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.check_circle_rounded,
-                        size: 22,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Iniciar de todos\nmodos',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                  child: const Text(
+                    'Iniciar de todos\nmodos',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             'Puedes completar el escaneo más tarde, pero se recomienda validar toda la carga antes de salir.',
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               color: Color(0xFF64748B),
               height: 1.5,
             ),

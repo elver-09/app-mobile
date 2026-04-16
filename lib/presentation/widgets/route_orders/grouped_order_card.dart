@@ -32,17 +32,36 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
   Widget build(BuildContext context) {
     final responsive = context.responsive;
     final groupedOrder = widget.groupedOrder;
-    
+    final hasPhone =
+        groupedOrder.orders.first.phone != null &&
+        groupedOrder.orders.first.phone!.isNotEmpty;
+    final orderWithCoordinates =
+        groupedOrder.orders.where((o) {
+          return o.latitude != null && o.longitude != null;
+        }).isNotEmpty
+        ? groupedOrder.orders.firstWhere(
+            (o) => o.latitude != null && o.longitude != null,
+          )
+        : null;
+    final hasMapButton =
+        groupedOrder.address.trim().isNotEmpty ||
+        orderWithCoordinates != null ||
+        (groupedOrder.latitude != null && groupedOrder.longitude != null);
+
     // Verificar si todas las órdenes están en curso
-    final allInCourse = groupedOrder.orders.every((o) => o.planningStatus == 'start_of_route');
-    final allBlocked = groupedOrder.orders.every((o) => o.planningStatus == 'blocked');
+    final allInCourse = groupedOrder.orders.every(
+      (o) => o.planningStatus == 'start_of_route',
+    );
+    final allBlocked = groupedOrder.orders.every(
+      (o) => o.planningStatus == 'blocked',
+    );
     final multipackOrdersCount = groupedOrder.orders
-      .where((o) => o.isMultipack && o.expectedPackages > 1)
-      .length;
+        .where((o) => o.isMultipack && o.expectedPackages > 1)
+        .length;
     final multipackRemainingPackages = groupedOrder.orders
-      .where((o) => o.isMultipack && o.expectedPackages > 1)
-      .fold<int>(0, (acc, o) => acc + o.remainingPackages);
-    
+        .where((o) => o.isMultipack && o.expectedPackages > 1)
+        .fold<int>(0, (acc, o) => acc + o.remainingPackages);
+
     return Opacity(
       opacity: allBlocked ? 0.55 : 1.0,
       child: Container(
@@ -50,21 +69,18 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: allInCourse 
-              ? [
-                  const Color(0xFFFEF3C7), // Amarillo suave
-                  const Color(0xFFFDE68A), // Amarillo más intenso
-                ]
-              : [
-                  Colors.white,
-                  const Color(0xFFF5F9FF),
-                ],
+            colors: allInCourse
+                ? [
+                    const Color(0xFFFEF3C7), // Amarillo suave
+                    const Color(0xFFFDE68A), // Amarillo más intenso
+                  ]
+                : [Colors.white, const Color(0xFFF5F9FF)],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: allInCourse 
-              ? const Color(0xFFF59E0B) // Borde amarillo si está en curso
-              : const Color(0xFF93C5FD), 
+            color: allInCourse
+                ? const Color(0xFFF59E0B) // Borde amarillo si está en curso
+                : const Color(0xFF93C5FD),
             width: allInCourse ? 2.2 : 2,
           ),
           boxShadow: [
@@ -77,452 +93,475 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
           ],
         ),
         child: Column(
-        children: [
-          // Header del grupo
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              onTap: () {
-                setState(() {
-                  _isExpanded = !_isExpanded;
-                });
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF3B82F6).withOpacity(0.05),
-                      const Color(0xFF3B82F6).withOpacity(0.02),
+          children: [
+            // Header del grupo
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF3B82F6).withOpacity(0.05),
+                        const Color(0xFF3B82F6).withOpacity(0.02),
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
+                  ),
+                  padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          // Icono de grupo
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF3B82F6),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.inventory_2,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          SizedBox(width: responsive.getResponsiveSize(10)),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  groupedOrder.clientName,
+                                  style: TextStyle(
+                                    fontSize: responsive.bodyMediumFontSize,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 14,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        groupedOrder.address,
+                                        style: TextStyle(
+                                          fontSize:
+                                              responsive.bodySmallFontSize,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: responsive.getResponsiveSize(8)),
+                          Icon(
+                            _isExpanded ? Icons.expand_less : Icons.expand_more,
+                            color: const Color(0xFF3B82F6),
+                            size: 28,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Indicadores de estado
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          _buildStatusBadge(
+                            label: '${groupedOrder.totalOrders} órdenes',
+                            icon: Icons.shopping_bag,
+                            color: const Color(0xFF3B82F6),
+                            responsive: responsive,
+                          ),
+                          if (groupedOrder.deliveredCount > 0)
+                            _buildStatusBadge(
+                              label:
+                                  '${groupedOrder.deliveredCount} entregadas',
+                              icon: Icons.check_circle,
+                              color: const Color(0xFF10B981),
+                              responsive: responsive,
+                            ),
+                          if (groupedOrder.rejectedCount > 0)
+                            _buildStatusBadge(
+                              label: '${groupedOrder.rejectedCount} rechazadas',
+                              icon: Icons.cancel,
+                              color: const Color(0xFFEF4444),
+                              responsive: responsive,
+                            ),
+                          if (groupedOrder.pendingCount > 0)
+                            _buildStatusBadge(
+                              label: '${groupedOrder.pendingCount} pendientes',
+                              icon: Icons.schedule,
+                              color: const Color(0xFFF59E0B),
+                              responsive: responsive,
+                            ),
+                          if (multipackOrdersCount > 0)
+                            _buildStatusBadge(
+                              label: '$multipackOrdersCount multibulto',
+                              icon: Icons.inventory_2,
+                              color: const Color(0xFFEA580C),
+                              responsive: responsive,
+                            ),
+                          if (multipackRemainingPackages > 0)
+                            _buildStatusBadge(
+                              label:
+                                  '$multipackRemainingPackages bultos faltan',
+                              icon: Icons.hourglass_top,
+                              color: const Color(0xFFB45309),
+                              responsive: responsive,
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+              ),
+            ),
+            // Órdenes expandidas
+            if (_isExpanded) ...[
+              Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8FAFC),
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFBFDBFE), width: 1.5),
+                  ),
                 ),
                 padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // SECCIÓN 1: Detalles del Cliente
+                    _buildClientDetailsSection(groupedOrder, responsive),
+                    SizedBox(height: responsive.getResponsiveSize(10)),
+                    // SECCIÓN 2: Órdenes del Cliente
+                    // Título de la sección
                     Row(
                       children: [
-                        // Icono de grupo
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3B82F6),
-                            borderRadius: BorderRadius.circular(8),
+                            color: const Color(0xFF3B82F6).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
-                            Icons.inventory_2,
-                            color: Colors.white,
-                            size: 20,
+                            Icons.list_alt,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
                           ),
                         ),
-                        SizedBox(width: responsive.getResponsiveSize(10)),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                groupedOrder.clientName,
-                                style: TextStyle(
-                                  fontSize: responsive.bodyMediumFontSize,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    size: 14,
-                                    color: const Color(0xFF64748B),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Órdenes del cliente (${groupedOrder.totalOrders})',
+                          style: TextStyle(
+                            fontSize: responsive.bodyMediumFontSize - 1,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(6)),
+                    // Lista de órdenes
+                    ...groupedOrder.orders.map((order) {
+                      return _buildOrderItem(order, responsive);
+                    }),
+                    SizedBox(height: responsive.getResponsiveSize(6)),
+                    // Separador visual
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            const Color(0xFFE2E8F0),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(6)),
+                    // Botones de acciones
+                    if (!allBlocked)
+                      Row(
+                        children: [
+                          // Botón llamar (usa teléfono de la primera orden)
+                          if (hasPhone)
+                            Expanded(
+                              child: Container(
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFF10B981).withOpacity(0.1),
+                                      const Color(0xFF10B981).withOpacity(0.05),
+                                    ],
                                   ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      groupedOrder.address,
-                                      style: TextStyle(
-                                        fontSize: responsive.bodySmallFontSize,
-                                        color: const Color(0xFF64748B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () {
+                                      _launchPhone(
+                                        groupedOrder.orders.first.phone!,
+                                      );
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.phone,
+                                          size: 18,
+                                          color: const Color(0xFF10B981),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Llamar',
+                                          style: TextStyle(
+                                            fontSize:
+                                                responsive.bodySmallFontSize,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF10B981),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: responsive.getResponsiveSize(8)),
-                        Icon(
-                          _isExpanded ? Icons.expand_less : Icons.expand_more,
-                          color: const Color(0xFF3B82F6),
-                          size: 28,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Indicadores de estado
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        _buildStatusBadge(
-                          label: '${groupedOrder.totalOrders} órdenes',
-                          icon: Icons.shopping_bag,
-                          color: const Color(0xFF3B82F6),
-                          responsive: responsive,
-                        ),
-                        if (groupedOrder.deliveredCount > 0)
-                          _buildStatusBadge(
-                            label: '${groupedOrder.deliveredCount} entregadas',
-                            icon: Icons.check_circle,
-                            color: const Color(0xFF10B981),
-                            responsive: responsive,
-                          ),
-                        if (groupedOrder.rejectedCount > 0)
-                          _buildStatusBadge(
-                            label: '${groupedOrder.rejectedCount} rechazadas',
-                            icon: Icons.cancel,
-                            color: const Color(0xFFEF4444),
-                            responsive: responsive,
-                          ),
-                        if (groupedOrder.pendingCount > 0)
-                          _buildStatusBadge(
-                            label: '${groupedOrder.pendingCount} pendientes',
-                            icon: Icons.schedule,
-                            color: const Color(0xFFF59E0B),
-                            responsive: responsive,
-                          ),
-                        if (multipackOrdersCount > 0)
-                          _buildStatusBadge(
-                            label: '$multipackOrdersCount multibulto',
-                            icon: Icons.inventory_2,
-                            color: const Color(0xFFEA580C),
-                            responsive: responsive,
-                          ),
-                        if (multipackRemainingPackages > 0)
-                          _buildStatusBadge(
-                            label: '$multipackRemainingPackages bultos faltan',
-                            icon: Icons.hourglass_top,
-                            color: const Color(0xFFB45309),
-                            responsive: responsive,
-                          ),
-                      ],
-                    ),
+                            ),
+                          if (hasPhone &&
+                              (hasMapButton ||
+                                  widget.showManageButton ||
+                                  widget.showReprogramButton))
+                            SizedBox(width: responsive.getResponsiveSize(8)),
+                          // Botón ver mapa (usa coordenadas disponibles o dirección)
+                          if (hasMapButton)
+                            Expanded(
+                              child: Container(
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFF3B82F6).withOpacity(0.1),
+                                      const Color(0xFF3B82F6).withOpacity(0.05),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF3B82F6),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () {
+                                      _launchMap(
+                                        lat:
+                                            orderWithCoordinates?.latitude ??
+                                            groupedOrder.latitude,
+                                        lng:
+                                            orderWithCoordinates?.longitude ??
+                                            groupedOrder.longitude,
+                                        address: groupedOrder.address,
+                                      );
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.map,
+                                          size: 18,
+                                          color: const Color(0xFF3B82F6),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Mapa',
+                                          style: TextStyle(
+                                            fontSize:
+                                                responsive.bodySmallFontSize,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF3B82F6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (hasMapButton &&
+                              (widget.showManageButton ||
+                                  widget.showReprogramButton))
+                            SizedBox(width: responsive.getResponsiveSize(8)),
+                          // Botón Gestionar
+                          if (widget.showManageButton)
+                            Expanded(
+                              child: Container(
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF3B82F6),
+                                      Color(0xFF2563EB),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF3B82F6,
+                                      ).withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: widget.onTap,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.edit,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Gestionar',
+                                          style: TextStyle(
+                                            fontSize:
+                                                responsive.bodySmallFontSize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          // Botón Reprogramar
+                          if (widget.showReprogramButton)
+                            Expanded(
+                              child: Container(
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFF59E0B),
+                                      Color(0xFFD97706),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFFF59E0B,
+                                      ).withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: widget.onReprogramTap,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.event_repeat,
+                                          size: 18,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Reprogramar',
+                                          style: TextStyle(
+                                            fontSize:
+                                                responsive.bodySmallFontSize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                   ],
                 ),
               ),
-            ),
-          ),
-          // Órdenes expandidas
-          if (_isExpanded) ...[
-            Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
-                border: Border(
-                  top: BorderSide(color: Color(0xFFBFDBFE), width: 1.5),
-                ),
-              ),
-              padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SECCIÓN 1: Detalles del Cliente
-                  _buildClientDetailsSection(groupedOrder, responsive),
-                  SizedBox(height: responsive.getResponsiveSize(10)),
-                  // SECCIÓN 2: Órdenes del Cliente
-                  // Título de la sección
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(
-                          Icons.list_alt,
-                          size: 16,
-                          color: Color(0xFF3B82F6),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Órdenes del cliente (${groupedOrder.totalOrders})',
-                        style: TextStyle(
-                          fontSize: responsive.bodyMediumFontSize - 1,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: responsive.getResponsiveSize(6)),
-                  // Lista de órdenes
-                  ...groupedOrder.orders.map((order) {
-                    return _buildOrderItem(order, responsive);
-                  }),
-                  SizedBox(height: responsive.getResponsiveSize(6)),
-                  // Separador visual
-                  Container(
-                    height: 1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          const Color(0xFFE2E8F0),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: responsive.getResponsiveSize(6)),
-                  // Botones de acciones
-                  if (!allBlocked)
-                    Row(
-                      children: [
-                      // Botón llamar (usa teléfono de la primera orden)
-                      if (groupedOrder.orders.first.phone != null && 
-                          groupedOrder.orders.first.phone!.isNotEmpty)
-                        Expanded(
-                          child: Container(
-                            height: 42,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF10B981).withOpacity(0.1),
-                                  const Color(0xFF10B981).withOpacity(0.05),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFF10B981),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: () {
-                                  _launchPhone(groupedOrder.orders.first.phone!);
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.phone,
-                                      size: 18,
-                                      color: const Color(0xFF10B981),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Llamar',
-                                      style: TextStyle(
-                                        fontSize: responsive.bodySmallFontSize,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF10B981),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (groupedOrder.orders.first.phone != null && 
-                          groupedOrder.orders.first.phone!.isNotEmpty)
-                        SizedBox(width: responsive.getResponsiveSize(8)),
-                      // Botón ver mapa (usa coordenadas de la primera orden)
-                      if (groupedOrder.orders.first.latitude != null && 
-                          groupedOrder.orders.first.longitude != null)
-                        Expanded(
-                          child: Container(
-                            height: 42,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF3B82F6).withOpacity(0.1),
-                                  const Color(0xFF3B82F6).withOpacity(0.05),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFF3B82F6),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: () {
-                                  _launchMap(
-                                    groupedOrder.orders.first.latitude!,
-                                    groupedOrder.orders.first.longitude!,
-                                    groupedOrder.address,
-                                  );
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.map,
-                                      size: 18,
-                                      color: const Color(0xFF3B82F6),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Mapa',
-                                      style: TextStyle(
-                                        fontSize: responsive.bodySmallFontSize,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF3B82F6),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (groupedOrder.orders.first.latitude != null && 
-                          groupedOrder.orders.first.longitude != null)
-                        SizedBox(width: responsive.getResponsiveSize(8)),
-                      // Botón Gestionar
-                      if (widget.showManageButton)
-                        Expanded(
-                          child: Container(
-                            height: 42,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF3B82F6),
-                                  Color(0xFF2563EB),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF3B82F6).withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: widget.onTap,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.edit,
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Gestionar',
-                                      style: TextStyle(
-                                        fontSize: responsive.bodySmallFontSize,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      // Botón Reprogramar
-                      if (widget.showReprogramButton)
-                        Expanded(
-                          child: Container(
-                            height: 42,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFFF59E0B),
-                                  Color(0xFFD97706),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFF59E0B).withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: widget.onReprogramTap,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.event_repeat,
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Reprogramar',
-                                      style: TextStyle(
-                                        fontSize: responsive.bodySmallFontSize,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
+            ],
           ],
-        ],
-      ),
+        ),
       ),
     );
   }
 
-  Widget _buildClientDetailsSection(GroupedOrder groupedOrder, ResponsiveHelper responsive) {
+  Widget _buildClientDetailsSection(
+    GroupedOrder groupedOrder,
+    ResponsiveHelper responsive,
+  ) {
     final firstOrder = groupedOrder.orders.first;
-    
+
     return Container(
       padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            const Color(0xFFF8FAFC),
-          ],
+          colors: [Colors.white, const Color(0xFFF8FAFC)],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -556,7 +595,9 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
           SizedBox(height: responsive.getResponsiveSize(8)),
           // Zona/Comas
           Text(
-            firstOrder.district.isNotEmpty ? firstOrder.district.toUpperCase() : 'SIN ZONA',
+            firstOrder.district.isNotEmpty
+                ? firstOrder.district.toUpperCase()
+                : 'SIN ZONA',
             style: TextStyle(
               fontSize: responsive.bodySmallFontSize - 1,
               color: const Color(0xFF94A3B8),
@@ -579,11 +620,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     final widget = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: const Color(0xFF3B82F6),
-        ),
+        Icon(icon, size: 16, color: const Color(0xFF3B82F6)),
         SizedBox(width: responsive.getResponsiveSize(10)),
         SizedBox(
           width: responsive.getResponsiveSize(70),
@@ -612,10 +649,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     );
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: widget,
-      );
+      return GestureDetector(onTap: onTap, child: widget);
     }
     return widget;
   }
@@ -634,19 +668,12 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: color,
-          ),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
             label,
@@ -671,15 +698,14 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
         Opacity(
           opacity: isBlocked ? 0.55 : 1.0,
           child: Container(
-            margin: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(4)),
+            margin: EdgeInsets.symmetric(
+              vertical: responsive.getResponsiveSize(4),
+            ),
             padding: EdgeInsets.all(responsive.getResponsiveSize(8)),
             decoration: BoxDecoration(
               color: const Color(0xFFFAFAFC),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.02),
@@ -689,128 +715,113 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
               ],
             ),
             child: Row(
-            children: [
-              // Icono decorativo
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: order.statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+              children: [
+                // Icono decorativo
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: order.statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    _getOrderIcon(order.planningStatus),
+                    color: order.statusColor,
+                    size: 18,
+                  ),
                 ),
-                child: Icon(
-                  _getOrderIcon(order.planningStatus),
-                  color: order.statusColor,
-                  size: 18,
-                ),
-              ),
-              SizedBox(width: responsive.getResponsiveSize(8)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              if ((order.routeSequence ?? order.sequence ?? 0) > 0) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFDBEAFE),
-                                    borderRadius: BorderRadius.circular(999),
-                                    border: Border.all(color: const Color(0xFF93C5FD)),
-                                  ),
-                                  child: Text(
-                                    '# ${order.routeSequence ?? order.sequence}',
-                                    style: const TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF1D4ED8),
+                SizedBox(width: responsive.getResponsiveSize(8)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                if ((order.routeSequence ??
+                                        order.sequence ??
+                                        0) >
+                                    0) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDBEAFE),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: const Color(0xFF93C5FD),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '# ${order.routeSequence ?? order.sequence}',
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF1D4ED8),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 6),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  order.orderNumber,
-                                  style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize + 1,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF0F172A),
+                                  const SizedBox(width: 6),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    order.orderNumber,
+                                    style: TextStyle(
+                                      fontSize:
+                                          responsive.bodySmallFontSize + 1,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!showRibbon)
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: responsive.getResponsiveSize(10),
+                                vertical: responsive.getResponsiveSize(4),
+                              ),
+                              decoration: BoxDecoration(
+                                color: order.statusColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: order.statusColor.withOpacity(0.3),
+                                  width: 1,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        if (!showRibbon)
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: responsive.getResponsiveSize(10),
-                              vertical: responsive.getResponsiveSize(4),
-                            ),
-                            decoration: BoxDecoration(
-                              color: order.statusColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: order.statusColor.withOpacity(0.3),
-                                width: 1,
+                              child: Text(
+                                order.statusLabel,
+                                style: TextStyle(
+                                  fontSize: responsive.bodySmallFontSize - 2,
+                                  fontWeight: FontWeight.w600,
+                                  color: order.statusColor,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              order.statusLabel,
-                              style: TextStyle(
-                                fontSize: responsive.bodySmallFontSize - 2,
-                                fontWeight: FontWeight.w600,
-                                color: order.statusColor,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 14,
-                          color: const Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            order.product ?? 'Sin producto',
-                            style: TextStyle(
-                              fontSize: responsive.bodySmallFontSize - 1,
-                              color: const Color(0xFF64748B),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (order.isMultipack && order.expectedPackages > 1) ...[
-                      const SizedBox(height: 4),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
                       Row(
                         children: [
                           Icon(
-                            Icons.inventory,
+                            Icons.inventory_2_outlined,
                             size: 14,
-                            color: const Color(0xFFEA580C),
+                            color: const Color(0xFF94A3B8),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              'Multibulto: ${order.scannedPackages}/${order.expectedPackages} · Faltan ${order.remainingPackages}',
+                              order.product ?? 'Sin producto',
                               style: TextStyle(
-                                fontSize: responsive.bodySmallFontSize - 2,
-                                color: const Color(0xFF9A3412),
-                                fontWeight: FontWeight.w700,
+                                fontSize: responsive.bodySmallFontSize - 1,
+                                color: const Color(0xFF64748B),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -818,11 +829,35 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                           ),
                         ],
                       ),
+                      if (order.isMultipack && order.expectedPackages > 1) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.inventory,
+                              size: 14,
+                              color: const Color(0xFFEA580C),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Multibulto: ${order.scannedPackages}/${order.expectedPackages} · Faltan ${order.remainingPackages}',
+                                style: TextStyle(
+                                  fontSize: responsive.bodySmallFontSize - 2,
+                                  color: const Color(0xFF9A3412),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
             ),
           ),
         ),
@@ -840,7 +875,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     required Color baseColor,
   }) {
     final ribbonColor = baseColor.withOpacity(0.95);
-    final ribbonWidth = (label.length * 7.2).clamp(92.0, 126.0);
+    final ribbonWidth = (label.length * 5.8).clamp(76.0, 104.0);
 
     return Positioned(
       top: 0,
@@ -848,7 +883,7 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
       child: IgnorePointer(
         child: Container(
           width: ribbonWidth,
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [ribbonColor, ribbonColor.withOpacity(0.88)],
@@ -856,8 +891,8 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
               end: Alignment.centerRight,
             ),
             borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(10),
-              bottomLeft: Radius.circular(12),
+              topRight: Radius.circular(9),
+              bottomLeft: Radius.circular(10),
             ),
             boxShadow: const [
               BoxShadow(
@@ -872,10 +907,12 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
               label.toUpperCase(),
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 10,
+                fontSize: 8.8,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
+                letterSpacing: 0.5,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),
@@ -909,19 +946,68 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     }
   }
 
-  void _launchMap(double lat, double lng, String address) async {
-    print('🗺️ Abriendo mapa para dirección: $address ($lat, $lng)');
-    
+  void _launchMap({double? lat, double? lng, required String address}) async {
+    final cleanAddress = address.trim();
+    print('🗺️ Abriendo mapa para dirección: $cleanAddress ($lat, $lng)');
+
     try {
-      // Obtener ubicación actual del conductor
-      final currentLocation = await LocationService.getCurrentLocation();
-      
-      if (currentLocation == null) {
-        print('❌ No se pudo obtener la ubicación actual');
+      // Si no hay coordenadas, abrir búsqueda por dirección
+      if (lat == null || lng == null) {
+        if (cleanAddress.isEmpty) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No hay dirección disponible para abrir en el mapa',
+              ),
+            ),
+          );
+          return;
+        }
+
+        final Uri googleMapsSearchUri = Uri.parse(
+          'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(cleanAddress)}',
+        );
+
+        final opened = await launchUrl(
+          googleMapsSearchUri,
+          mode: LaunchMode.externalApplication,
+        );
+
+        if (!opened && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo abrir la aplicación de mapas'),
+            ),
+          );
+        }
         return;
       }
 
-      print('🗺️ Abriendo ruta desde ubicación actual (${currentLocation.latitude}, ${currentLocation.longitude}) hasta ($lat, $lng)');
+      // Obtener ubicación actual del conductor
+      final currentLocation = await LocationService.getCurrentLocation();
+
+      if (currentLocation == null) {
+        // Fallback: abrir solo el destino cuando no hay ubicación actual
+        final bool opened = await MapsService.openLocationInMaps(
+          latitude: lat,
+          longitude: lng,
+          label: cleanAddress,
+        );
+
+        if (!opened && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo abrir la aplicación de mapas'),
+            ),
+          );
+        }
+        return;
+      }
+
+      print(
+        '🗺️ Abriendo ruta desde ubicación actual (${currentLocation.latitude}, ${currentLocation.longitude}) hasta ($lat, $lng)',
+      );
 
       // Abrir ruta desde ubicación actual hasta la dirección del cliente
       final bool success = await MapsService.openRouteInMaps(
@@ -929,14 +1015,24 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
         originLng: currentLocation.longitude,
         destinationLat: lat,
         destinationLng: lng,
-        destinationLabel: address,
+        destinationLabel: cleanAddress,
       );
 
       if (!success) {
         print('❌ No se pudo abrir la aplicación de mapas');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir la aplicación de mapas'),
+          ),
+        );
       }
     } catch (e) {
       print('❌ Error al abrir el mapa: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al abrir el mapa: $e')));
     }
   }
 }

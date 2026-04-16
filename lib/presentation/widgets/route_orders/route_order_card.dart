@@ -64,16 +64,21 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                 ],
               ),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
-                  color: widget.isActive 
-                    ? const Color(0xFFFEF3C7) // Amarillo suave si está activa
-                    : const Color(0xFFF6F8FB),
+                  color: widget.isActive
+                      ? const Color(0xFFFEF3C7) // Amarillo suave si está activa
+                      : const Color(0xFFF6F8FB),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: widget.isActive 
-                      ? const Color(0xFFF59E0B) // Borde amarillo si está activa
-                      : const Color(0xFFE5E7EB), 
+                    color: widget.isActive
+                        ? const Color(
+                            0xFFF59E0B,
+                          ) // Borde amarillo si está activa
+                        : const Color(0xFFE5E7EB),
                     width: widget.isActive ? 2 : 1,
                   ),
                 ),
@@ -110,9 +115,15 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
             children: [
               Row(
                 children: [
-                  if ((widget.order.routeSequence ?? widget.order.sequence ?? 0) > 0) ...[
+                  if ((widget.order.routeSequence ??
+                          widget.order.sequence ??
+                          0) >
+                      0) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFDBEAFE),
                         borderRadius: BorderRadius.circular(999),
@@ -153,7 +164,8 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              if (widget.order.isMultipack && widget.order.expectedPackages > 1) ...[
+              if (widget.order.isMultipack &&
+                  widget.order.expectedPackages > 1) ...[
                 const SizedBox(height: 6),
                 _buildMultipackBadge(),
               ],
@@ -168,7 +180,10 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
           children: [
             if (widget.order.planningStatus == 'in_transport')
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: _statusColor(widget.order.statusLabel),
                   borderRadius: BorderRadius.circular(18),
@@ -262,7 +277,8 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
   }
 
   Widget _buildProductInfo() {
-    final showMultipack = widget.order.isMultipack && widget.order.expectedPackages > 1;
+    final showMultipack =
+        widget.order.isMultipack && widget.order.expectedPackages > 1;
     return Text(
       showMultipack
           ? 'Producto: ${widget.order.product ?? 'N/A'} · Zona ${widget.order.district} · Bultos ${widget.order.scannedPackages}/${widget.order.expectedPackages}'
@@ -348,13 +364,13 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
 
     return Positioned(
       top: 10,
-      right: -48,
+      right: -42,
       child: IgnorePointer(
         child: Transform.rotate(
           angle: 0.62,
           child: Container(
-            width: 170,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            width: 146,
+            padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: colors),
               borderRadius: BorderRadius.circular(6),
@@ -373,10 +389,12 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
                   label.toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 8.8,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 1.0,
+                    letterSpacing: 0.7,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -388,12 +406,18 @@ class _RouteOrderCardState extends State<RouteOrderCard> {
 
   Color _statusColor(String status) {
     final normalized = status.toLowerCase();
-    if (normalized.contains('pendiente')) return const Color(0xFF8B95A4); // gris/plomo
-    if (normalized.contains('bloqueado')) return const Color(0xFF8B5CF6); // morado
-    if (normalized.contains('transporte')) return const Color(0xFF3B82F6); // azul
-    if (normalized.contains('en curso')) return const Color(0xFFF59E0B); // amarillo
-    if (normalized.contains('entregado')) return const Color(0xFF10B981); // verde
-    if (normalized.contains('rechazado')) return const Color(0xFFEF4444); // rojo
+    if (normalized.contains('pendiente'))
+      return const Color(0xFF8B95A4); // gris/plomo
+    if (normalized.contains('bloqueado'))
+      return const Color(0xFF8B5CF6); // morado
+    if (normalized.contains('transporte'))
+      return const Color(0xFF3B82F6); // azul
+    if (normalized.contains('en curso'))
+      return const Color(0xFFF59E0B); // amarillo
+    if (normalized.contains('entregado'))
+      return const Color(0xFF10B981); // verde
+    if (normalized.contains('rechazado'))
+      return const Color(0xFFEF4444); // rojo
     if (normalized.contains('por validar')) return const Color(0xFFF59E0B);
     if (normalized.contains('en ruta')) return const Color(0xFF3B82F6);
     if (normalized.contains('terminado')) return const Color(0xFF10B981);
