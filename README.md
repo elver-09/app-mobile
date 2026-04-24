@@ -110,15 +110,6 @@ git push origin main
 
 Hay APKs grandes en `releases/` (>50 MB). Para proyectos públicos, recomiendo mover los binarios a GitHub Releases o usar Git LFS para no perjudicar el rendimiento del repositorio.
 
-## 🔧 Configuración de backend
-
-El backend Odoo se configura en `lib/presentation/screens/login_screen.dart`:
-
-- URL: `https://trainyl.digilab.pe`
-- Base de datos: `trainyl-prd`
-
-Si necesitas cambiar el backend, actualiza `AuthController` / `OdooClient`.
-
 ## 📌 Recomendaciones para el README público
 
 - Agregar capturas de pantalla reales de la app.
