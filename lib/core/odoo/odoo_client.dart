@@ -53,10 +53,7 @@ class OdooAuthResult {
   final DriverInfo driver;
   final String token;
 
-  OdooAuthResult({
-    required this.driver,
-    required this.token,
-  });
+  OdooAuthResult({required this.driver, required this.token});
 }
 
 class OdooClient {
@@ -64,7 +61,7 @@ class OdooClient {
   final String db;
 
   OdooClient({required String baseUrl, required this.db})
-      : baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), '');
+    : baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), '');
 
   String _asString(dynamic value, {String fallback = ''}) {
     if (value == null || value == false) return fallback;
@@ -89,10 +86,7 @@ class OdooClient {
       body: jsonEncode({
         'jsonrpc': '2.0',
         'method': 'call',
-        'params': {
-          'login': login,
-          'password': password,
-        },
+        'params': {'login': login, 'password': password},
       }),
     );
 
@@ -130,10 +124,7 @@ class OdooClient {
       routeName: null,
     );
 
-    return OdooAuthResult(
-      driver: driver,
-      token: token,
-    );
+    return OdooAuthResult(driver: driver, token: token);
   }
 
   /// Obtiene las rutas del día del conductor autenticado
@@ -146,11 +137,7 @@ class OdooClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'jsonrpc': '2.0',
-        'method': 'call',
-        'params': {},
-      }),
+      body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
     );
 
     if (resp.statusCode != 200) {
@@ -183,11 +170,7 @@ class OdooClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'jsonrpc': '2.0',
-        'method': 'call',
-        'params': {},
-      }),
+      body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
     );
 
     if (resp.statusCode != 200) {
@@ -208,7 +191,7 @@ class OdooClient {
     final orders = ordersData
         .map((o) => OrderItem.fromJson(o as Map<String, dynamic>))
         .toList();
-    
+
     return RouteOrdersResponse(
       orders: orders,
       fleetType: result['fleet_type'] as String? ?? 'Vehículo',
@@ -233,11 +216,7 @@ class OdooClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'jsonrpc': '2.0',
-        'method': 'call',
-        'params': {},
-      }),
+      body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
     );
 
     if (resp.statusCode != 200) {
@@ -246,7 +225,7 @@ class OdooClient {
 
     final data = jsonDecode(resp.body);
     print('📦 Respuesta del servidor: $data');
-    
+
     final result = data['result'];
     if (result == null || result['success'] != true) {
       print('❌ Success = false. Error: ${result?['error']}');
@@ -271,7 +250,7 @@ class OdooClient {
     required List<String> photoBase64List,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/update_delivered');
-    
+
     try {
       final resp = await http.post(
         url,
@@ -300,7 +279,7 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('📦 Respuesta Odoo updateOrderDelivered: $data');
       final result = data['result'];
-      
+
       if (result != null && result['success'] == true) {
         print('✅ Orden entregada sincronizada con Odoo');
         return true;
@@ -322,6 +301,7 @@ class OdooClient {
     required int orderId,
     required String deliveryDateIso,
     String? comment,
+    int? areaId,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/reprogram');
 
@@ -339,6 +319,7 @@ class OdooClient {
             'order_id': orderId,
             'delivery_date': deliveryDateIso,
             'comment': comment ?? '',
+            if (areaId != null) 'area_id': areaId,
           },
         }),
       );
@@ -378,7 +359,7 @@ class OdooClient {
     required List<String> photoBase64List,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/update_rejected');
-    
+
     try {
       final resp = await http.post(
         url,
@@ -409,7 +390,7 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('📦 Respuesta Odoo updateOrderRejected: $data');
       final result = data['result'];
-      
+
       if (result != null && result['success'] == true) {
         print('✅ Orden rechazada sincronizada con Odoo');
         return true;
@@ -431,7 +412,7 @@ class OdooClient {
     required int routeId,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/start_next/$routeId');
-    
+
     try {
       final resp = await http.post(
         url,
@@ -439,11 +420,7 @@ class OdooClient {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'jsonrpc': '2.0',
-          'method': 'call',
-          'params': {},
-        }),
+        body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
       );
 
       if (resp.statusCode != 200) {
@@ -454,7 +431,7 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('📦 Respuesta Odoo startNextOrder: $data');
       final result = data['result'];
-      
+
       if (result != null && result['success'] == true) {
         print('✅ Siguiente orden iniciada correctamente');
         return result;
@@ -475,7 +452,7 @@ class OdooClient {
     required int routeId,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/start/$routeId/$orderId');
-    
+
     try {
       final resp = await http.post(
         url,
@@ -483,11 +460,7 @@ class OdooClient {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'jsonrpc': '2.0',
-          'method': 'call',
-          'params': {},
-        }),
+        body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
       );
 
       if (resp.statusCode != 200) {
@@ -498,7 +471,7 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('📦 Respuesta Odoo startSpecificOrder: $data');
       final result = data['result'];
-      
+
       if (result != null && result['success'] == true) {
         print('✅ Orden específica iniciada correctamente');
         return result;
@@ -518,8 +491,10 @@ class OdooClient {
     required int currentOrderId,
     required int routeId,
   }) async {
-    final url = Uri.parse('$baseUrl/driver/order/start_next_from_current/$routeId/$currentOrderId');
-    
+    final url = Uri.parse(
+      '$baseUrl/driver/order/start_next_from_current/$routeId/$currentOrderId',
+    );
+
     try {
       final resp = await http.post(
         url,
@@ -527,11 +502,7 @@ class OdooClient {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'jsonrpc': '2.0',
-          'method': 'call',
-          'params': {},
-        }),
+        body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
       );
 
       if (resp.statusCode != 200) {
@@ -542,7 +513,7 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('📦 Respuesta Odoo startNextOrderFromCurrent: $data');
       final result = data['result'];
-      
+
       if (result != null && result['success'] == true) {
         print('✅ Siguiente orden iniciada desde ubicación actual');
         return result as Map<String, dynamic>;
@@ -568,11 +539,7 @@ class OdooClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'jsonrpc': '2.0',
-        'method': 'call',
-        'params': {},
-      }),
+      body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
     );
 
     if (resp.statusCode != 200) {
@@ -582,7 +549,7 @@ class OdooClient {
 
     final data = jsonDecode(resp.body);
     print('📦 Respuesta razones de rechazo: $data');
-    
+
     final result = data['result'];
     if (result == null || result['success'] != true) {
       print('❌ Error obteniendo razones de rechazo');
@@ -594,6 +561,40 @@ class OdooClient {
     return reasonsData.cast<Map<String, dynamic>>();
   }
 
+  /// Obtiene los distritos (Lima y Callao)
+  Future<List<Map<String, dynamic>>> fetchDistricts({
+    required String token,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/locations/districts');
+
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
+      );
+
+      if (resp.statusCode != 200) {
+        print('❌ HTTP Error en fetchDistricts: ${resp.statusCode}');
+        return [];
+      }
+
+      final data = jsonDecode(resp.body);
+      print('📦 Respuesta distritos: $data');
+      final result = data['result'];
+      if (result == null || result['success'] != true) return [];
+
+      final List districts = result['districts'] ?? [];
+      return districts.cast<Map<String, dynamic>>();
+    } catch (e) {
+      print('❌ Exception en fetchDistricts: $e');
+      return [];
+    }
+  }
+
   /// Confirmar escaneo de orden (cambiar de in_planification a in_transport)
   Future<Map<String, dynamic>> scanConfirmOrder({
     required String token,
@@ -602,10 +603,10 @@ class OdooClient {
     print('🟢 ===== ODOO CLIENT: scanConfirmOrder =====');
     print('🟢 Order ID: $orderId');
     print('🟢 Token length: ${token.length}');
-    
+
     final url = Uri.parse('$baseUrl/driver/order/scan_confirm/$orderId');
     print('🟢 URL: $url');
-    
+
     try {
       print('🟢 Enviando petición POST...');
       final resp = await http.post(
@@ -614,11 +615,7 @@ class OdooClient {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'jsonrpc': '2.0',
-          'method': 'call',
-          'params': {},
-        }),
+        body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
       );
 
       print('🟢 Respuesta HTTP recibida');
@@ -633,10 +630,10 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('🟢 JSON decodificado:');
       print('🟢 Data completo: $data');
-      
+
       final result = data['result'];
       print('🟢 Result extraído: $result');
-      
+
       if (result != null && result['success'] == true) {
         print('✅ ÉXITO en OdooClient: Orden confirmada');
         print('✅ Nuevo estado reportado por Odoo: ${result['new_status']}');
@@ -664,12 +661,12 @@ class OdooClient {
     print('🟢 ===== ODOO CLIENT: searchOrderGlobal =====');
     print('🟢 Order Code: $orderCode');
     print('🟢 Token length: ${token.length}');
-    
-    final url = Uri.parse('$baseUrl/driver/order/search_global').replace(
-      queryParameters: {'order_code': orderCode},
-    );
+
+    final url = Uri.parse(
+      '$baseUrl/driver/order/search_global',
+    ).replace(queryParameters: {'order_code': orderCode});
     print('🟢 URL: $url');
-    
+
     try {
       print('🟢 Enviando petición GET...');
       final resp = await http.get(
@@ -691,7 +688,7 @@ class OdooClient {
 
       final data = jsonDecode(resp.body);
       print('🟢 JSON decodificado: $data');
-      
+
       if (data['success'] == true) {
         print('✅ ÉXITO en OdooClient: Orden encontrada');
         return data;
@@ -717,7 +714,7 @@ class OdooClient {
     String? deliveryComment,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/update_multiple_delivered');
-    
+
     try {
       final resp = await http.post(
         url,
@@ -747,10 +744,11 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('📦 Respuesta Odoo updateMultipleDelivered: $data');
       final result = data['result'];
-      
+
       if (result != null && result['success'] == true) {
         print('✅ ${orderIds.length} órdenes entregadas sincronizadas con Odoo');
-        final processedCount = (result['processed_orders'] as List?)?.length ?? 0;
+        final processedCount =
+            (result['processed_orders'] as List?)?.length ?? 0;
         final failedCount = (result['failed_orders'] as List?)?.length ?? 0;
         print('   Procesadas: $processedCount, Fallidas: $failedCount');
         return true;
@@ -776,7 +774,7 @@ class OdooClient {
     required List<String> photoBase64List,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/update_multiple_rejected');
-    
+
     try {
       final resp = await http.post(
         url,
@@ -807,10 +805,11 @@ class OdooClient {
       final data = jsonDecode(resp.body);
       print('📦 Respuesta Odoo updateMultipleRejected: $data');
       final result = data['result'];
-      
+
       if (result != null && result['success'] == true) {
         print('✅ ${orderIds.length} órdenes rechazadas sincronizadas con Odoo');
-        final processedCount = (result['processed_orders'] as List?)?.length ?? 0;
+        final processedCount =
+            (result['processed_orders'] as List?)?.length ?? 0;
         final failedCount = (result['failed_orders'] as List?)?.length ?? 0;
         print('   Procesadas: $processedCount, Fallidas: $failedCount');
         return true;
@@ -826,5 +825,3 @@ class OdooClient {
     }
   }
 }
-
-

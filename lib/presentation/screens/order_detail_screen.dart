@@ -85,11 +85,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   List<LatLng> routePoints = [];
   bool isLoadingRoute = true;
-    LatLng? _originLatLng;
+  LatLng? _originLatLng;
   List<File> deliveryPhotos = [];
   List<Map<String, dynamic>> rejectionReasons = [];
   int? selectedRejectionReasonId; // ← ID de la razón seleccionada
-  bool canReprogramAfterRejection = false; // ← Flag para mostrar botón de reprogramación
+  bool canReprogramAfterRejection =
+      false; // ← Flag para mostrar botón de reprogramación
 
   // Estado multibulto
   bool isMultipack = false;
@@ -99,13 +100,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   // Estado actual de la orden
   late String currentOrderStatus;
-  
+
   // Controller para el campo de comentario
   final TextEditingController _commentController = TextEditingController();
 
   Timer? _autoRefreshTimer;
   bool _isAppInBackground = false;
-  
+
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
@@ -173,16 +174,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           expectedPackages = details.expectedPackages;
           scannedPackages = details.scannedPackages;
           remainingPackages = details.remainingPackages;
-          
+
           // Si la orden está rechazada y tiene una razón, validar si permite reprogramar
-          if (details.planningStatus == 'cancelled' && details.reasonRejectionId != null) {
+          if (details.planningStatus == 'cancelled' &&
+              details.reasonRejectionId != null) {
             final rejectedReason = rejectionReasons.firstWhere(
               (r) => r['id'] == details.reasonRejectionId,
               orElse: () => {},
             );
             canReprogramAfterRejection = rejectedReason['reprogramed'] ?? false;
             selectedRejectionReasonId = details.reasonRejectionId;
-            print('🔄 Orden rechazada con razón ID: ${details.reasonRejectionId}, permite reprogramar: $canReprogramAfterRejection');
+            print(
+              '🔄 Orden rechazada con razón ID: ${details.reasonRejectionId}, permite reprogramar: $canReprogramAfterRejection',
+            );
           }
         });
       }
@@ -238,7 +242,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   Future<void> _loadRejectionReasons() async {
     if (!mounted) return;
-    
+
     try {
       final reasons = await widget.odooClient.fetchRejectionReasons(
         token: widget.token,
@@ -266,7 +270,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       }
     } catch (_) {}
 
-    origin ??= (widget.routeStartLatitude != null &&
+    origin ??=
+        (widget.routeStartLatitude != null &&
             widget.routeStartLongitude != null)
         ? LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!)
         : null;
@@ -283,7 +288,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       _useFallbackRoute();
       return;
     }
-    
+
     try {
       final String url =
           'https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${widget.longitude},${widget.latitude}?overview=full&geometries=geojson';
@@ -347,7 +352,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     if (!mounted) return;
     setState(() {
       // Crear una línea recta entre inicio y fin si hay coordenadas
-      final fallbackOrigin = _originLatLng ??
+      final fallbackOrigin =
+          _originLatLng ??
           ((widget.routeStartLatitude != null &&
                   widget.routeStartLongitude != null)
               ? LatLng(widget.routeStartLatitude!, widget.routeStartLongitude!)
@@ -455,14 +461,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     try {
       // Obtener ubicación actual del conductor
       final currentLocation = await LocationService.getCurrentLocation();
-      
+
       if (!mounted) return;
       Navigator.pop(context); // Cerrar loading dialog
 
       if (currentLocation == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No se pudo obtener tu ubicación actual. Asegúrate de tener permisos y GPS activado.'),
+            content: Text(
+              'No se pudo obtener tu ubicación actual. Asegúrate de tener permisos y GPS activado.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -515,10 +523,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
     double? minLat, maxLat, minLng, maxLng;
     for (final point in routePoints) {
-      minLat = minLat == null ? point.latitude : (point.latitude < minLat ? point.latitude : minLat);
-      maxLat = maxLat == null ? point.latitude : (point.latitude > maxLat ? point.latitude : maxLat);
-      minLng = minLng == null ? point.longitude : (point.longitude < minLng ? point.longitude : minLng);
-      maxLng = maxLng == null ? point.longitude : (point.longitude > maxLng ? point.longitude : maxLng);
+      minLat = minLat == null
+          ? point.latitude
+          : (point.latitude < minLat ? point.latitude : minLat);
+      maxLat = maxLat == null
+          ? point.latitude
+          : (point.latitude > maxLat ? point.latitude : maxLat);
+      minLng = minLng == null
+          ? point.longitude
+          : (point.longitude < minLng ? point.longitude : minLng);
+      maxLng = maxLng == null
+          ? point.longitude
+          : (point.longitude > maxLng ? point.longitude : maxLng);
     }
 
     if (minLat == null || maxLat == null || minLng == null || maxLng == null) {
@@ -530,9 +546,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       northeast: LatLng(maxLat, maxLng),
     );
 
-    routeMapController!.animateCamera(
-      CameraUpdate.newLatLngBounds(bounds, 40),
-    );
+    routeMapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 40));
   }
 
   // Método para obtener el color del estado actual
@@ -598,7 +612,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('⚠️ No hay razones de rechazo disponibles. Intenta más tarde.'),
+          content: Text(
+            '⚠️ No hay razones de rechazo disponibles. Intenta más tarde.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -609,7 +625,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        print('🔴 Construyendo RejectOrderModal con ${rejectionReasons.length} razones');
+        print(
+          '🔴 Construyendo RejectOrderModal con ${rejectionReasons.length} razones',
+        );
         return RejectOrderModal(
           orderNumber: widget.orderNumber,
           clientName: widget.clientName,
@@ -668,7 +686,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               currentOrderStatus = 'cancelled'; // Actualizar estado a rechazado
               selectedRejectionReasonId = result['reasonId'] as int?;
               canReprogramAfterRejection = allowsReprogramming;
-              _commentController.text = 'Recibido por: ${result['recipient']}';              // Si es "Otro motivo", mostrar el comentario; si no, mostrar la razón
+              _commentController.text =
+                  'Recibido por: ${result['recipient']}'; // Si es "Otro motivo", mostrar el comentario; si no, mostrar la razón
               if (result['reason'] == 'Otro motivo') {
                 _commentController.text = 'Motivo: ${result['comment']}';
               } else {
@@ -676,7 +695,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               }
             });
             await _savePhotos();
-            
+
             // Refrescar estado desde servidor
             await Future.delayed(const Duration(milliseconds: 500));
             await _refreshOrderStatus();
@@ -770,7 +789,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               _commentController.text = 'Recibido por: ${result['recipient']}';
             });
             await _savePhotos();
-            
+
             // Refrescar estado desde servidor
             await Future.delayed(const Duration(milliseconds: 500));
             await _refreshOrderStatus();
@@ -814,7 +833,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     final isBlocked = currentOrderStatus == 'blocked';
     final responsive = context.responsive;
     final origin = _resolveOriginLatLng();
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -885,7 +904,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       address: widget.address,
                       district: widget.district,
                       product: widget.product,
-                      onCallPressed: isBlocked ? () {} : () => _makePhoneCall(widget.phone),
+                      onCallPressed: isBlocked
+                          ? () {}
+                          : () => _makePhoneCall(widget.phone),
                       onMapPressed: isBlocked ? () {} : _openRouteInMaps,
                       statusLabel: _getStatusLabel(),
                       statusColor: _getStatusColor(),
@@ -909,12 +930,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     SizedBox(height: responsive.getResponsiveSize(8)),
                     // Map preview - Full width
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(responsive.borderRadius),
+                      borderRadius: BorderRadius.circular(
+                        responsive.borderRadius,
+                      ),
                       child: SizedBox(
                         height: responsive.getResponsiveSize(190),
-                        child: (origin == null ||
-                          widget.latitude == null ||
-                          widget.longitude == null)
+                        child:
+                            (origin == null ||
+                                widget.latitude == null ||
+                                widget.longitude == null)
                             ? Container(
                                 color: Colors.grey[200],
                                 child: Center(
@@ -943,7 +967,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                 markers: {
                                   Marker(
                                     markerId: const MarkerId('route_start'),
-                                    position: LatLng(origin.latitude, origin.longitude),
+                                    position: LatLng(
+                                      origin.latitude,
+                                      origin.longitude,
+                                    ),
                                     infoWindow: InfoWindow(
                                       title: _originLatLng != null
                                           ? 'Mi ubicación'
@@ -959,7 +986,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                       widget.latitude!,
                                       widget.longitude!,
                                     ),
-                                    infoWindow: const InfoWindow(title: 'Destino'),
+                                    infoWindow: const InfoWindow(
+                                      title: 'Destino',
+                                    ),
                                     icon: BitmapDescriptor.defaultMarkerWithHue(
                                       BitmapDescriptor.hueRed,
                                     ),
@@ -972,8 +1001,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                     width: 3,
                                     points: isLoadingRoute
                                         ? [
-                                            LatLng(origin.latitude, origin.longitude),
-                                            LatLng(widget.latitude!, widget.longitude!),
+                                            LatLng(
+                                              origin.latitude,
+                                              origin.longitude,
+                                            ),
+                                            LatLng(
+                                              widget.latitude!,
+                                              widget.longitude!,
+                                            ),
                                           ]
                                         : routePoints,
                                   ),
@@ -985,7 +1020,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                 zoomControlsEnabled: true,
                                 myLocationButtonEnabled: false,
                                 mapToolbarEnabled: false,
-                        ),
+                              ),
                       ),
                     ),
                     SizedBox(height: responsive.getResponsiveSize(24)),
@@ -1016,12 +1051,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       DeliveryStatusButtons(
                         onEntregadoPressed: _showDeliveryModal,
                         onRechazadoPressed: _showRejectModal,
-                        isOrderInProgress: widget.planningStatus == 'start_of_route',
+                        isOrderInProgress:
+                            widget.planningStatus == 'start_of_route',
                         currentStatus: widget.planningStatus,
                       ),
                       SizedBox(height: responsive.getResponsiveSize(24)),
                     ],
-                    
+
                     // Widget de fotos
                     Opacity(
                       opacity: isBlocked ? 0.55 : 1,
@@ -1054,7 +1090,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Este comentario se completa automáticamente desde los modales de entrega o rechazo'),
+                                content: Text(
+                                  'Este comentario se completa automáticamente desde los modales de entrega o rechazo',
+                                ),
                                 duration: Duration(seconds: 2),
                               ),
                             );
@@ -1069,16 +1107,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                             filled: true,
                             fillColor: const Color(0xFFF1F5F9),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              borderRadius: BorderRadius.circular(
+                                responsive.borderRadius - 4,
+                              ),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              borderRadius: BorderRadius.circular(
+                                responsive.borderRadius - 4,
+                              ),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                              borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
+                              borderRadius: BorderRadius.circular(
+                                responsive.borderRadius - 4,
+                              ),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF94A3B8),
+                                width: 1.5,
+                              ),
                             ),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: responsive.getResponsiveSize(14),
@@ -1090,28 +1141,41 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     ),
                     SizedBox(height: responsive.getResponsiveSize(5)),
                     // Reprogramar: botón visible solo cuando la orden está en estado 'cancelled' Y la razón seleccionada tiene reprogramed=true
-                    if (currentOrderStatus == 'cancelled' && canReprogramAfterRejection)
+                    if (currentOrderStatus == 'cancelled' &&
+                        canReprogramAfterRejection)
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(0)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: responsive.getResponsiveSize(0),
+                        ),
                         child: Column(
                           children: [
                             ReprogramButton(
                               visible: true,
                               onPressed: () async {
-                                final result = await showDialog<Map<String, dynamic>?>(
-                                  context: context,
-                                  builder: (_) => const ReprogramModal(),
-                                );
+                                final result =
+                                    await showDialog<Map<String, dynamic>?>(
+                                      context: context,
+                                      builder: (_) => ReprogramModal(
+                                        odooClient: widget.odooClient,
+                                        token: widget.token,
+                                      ),
+                                    );
                                 if (result != null && mounted) {
                                   final date = result['date'] as String?;
-                                  final comment = result['comment'] as String? ?? '';
+                                  final comment =
+                                      result['comment'] as String? ?? '';
+                                  final areaId = result['area_id'] as int?;
                                   // Llamar al backend para guardar la reprogramación
-                                  final success = await widget.odooClient.reprogramOrder(
-                                    token: widget.token,
-                                    orderId: widget.orderId,
-                                    deliveryDateIso: date ?? DateTime.now().toIso8601String(),
-                                    comment: comment,
-                                  );
+                                  final success = await widget.odooClient
+                                      .reprogramOrder(
+                                        token: widget.token,
+                                        orderId: widget.orderId,
+                                        deliveryDateIso:
+                                            date ??
+                                            DateTime.now().toIso8601String(),
+                                        comment: comment,
+                                        areaId: areaId,
+                                      );
                                   if (success) {
                                     if (mounted) {
                                       setState(() {
@@ -1119,14 +1183,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                       });
                                     }
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Reprogramación registrada: ${date ?? 'N/A'}')),
+                                      SnackBar(
+                                        content: Text(
+                                          'Reprogramación registrada: ${date ?? 'N/A'}',
+                                        ),
+                                      ),
                                     );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Error al sincronizar la reprogramación')),
+                                      const SnackBar(
+                                        content: Text(
+                                          'Error al sincronizar la reprogramación',
+                                        ),
+                                      ),
                                     );
                                   }
-                                  
                                 }
                               },
                             ),
@@ -1137,7 +1208,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                   ],
                 ),
               ),
-              
             ],
           ),
         ),

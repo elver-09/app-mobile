@@ -245,11 +245,13 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           final message = unscannedCount > 0
               ? '$baseMessage\n⚠️ $unscannedCount orden${unscannedCount > 1 ? 'es' : ''} sin escanear registrada${unscannedCount > 1 ? 's' : ''}'
               : baseMessage;
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message),
-              backgroundColor: unscannedCount > 0 ? Colors.orange : Colors.green,
+              backgroundColor: unscannedCount > 0
+                  ? Colors.orange
+                  : Colors.green,
               duration: const Duration(seconds: 4),
             ),
           );
@@ -333,46 +335,58 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           ? PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) =>
                   OrderDetailScreen(
-                orderId: detail.id,
-                routeSequence: detail.routeSequence ?? detail.sequence ?? order.routeSequence ?? order.sequence,
-                orderNumber: detail.orderNumber,
-                clientName: detail.fullname,
-                phone: detail.phone ?? '',
-                address: detail.address,
-                product: detail.product ?? 'N/A',
-                district: detail.district,
-                token: widget.token,
-                odooClient: widget.odooClient,
-                routeName: widget.routeName,
-                fleetType: fleetType,
-                fleetLicense: fleetLicense,
-                routeStartLatitude: routeStartLat,
-                routeStartLongitude: routeStartLng,
-                latitude: detail.latitude,
-                longitude: detail.longitude,
-                planningStatus: detail.planningStatus,
-                routeId: widget.routeId,
-              ),
+                    orderId: detail.id,
+                    routeSequence:
+                        detail.routeSequence ??
+                        detail.sequence ??
+                        order.routeSequence ??
+                        order.sequence,
+                    orderNumber: detail.orderNumber,
+                    clientName: detail.fullname,
+                    phone: detail.phone ?? '',
+                    address: detail.address,
+                    product: detail.product ?? 'N/A',
+                    district: detail.district,
+                    token: widget.token,
+                    odooClient: widget.odooClient,
+                    routeName: widget.routeName,
+                    fleetType: fleetType,
+                    fleetLicense: fleetLicense,
+                    routeStartLatitude: routeStartLat,
+                    routeStartLongitude: routeStartLng,
+                    latitude: detail.latitude,
+                    longitude: detail.longitude,
+                    planningStatus: detail.planningStatus,
+                    routeId: widget.routeId,
+                  ),
               transitionDuration: const Duration(milliseconds: 360),
               reverseTransitionDuration: const Duration(milliseconds: 250),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                final curved = CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                );
-                return FadeTransition(
-                  opacity: curved,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.96, end: 1.0).animate(curved),
-                    child: child,
-                  ),
-                );
-              },
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    final curved = CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    );
+                    return FadeTransition(
+                      opacity: curved,
+                      child: ScaleTransition(
+                        scale: Tween<double>(
+                          begin: 0.96,
+                          end: 1.0,
+                        ).animate(curved),
+                        child: child,
+                      ),
+                    );
+                  },
             )
           : MaterialPageRoute(
               builder: (context) => OrderDetailScreen(
                 orderId: detail.id,
-                routeSequence: detail.routeSequence ?? detail.sequence ?? order.routeSequence ?? order.sequence,
+                routeSequence:
+                    detail.routeSequence ??
+                    detail.sequence ??
+                    order.routeSequence ??
+                    order.sequence,
                 orderNumber: detail.orderNumber,
                 clientName: detail.fullname,
                 phone: detail.phone ?? '',
@@ -393,10 +407,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
               ),
             );
 
-      final result = await Navigator.push(
-        context,
-        route,
-      );
+      final result = await Navigator.push(context, route);
       if (result is Map && result['updated'] == true) {
         _reloadOrders();
       }
@@ -467,7 +478,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
         renderedGroupKeys.add(groupKey);
 
         // Verificar si todas las órdenes están rechazadas y pueden reprogramarse
-        final allRejected = groupedOrder.orders.every((o) => o.planningStatus == 'cancelled');
+        final allRejected = groupedOrder.orders.every(
+          (o) => o.planningStatus == 'cancelled',
+        );
         bool allCanReprogramAfterRejection = false;
         if (allRejected && rejectionReasons.isNotEmpty) {
           allCanReprogramAfterRejection = groupedOrder.orders.every((o) {
@@ -486,7 +499,8 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             .toList();
         final hasInCourse = inCourseOrders.isNotEmpty;
 
-        final manageableGroup = inCourseOrders.length == groupedOrder.orders.length
+        final manageableGroup =
+            inCourseOrders.length == groupedOrder.orders.length
             ? groupedOrder
             : GroupedOrder(
                 clientName: groupedOrder.clientName,
@@ -497,10 +511,14 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                 longitude: groupedOrder.longitude,
               );
 
-        final showReprogramButton = allRejected && allCanReprogramAfterRejection;
+        final showReprogramButton =
+            allRejected && allCanReprogramAfterRejection;
         final showManageButton = !showReprogramButton && hasInCourse;
-        final VoidCallback onManageTap = () => _showGroupedOrderOptions(manageableGroup);
-        final isFocusedGroup = groupedOrder.orders.any((o) => o.id == _focusedOrderId);
+        final VoidCallback onManageTap = () =>
+            _showGroupedOrderOptions(manageableGroup);
+        final isFocusedGroup = groupedOrder.orders.any(
+          (o) => o.id == _focusedOrderId,
+        );
 
         orderedWidgets.add(
           KeyedSubtree(
@@ -640,7 +658,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           ),
           SizedBox(height: responsive.getResponsiveSize(6)),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
+            padding: EdgeInsets.symmetric(
+              horizontal: responsive.getResponsiveSize(16),
+            ),
             child: Text(
               'Puedes iniciar la ruta aunque queden órdenes sin validar. Recuerda validar toda la carga antes de salir.',
               style: TextStyle(
@@ -659,32 +679,36 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
   void _showGroupedOrderOptions(GroupedOrder groupedOrder) {
     // Verificar si todas las órdenes están rechazadas
-    final allRejected = groupedOrder.orders.every((order) => order.planningStatus == 'cancelled');
-    
+    final allRejected = groupedOrder.orders.every(
+      (order) => order.planningStatus == 'cancelled',
+    );
+
     print('🔍 _showGroupedOrderOptions: allRejected=$allRejected');
     print('🔍 Total órdenes en grupo: ${groupedOrder.orders.length}');
     print('🔍 Razones de rechazo cargadas: ${rejectionReasons.length}');
     print('🔍 Razones: $rejectionReasons');
-    
+
     // Verificar si TODAS pueden reprogramarse (todas tienen razón y la razón permite reprogramación)
     bool allCanReprogramAfterRejection = false;
     if (allRejected && rejectionReasons.isNotEmpty) {
       allCanReprogramAfterRejection = groupedOrder.orders.every((order) {
-        print('🔍 Verificando orden ${order.id}: reasonId=${order.reasonRejectionId}, status=${order.planningStatus}');
-        
+        print(
+          '🔍 Verificando orden ${order.id}: reasonId=${order.reasonRejectionId}, status=${order.planningStatus}',
+        );
+
         if (order.reasonRejectionId == null) {
           print('  ❌ No tiene reasonRejectionId');
           return false;
         }
-        
+
         // Buscar la razón de esta orden
         final rejectedReason = rejectionReasons.firstWhere(
           (r) => r['id'] == order.reasonRejectionId,
           orElse: () => {},
         );
-        
+
         print('  Razón encontrada: $rejectedReason');
-        
+
         // Verificar que el boolean 'reprogramed' esté en true
         final canReprogramThisOrder = rejectedReason['reprogramed'] ?? false;
         print('  canReprogram=$canReprogramThisOrder');
@@ -692,8 +716,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
       });
     }
 
-    print('🔍 Resultado final: allRejected=$allRejected, allCanReprogramAfterRejection=$allCanReprogramAfterRejection');
-
+    print(
+      '🔍 Resultado final: allRejected=$allRejected, allCanReprogramAfterRejection=$allCanReprogramAfterRejection',
+    );
 
     // Si todas están rechazadas Y pueden reprogramarse, mostrar SOLO el botón Reprogramar
     if (allRejected && allCanReprogramAfterRejection) {
@@ -787,7 +812,10 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         label: const Text('Entrega parcial'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF2563EB),
-                          side: const BorderSide(color: Color(0xFF93C5FD), width: 1.5),
+                          side: const BorderSide(
+                            color: Color(0xFF93C5FD),
+                            width: 1.5,
+                          ),
                           textStyle: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -806,7 +834,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                           Navigator.pop(context);
                           _showMultipleDeliveryModal(groupedOrder, 'deliver');
                         },
-                        icon: const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        icon: const Icon(
+                          Icons.check_circle,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         label: const Text('Entregar todas'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF10B981),
@@ -829,7 +861,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                           Navigator.pop(context);
                           _showMultipleDeliveryModal(groupedOrder, 'reject');
                         },
-                        icon: const Icon(Icons.cancel, color: Colors.white, size: 18),
+                        icon: const Icon(
+                          Icons.cancel,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         label: const Text('Rechazar todas'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFB91C1C),
@@ -858,14 +894,18 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
   void _showReprogramGroupedOrdersModal(GroupedOrder groupedOrder) {
     showDialog(
       context: context,
-      builder: (_) => const ReprogramModal(),
+      builder: (_) =>
+          ReprogramModal(odooClient: widget.odooClient, token: widget.token),
     ).then((result) async {
       if (result != null && mounted) {
         final date = result['date'] as String?;
         final comment = result['comment'] as String? ?? '';
-        
-        print('🔄 Reprogramando ${groupedOrder.orders.length} órdenes para: $date');
-        
+        final areaId = result['area_id'] as int?;
+
+        print(
+          '🔄 Reprogramando ${groupedOrder.orders.length} órdenes para: $date',
+        );
+
         // Reprogramar todas las órdenes del grupo
         bool allSuccessful = true;
         for (final order in groupedOrder.orders) {
@@ -875,6 +915,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
               orderId: order.id,
               deliveryDateIso: date ?? DateTime.now().toIso8601String(),
               comment: comment,
+              areaId: areaId,
             );
             if (!success) {
               allSuccessful = false;
@@ -885,12 +926,14 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             print('❌ Excepción al reprogramar orden ${order.id}: $e');
           }
         }
-        
+
         if (mounted) {
           if (allSuccessful) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('${groupedOrder.orders.length} órdenes reprogramadas para: ${date ?? 'N/A'}'),
+                content: Text(
+                  '${groupedOrder.orders.length} órdenes reprogramadas para: ${date ?? 'N/A'}',
+                ),
                 backgroundColor: const Color(0xFF10B981),
               ),
             );
@@ -924,7 +967,10 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
     });
   }
 
-  void _showMultipleDeliveryModal(GroupedOrder groupedOrder, String actionType) {
+  void _showMultipleDeliveryModal(
+    GroupedOrder groupedOrder,
+    String actionType,
+  ) {
     showDialog(
       context: context,
       builder: (context) => MultipleDeliveryModal(
@@ -942,27 +988,31 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
   void _handlePartialDeliveryResult(Map<String, dynamic> result) async {
     print('📦 Partial delivery result: $result');
-    
-    final deliveredOrders = (result['ordersToDeliver'] as List?)
-        ?.map((o) => o as OrderItem)
-        .toList() ?? [];
-    final rejectedOrders = (result['ordersToReject'] as List?)
-        ?.map((o) => o as OrderItem)
-        .toList() ?? [];
-    final deliveryPhotos = (result['deliveryPhotos'] as List?)
-        ?.map((p) => p as File)
-        .toList() ?? [];
-    final rejectionPhotos = (result['rejectionPhotos'] as List?)
-        ?.map((p) => p as File)
-        .toList() ?? [];
-    
+
+    final deliveredOrders =
+        (result['ordersToDeliver'] as List?)
+            ?.map((o) => o as OrderItem)
+            .toList() ??
+        [];
+    final rejectedOrders =
+        (result['ordersToReject'] as List?)
+            ?.map((o) => o as OrderItem)
+            .toList() ??
+        [];
+    final deliveryPhotos =
+        (result['deliveryPhotos'] as List?)?.map((p) => p as File).toList() ??
+        [];
+    final rejectionPhotos =
+        (result['rejectionPhotos'] as List?)?.map((p) => p as File).toList() ??
+        [];
+
     print('✅ Órdenes a entregar: ${deliveredOrders.length}');
     print('✅ Órdenes a rechazar: ${rejectedOrders.length}');
     print('✅ Fotos de entrega: ${deliveryPhotos.length}');
     print('✅ Fotos de rechazo: ${rejectionPhotos.length}');
-    
+
     if (!mounted) return;
-    
+
     try {
       // Procesar entregas
       if (deliveredOrders.isNotEmpty) {
@@ -973,7 +1023,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           final base64String = base64Encode(bytes);
           deliveryPhotoBase64List.add(base64String);
         }
-        
+
         final deliveryOrderIds = deliveredOrders.map((o) => o.id).toList();
         final success = await widget.odooClient.updateMultipleDelivered(
           token: widget.token,
@@ -982,7 +1032,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           photoBase64List: deliveryPhotoBase64List,
           deliveryComment: result['deliveryComment'] as String?,
         );
-        
+
         if (!success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -993,7 +1043,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           return;
         }
       }
-      
+
       // Procesar rechazos
       if (rejectedOrders.isNotEmpty) {
         // Convertir fotos de rechazo a base64
@@ -1003,7 +1053,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           final base64String = base64Encode(bytes);
           rejectionPhotoBase64List.add(base64String);
         }
-        
+
         final rejectOrderIds = rejectedOrders.map((o) => o.id).toList();
         final success = await widget.odooClient.updateMultipleRejected(
           token: widget.token,
@@ -1013,7 +1063,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           comment: result['rejectionComment'] as String? ?? '',
           photoBase64List: rejectionPhotoBase64List,
         );
-        
+
         if (!success && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1024,11 +1074,13 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           return;
         }
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Entrega parcial procesada: ${deliveredOrders.length} entregadas, ${rejectedOrders.length} rechazadas'),
+            content: Text(
+              'Entrega parcial procesada: ${deliveredOrders.length} entregadas, ${rejectedOrders.length} rechazadas',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -1050,19 +1102,17 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
 
   void _handleMultipleDeliveryResult(Map<String, dynamic> result) async {
     print('📦 Multiple delivery result: $result');
-    
+
     final type = result['type'] as String;
-    final orders = (result['orders'] as List?)
-        ?.map((o) => o as OrderItem)
-        .toList() ?? [];
-    final photos = (result['photos'] as List?)
-        ?.map((p) => p as File)
-        .toList() ?? [];
-    
+    final orders =
+        (result['orders'] as List?)?.map((o) => o as OrderItem).toList() ?? [];
+    final photos =
+        (result['photos'] as List?)?.map((p) => p as File).toList() ?? [];
+
     print('✅ Tipo: $type');
     print('✅ Órdenes a procesar: ${orders.length}');
     print('✅ Fotos capturadas: ${photos.length}');
-    
+
     if (orders.isEmpty || photos.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1074,9 +1124,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
       }
       return;
     }
-    
+
     if (!mounted) return;
-    
+
     try {
       // Convertir fotos a base64
       final List<String> photoBase64List = [];
@@ -1085,10 +1135,10 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
         final base64String = base64Encode(bytes);
         photoBase64List.add(base64String);
       }
-      
+
       final orderIds = orders.map((o) => o.id).toList();
       bool success = false;
-      
+
       if (type == 'multiple_delivery') {
         // Entregar todas las órdenes
         success = await widget.odooClient.updateMultipleDelivered(
@@ -1109,7 +1159,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           photoBase64List: photoBase64List,
         );
       }
-      
+
       if (!success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1121,15 +1171,18 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
         }
         return;
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(type == 'multiple_delivery'
-                ? '${orders.length} órdenes entregadas'
-                : '${orders.length} órdenes rechazadas'),
-            backgroundColor:
-                type == 'multiple_delivery' ? Colors.green : Colors.red,
+            content: Text(
+              type == 'multiple_delivery'
+                  ? '${orders.length} órdenes entregadas'
+                  : '${orders.length} órdenes rechazadas',
+            ),
+            backgroundColor: type == 'multiple_delivery'
+                ? Colors.green
+                : Colors.red,
           ),
         );
         // Recargar órdenes después de procesar
@@ -1151,7 +1204,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: FutureBuilder<RouteOrdersResponse>(
@@ -1177,17 +1230,17 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             return const Center(child: Text('No hay órdenes en esta ruta'));
           }
 
-            // Filtrar órdenes
-            final statusFilteredOrders = _showOnlyActive
+          // Filtrar órdenes
+          final statusFilteredOrders = _showOnlyActive
               ? orders.where((order) {
                   final status = order.planningStatus;
-                  return status == 'in_planification' || 
-                        status == 'in_transport' || 
-                        status == 'start_of_route';
+                  return status == 'in_planification' ||
+                      status == 'in_transport' ||
+                      status == 'start_of_route';
                 }).toList()
               : orders;
 
-            final filteredOrders = statusFilteredOrders
+          final filteredOrders = statusFilteredOrders
               .where((order) => _matchesOrderSearch(order))
               .toList();
 
@@ -1195,20 +1248,22 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           final scannedOrders = orders.where((order) {
             return order.planningStatus != 'in_planification';
           }).toList();
-          
+
           // Agrupar órdenes escaneadas por cliente+dirección
-          final groupedScannedOrders = scannedOrders.isNotEmpty 
+          final groupedScannedOrders = scannedOrders.isNotEmpty
               ? GroupedOrder.groupOrders(scannedOrders)
               : <GroupedOrder>[];
-          
+
           // Mostrar vista agrupada si hay al menos un grupo con múltiples órdenes
-          final shouldShowGroupedView = groupedScannedOrders.any((group) => group.orders.length > 1);
-          
+          final shouldShowGroupedView = groupedScannedOrders.any(
+            (group) => group.orders.length > 1,
+          );
+
           // Verificar si TODAS las órdenes están escaneadas (para ocultar el scanner)
           final allOrdersScanned = orders.every((order) {
             return order.planningStatus != 'in_planification';
           });
-          
+
           // Verificar si la ruta ya está en curso
           final routeInProgress = response.routeStatus == 'in_route';
 
@@ -1239,7 +1294,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         ),
                         SizedBox(width: responsive.getResponsiveSize(8)),
                         Text(
-                          allOrdersScanned ? 'Órdenes asignadas' : 'Verificar carga',
+                          allOrdersScanned
+                              ? 'Órdenes asignadas'
+                              : 'Verificar carga',
                           style: TextStyle(
                             fontSize: responsive.headingMediumFontSize,
                             fontWeight: FontWeight.bold,
@@ -1259,31 +1316,37 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         orders: orders,
                         routeStatus: response.routeStatus,
                         onScanTap: () async {
-                        print('🔵 Navegando al scanner...');
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ScanBarcodeScreen(
-                              routeName: widget.routeName,
-                              fleetType: fleetType,
-                              fleetLicense: fleetLicense,
-                              orders: orders,
-                              odooClient: widget.odooClient,
-                              token: widget.token,
+                          print('🔵 Navegando al scanner...');
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ScanBarcodeScreen(
+                                routeName: widget.routeName,
+                                fleetType: fleetType,
+                                fleetLicense: fleetLicense,
+                                orders: orders,
+                                odooClient: widget.odooClient,
+                                token: widget.token,
+                              ),
                             ),
-                          ),
-                        );
-                        
-                        print('🔵 Regresó del scanner con resultado: $result');
-                        // Si regresó con true, refrescar la lista
-                        if (result == true && mounted) {
-                          print('🔵 Esperando 2 segundos para que Odoo procese el cambio...');
-                          await Future.delayed(const Duration(seconds: 2));
-                          print('🔵 Llamando a _reloadOrders() para refrescar...');
-                          _reloadOrders();
-                        }
-                      },
-                    ),
+                          );
+
+                          print(
+                            '🔵 Regresó del scanner con resultado: $result',
+                          );
+                          // Si regresó con true, refrescar la lista
+                          if (result == true && mounted) {
+                            print(
+                              '🔵 Esperando 2 segundos para que Odoo procese el cambio...',
+                            );
+                            await Future.delayed(const Duration(seconds: 2));
+                            print(
+                              '🔵 Llamando a _reloadOrders() para refrescar...',
+                            );
+                            _reloadOrders();
+                          }
+                        },
+                      ),
                     ],
                     SizedBox(height: responsive.getResponsiveSize(0)),
 
@@ -1337,11 +1400,15 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1397,13 +1464,15 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                     if (filteredOrders.isEmpty)
                       Center(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: responsive.getResponsiveSize(32)),
+                          padding: EdgeInsets.symmetric(
+                            vertical: responsive.getResponsiveSize(32),
+                          ),
                           child: Text(
                             _searchQuery.trim().isNotEmpty
                                 ? 'No se encontraron órdenes para "${_searchQuery.trim()}"'
                                 : _showOnlyActive
-                                    ? 'No hay órdenes pendientes'
-                                    : 'No hay órdenes en esta ruta',
+                                ? 'No hay órdenes pendientes'
+                                : 'No hay órdenes en esta ruta',
                             style: TextStyle(
                               fontSize: responsive.bodyMediumFontSize,
                               color: Colors.grey.shade600,
@@ -1413,7 +1482,18 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                       )
                     else if (shouldShowGroupedView)
                       // Mostrar vista mixta: órdenes agrupadas (escaneadas) + órdenes individuales (no escaneadas)
-                      _buildMixedOrdersList(orders, filteredOrders, groupedScannedOrders, fleetType, fleetLicense, routeStartLat, routeStartLng, responsive, allOrdersScanned, routeInProgress)
+                      _buildMixedOrdersList(
+                        orders,
+                        filteredOrders,
+                        groupedScannedOrders,
+                        fleetType,
+                        fleetLicense,
+                        routeStartLat,
+                        routeStartLng,
+                        responsive,
+                        allOrdersScanned,
+                        routeInProgress,
+                      )
                     else
                       // Mostrar solo órdenes individuales (ninguna agrupación aún)
                       Column(
@@ -1438,7 +1518,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                       boxShadow: isFocusedOrder
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFF3B82F6).withOpacity(0.28),
+                                                color: const Color(
+                                                  0xFF3B82F6,
+                                                ).withOpacity(0.28),
                                                 blurRadius: 18,
                                                 spreadRadius: 1,
                                               ),
@@ -1469,7 +1551,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                   ),
                                 ),
                                 if (entry.key < filteredOrders.length - 1)
-                                  SizedBox(height: responsive.getResponsiveSize(8)),
+                                  SizedBox(
+                                    height: responsive.getResponsiveSize(8),
+                                  ),
                               ],
                             );
                           }),
@@ -1479,17 +1563,25 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF3B82F6),
-                                  borderRadius: BorderRadius.circular(responsive.borderRadius),
+                                  borderRadius: BorderRadius.circular(
+                                    responsive.borderRadius,
+                                  ),
                                 ),
                                 child: Material(
                                   color: Colors.transparent,
                                   child: InkWell(
-                                    borderRadius: BorderRadius.circular(responsive.borderRadius),
-                                    onTap: () => _showStartOptimizedRouteDialog(orders),
+                                    borderRadius: BorderRadius.circular(
+                                      responsive.borderRadius,
+                                    ),
+                                    onTap: () =>
+                                        _showStartOptimizedRouteDialog(orders),
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: responsive.getResponsiveSize(14),
-                                        vertical: responsive.getResponsiveSize(8),
+                                        horizontal: responsive
+                                            .getResponsiveSize(14),
+                                        vertical: responsive.getResponsiveSize(
+                                          8,
+                                        ),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -1501,12 +1593,17 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                                             color: Colors.white,
                                             size: responsive.iconSize,
                                           ),
-                                          SizedBox(width: responsive.getResponsiveSize(10)),
+                                          SizedBox(
+                                            width: responsive.getResponsiveSize(
+                                              10,
+                                            ),
+                                          ),
                                           Text(
                                             'Iniciar ruta optimizada',
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: responsive.bodyMediumFontSize,
+                                              fontSize:
+                                                  responsive.bodyMediumFontSize,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -1519,7 +1616,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                             ),
                             SizedBox(height: responsive.getResponsiveSize(6)),
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: responsive.getResponsiveSize(16)),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: responsive.getResponsiveSize(16),
+                              ),
                               child: Text(
                                 'Puedes iniciar la ruta aunque queden órdenes sin validar. Recuerda validar toda la carga antes de salir.',
                                 style: TextStyle(
@@ -1552,19 +1651,23 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
           if (snapshot.hasData && snapshot.data != null) {
             final orders = snapshot.data!.orders;
             final routeStatus = snapshot.data!.routeStatus;
-            
+
             // Si la ruta ya está terminada, no mostrar botón
             if (routeStatus == 'finished') {
               return const SizedBox.shrink();
             }
-            
+
             // Verificar si hay órdenes en curso (start_of_route)
-            final hasOrdersInCourse = orders.any((order) => order.planningStatus == 'start_of_route');
+            final hasOrdersInCourse = orders.any(
+              (order) => order.planningStatus == 'start_of_route',
+            );
 
             // Verificar si todas las órdenes están en transporte (in_transport)
-            final allOrdersInTransport = orders.every((order) =>
-              order.planningStatus == 'in_transport' ||
-              order.planningStatus == 'blocked');
+            final allOrdersInTransport = orders.every(
+              (order) =>
+                  order.planningStatus == 'in_transport' ||
+                  order.planningStatus == 'blocked',
+            );
 
             final hasOrdersInTransport = orders.any(
               (order) => order.planningStatus == 'in_transport',
@@ -1573,15 +1676,17 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             // Verificar si hay órdenes entregadas o rechazadas
             final hasOrdersDeliveredOrRejected = orders.any((order) {
               return order.planningStatus == 'delivered' ||
-                order.planningStatus == 'cancelled' ||
-                order.planningStatus == 'anulled' ||
-                order.planningStatus == 'returned' ||
-                order.planningStatus == 'cancelled_origin' ||
-                order.planningStatus == 'blocked';
+                  order.planningStatus == 'cancelled' ||
+                  order.planningStatus == 'anulled' ||
+                  order.planningStatus == 'returned' ||
+                  order.planningStatus == 'cancelled_origin' ||
+                  order.planningStatus == 'blocked';
             });
 
             // Si no hay órdenes en curso y todas están en transporte, mostrar "Iniciar Ruta"
-            if (!hasOrdersInCourse && allOrdersInTransport && hasOrdersInTransport) {
+            if (!hasOrdersInCourse &&
+                allOrdersInTransport &&
+                hasOrdersInTransport) {
               return Transform.scale(
                 scale: 0.88,
                 child: FloatingActionButton.extended(
@@ -1614,9 +1719,12 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
             }
 
             // Si hay órdenes en curso o entregadas/rechazadas, mostrar "Siguiente Orden"
-            if ((hasOrdersInCourse || hasOrdersDeliveredOrRejected) && hasOrdersInTransport) {
+            if ((hasOrdersInCourse || hasOrdersDeliveredOrRejected) &&
+                hasOrdersInTransport) {
               final orderInCourse = hasOrdersInCourse
-                  ? orders.firstWhere((order) => order.planningStatus == 'start_of_route')
+                  ? orders.firstWhere(
+                      (order) => order.planningStatus == 'start_of_route',
+                    )
                   : null;
 
               return Transform.translate(
@@ -1663,11 +1771,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                 ),
               );
             }
-            
+
             // Sin órdenes en curso ni todas escaneadas, no mostrar nada
             return const SizedBox.shrink();
           }
-          
+
           // Mientras carga, mostrar nada
           return const SizedBox.shrink();
         },
