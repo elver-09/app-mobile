@@ -11,7 +11,7 @@ class StartOrderButton extends StatefulWidget {
   final String token;
   final OdooClient odooClient;
   final VoidCallback? onSuccess;
-  
+
   /// Lista de todas las órdenes para detectar la siguiente planeada
   final List<OrderItem> allOrders;
 
@@ -36,9 +36,9 @@ class _StartOrderButtonState extends State<StartOrderButton> {
   /// Obtiene la próxima orden pendiente que debería iniciarse según planificación
   OrderItem? _getNextPlannedOrder() {
     for (final order in widget.allOrders) {
-      if ((order.planningStatus == 'in_planification' || 
-          order.planningStatus == 'in_transport' || 
-          order.planningStatus == 'pending') && 
+      if ((order.planningStatus == 'in_planification' ||
+              order.planningStatus == 'in_transport' ||
+              order.planningStatus == 'pending') &&
           order.id != widget.orderId) {
         return order;
       }
@@ -48,7 +48,7 @@ class _StartOrderButtonState extends State<StartOrderButton> {
 
   Future<void> _startSpecificOrder() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -150,7 +150,9 @@ class _StartOrderButtonState extends State<StartOrderButton> {
               if (result['success'] == true) {
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text('✅ Orden ${plannedOrder.orderNumber} iniciada'),
+                    content: Text(
+                      '✅ Orden ${plannedOrder.orderNumber} iniciada',
+                    ),
                     backgroundColor: const Color(0xFF10B981),
                     duration: const Duration(seconds: 2),
                   ),
@@ -159,7 +161,9 @@ class _StartOrderButtonState extends State<StartOrderButton> {
               } else {
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text('❌ ${result["error"] ?? "Error al iniciar orden"}'),
+                    content: Text(
+                      '❌ ${result["error"] ?? "Error al iniciar orden"}',
+                    ),
                     backgroundColor: const Color(0xFFEF4444),
                     duration: const Duration(seconds: 3),
                   ),
@@ -219,13 +223,8 @@ class _StartOrderButtonState extends State<StartOrderButton> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         minimumSize: const Size(0, 32),
-        side: const BorderSide(
-          color: Color(0xFF3B82F6),
-          width: 1.5,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        side: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
