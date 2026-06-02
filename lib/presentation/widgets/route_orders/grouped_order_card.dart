@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
+import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
+import 'package:trainyl_2_0/presentation/widgets/route_orders/start_order_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:trainyl_2_0/core/services/location_service.dart';
 import 'package:trainyl_2_0/core/services/maps_service.dart';
@@ -11,6 +13,11 @@ class GroupedOrderCard extends StatefulWidget {
   final bool showManageButton;
   final bool showReprogramButton;
   final VoidCallback? onReprogramTap;
+  final int routeId;
+  final String token;
+  final OdooClient odooClient;
+  final List<OrderItem> allOrders;
+  final VoidCallback? onStartRouteSuccess;
 
   const GroupedOrderCard({
     super.key,
@@ -19,6 +26,11 @@ class GroupedOrderCard extends StatefulWidget {
     this.showManageButton = true,
     this.showReprogramButton = false,
     this.onReprogramTap,
+    required this.routeId,
+    required this.token,
+    required this.odooClient,
+    required this.allOrders,
+    this.onStartRouteSuccess,
   });
 
   @override
@@ -54,6 +66,13 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     );
     final allBlocked = groupedOrder.orders.every(
       (o) => o.planningStatus == 'blocked',
+    );
+    final hasStartableOrders = groupedOrder.orders.any(
+      (o) => o.planningStatus == 'in_transport',
+    );
+    final orderToStart = groupedOrder.orders.firstWhere(
+      (o) => o.planningStatus == 'in_transport',
+      orElse: () => groupedOrder.orders.first,
     );
     final multipackOrdersCount = groupedOrder.orders
         .where((o) => o.isMultipack && o.expectedPackages > 1)
@@ -364,7 +383,8 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                           if (hasPhone &&
                               (hasMapButton ||
                                   widget.showManageButton ||
-                                  widget.showReprogramButton))
+                                  widget.showReprogramButton ||
+                                  hasStartableOrders))
                             SizedBox(width: responsive.getResponsiveSize(8)),
                           // Botón ver mapa (usa coordenadas disponibles o dirección)
                           if (hasMapButton)
@@ -425,6 +445,24 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                               ),
                             ),
                           if (hasMapButton &&
+                              (widget.showManageButton ||
+                                  widget.showReprogramButton ||
+                                  hasStartableOrders))
+                            SizedBox(width: responsive.getResponsiveSize(8)),
+                          // Botón iniciar grupo
+                          if (hasStartableOrders)
+                            Expanded(
+                              child: StartOrderButton(
+                                orderId: orderToStart.id,
+                                routeId: widget.routeId,
+                                orderNumber: orderToStart.orderNumber,
+                                token: widget.token,
+                                odooClient: widget.odooClient,
+                                allOrders: widget.allOrders,
+                                onSuccess: widget.onStartRouteSuccess,
+                              ),
+                            ),
+                          if (hasStartableOrders &&
                               (widget.showManageButton ||
                                   widget.showReprogramButton))
                             SizedBox(width: responsive.getResponsiveSize(8)),

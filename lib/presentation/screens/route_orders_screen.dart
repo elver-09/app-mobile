@@ -546,6 +546,11 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                 onReprogramTap: showReprogramButton
                     ? () => _showReprogramGroupedOrdersModal(groupedOrder)
                     : null,
+                routeId: widget.routeId,
+                token: widget.token,
+                odooClient: widget.odooClient,
+                allOrders: allOrders,
+                onStartRouteSuccess: _reloadOrders,
               ),
             ),
           ),
