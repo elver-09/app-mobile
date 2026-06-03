@@ -4,6 +4,7 @@ import 'package:trainyl_2_0/core/app_routes.dart';
 void main() {
   runApp(const MainWidget());
 }
+
 class MainWidget extends StatelessWidget {
   const MainWidget({super.key});
 
@@ -16,7 +17,7 @@ class MainWidget extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
-      initialRoute: AppRoutes.login,
+      initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );
   }
