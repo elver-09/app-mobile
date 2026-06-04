@@ -14,9 +14,11 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
-  static const Color kBlue = Color(0xFF008DE1);
-  static const Color kBlueDark = Color(0xFF0070B8);
-  static const Color kBlueSoft = Color(0xFFE5F4FC);
+  // ── Paleta de marca ──────────────────────────────────────────────────────
+  static const Color kBlue     = Color(0xFF123C80);
+  static const Color kBlueMid  = Color(0xFF0D2D61);
+  static const Color kBlueDark = Color(0xFF091E42);
+  static const Color kBlueSoft = Color(0xFFEAF0FB);
 
   late final AuthController _auth;
   bool _loading = false;
@@ -30,10 +32,10 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _formFade;
   late Animation<double> _btnScale;
 
-  // Animación de shimmer en el botón
+  // Shimmer continuo en el botón
   late AnimationController _shimmerCtrl;
 
-  // Focus nodes para detectar foco en campos
+  // Focus nodes
   final FocusNode _userFocus = FocusNode();
   final FocusNode _passFocus = FocusNode();
 
@@ -47,54 +49,40 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
 
-    // Entrada
     _entranceCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
 
     _headerSlide = Tween<double>(begin: -60, end: 0).animate(
-      CurvedAnimation(
-        parent: _entranceCtrl,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _entranceCtrl,
+          curve: const Interval(0.0, 0.6, curve: Curves.easeOut)),
     );
     _headerFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _entranceCtrl,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _entranceCtrl,
+          curve: const Interval(0.0, 0.55, curve: Curves.easeOut)),
     );
     _formSlide = Tween<double>(begin: 60, end: 0).animate(
-      CurvedAnimation(
-        parent: _entranceCtrl,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _entranceCtrl,
+          curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
     );
     _formFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _entranceCtrl,
-        curve: const Interval(0.3, 0.85, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _entranceCtrl,
+          curve: const Interval(0.3, 0.85, curve: Curves.easeOut)),
     );
     _btnScale = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _entranceCtrl,
-        curve: const Interval(0.65, 1.0, curve: Curves.elasticOut),
-      ),
+      CurvedAnimation(parent: _entranceCtrl,
+          curve: const Interval(0.65, 1.0, curve: Curves.elasticOut)),
     );
 
-    // Shimmer continuo en el botón
     _shimmerCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat();
 
-    // Escuchar foco para rebuild
     _userFocus.addListener(() => setState(() {}));
     _passFocus.addListener(() => setState(() {}));
 
-    // Iniciar animación de entrada
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _entranceCtrl.forward();
     });
@@ -112,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleLogin() async {
     if (_loading) return;
-    // Quitar foco del teclado
     FocusScope.of(context).unfocus();
     setState(() => _loading = true);
     try {
@@ -157,8 +144,7 @@ class _LoginScreenState extends State<LoginScreen>
           content: Text('Error al iniciar sesión: $e'),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     } finally {
@@ -193,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ── Ola decorativa en la parte superior ──
+          // ── Ola decorativa con degradado de marca ─────────────────────
           AnimatedBuilder(
             animation: _headerFade,
             builder: (_, __) => Opacity(
@@ -201,18 +187,24 @@ class _LoginScreenState extends State<LoginScreen>
               child: Transform.translate(
                 offset: Offset(0, _headerSlide.value),
                 child: SizedBox(
-                  height: size.height * 0.48,
+                  height: size.height * 0.50,
                   width: double.infinity,
-                  child: CustomPaint(painter: _WavePainter(color: kBlue)),
+                  child: CustomPaint(
+                    painter: _GradientWavePainter(
+                      colorTop: kBlue,
+                      colorMid: kBlueMid,
+                      colorBottom: kBlueDark,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
 
-          // ── Partículas decorativas flotantes ──
+          // ── Partículas decorativas flotantes ──────────────────────────
           ..._buildParticles(size),
 
-          // ── Contenido scrollable ──
+          // ── Contenido scrollable ──────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
               child: Column(
@@ -232,7 +224,6 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Logo con sombra suave
                           Container(
                             width: 88,
                             height: 106,
@@ -274,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
 
-                  // ── Tarjeta del formulario ──
+                  // ── Tarjeta del formulario ────────────────────────────
                   AnimatedBuilder(
                     animation: _formFade,
                     builder: (_, child) => Opacity(
@@ -294,9 +285,9 @@ class _LoginScreenState extends State<LoginScreen>
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: kBlue.withOpacity(0.12),
-                              blurRadius: 30,
-                              offset: const Offset(0, 10),
+                              color: kBlue.withOpacity(0.14),
+                              blurRadius: 32,
+                              offset: const Offset(0, 12),
                             ),
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -314,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen>
                               style: TextStyle(
                                 fontSize: responsive.headingMediumFontSize,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1A1A2E),
+                                color: kBlueDark,
                                 letterSpacing: 0.3,
                               ),
                               textAlign: TextAlign.center,
@@ -363,7 +354,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             SizedBox(height: responsive.getResponsiveSize(26)),
 
-                            // Botón ingresar con shimmer
+                            // Botón Ingresar
                             AnimatedBuilder(
                               animation: _btnScale,
                               builder: (_, child) => Transform.scale(
@@ -374,8 +365,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 label: 'Ingresar',
                                 onTap: _loading ? null : _handleLogin,
                                 loading: _loading,
-                                color: kBlue,
-                                darkColor: kBlueDark,
+                                colorTop: kBlue,
+                                colorBottom: kBlueDark,
                                 shimmerCtrl: _shimmerCtrl,
                                 height: responsive.buttonHeight,
                                 fontSize: responsive.bodyMediumFontSize,
@@ -383,7 +374,6 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             SizedBox(height: responsive.getResponsiveSize(18)),
 
-                            // Texto legal
                             Text(
                               'Al ingresar, aceptas nuestros Términos y Política de Privacidad',
                               textAlign: TextAlign.center,
@@ -409,7 +399,6 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   List<Widget> _buildParticles(Size size) {
-    // Pequeños círculos decorativos en la zona azul
     final positions = [
       const Offset(0.08, 0.04),
       const Offset(0.92, 0.06),
@@ -532,14 +521,14 @@ class _AnimatedInputField extends StatelessWidget {
   }
 }
 
-// ─── Botón con shimmer ───────────────────────────────────────────────────────
+// ─── Botón con shimmer y degradado de marca ───────────────────────────────────
 
 class _ShimmerButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
   final bool loading;
-  final Color color;
-  final Color darkColor;
+  final Color colorTop;
+  final Color colorBottom;
   final AnimationController shimmerCtrl;
   final double height;
   final double fontSize;
@@ -548,8 +537,8 @@ class _ShimmerButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.loading,
-    required this.color,
-    required this.darkColor,
+    required this.colorTop,
+    required this.colorBottom,
     required this.shimmerCtrl,
     required this.height,
     required this.fontSize,
@@ -567,7 +556,7 @@ class _ShimmerButton extends StatelessWidget {
           gradient: LinearGradient(
             colors: loading
                 ? [Colors.grey.shade400, Colors.grey.shade300]
-                : [color, darkColor],
+                : [colorTop, colorBottom],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -575,9 +564,9 @@ class _ShimmerButton extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: color.withOpacity(0.4),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
+                    color: colorTop.withOpacity(0.45),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
                 ],
         ),
@@ -586,7 +575,6 @@ class _ShimmerButton extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Shimmer sweep
               if (!loading)
                 AnimatedBuilder(
                   animation: shimmerCtrl,
@@ -598,7 +586,6 @@ class _ShimmerButton extends StatelessWidget {
                     );
                   },
                 ),
-              // Label o spinner
               loading
                   ? const SizedBox(
                       width: 22,
@@ -631,7 +618,6 @@ class _ShimmerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Franja blanca diagonal que cruza el botón
     final x = size.width * (progress * 1.6 - 0.3);
     final paint = Paint()
       ..shader = LinearGradient(
@@ -658,17 +644,23 @@ class _ShimmerPainter extends CustomPainter {
   bool shouldRepaint(_ShimmerPainter old) => old.progress != progress;
 }
 
-// ─── Ola decorativa superior ────────────────────────────────────────────────
+// ─── Ola con degradado de marca ─────────────────────────────────────────────
 
-class _WavePainter extends CustomPainter {
-  final Color color;
-  _WavePainter({required this.color});
+class _GradientWavePainter extends CustomPainter {
+  final Color colorTop;
+  final Color colorMid;
+  final Color colorBottom;
+
+  _GradientWavePainter({
+    required this.colorTop,
+    required this.colorMid,
+    required this.colorBottom,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-
-    final path = Path()
+    // Forma de ola
+    final wavePath = Path()
       ..lineTo(0, size.height * 0.82)
       ..quadraticBezierTo(
         size.width * 0.25, size.height * 0.97,
@@ -681,14 +673,19 @@ class _WavePainter extends CustomPainter {
       ..lineTo(size.width, 0)
       ..close();
 
-    canvas.drawPath(path, paint);
+    // Gradiente diagonal sobre la ola principal
+    final gradPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [colorTop, colorMid, colorBottom],
+        stops: const [0.0, 0.55, 1.0],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawPath(wavePath, gradPaint);
 
     // Segunda ola más suave
-    final paint2 = Paint()
-      ..color = color.withOpacity(0.35)
-      ..style = PaintingStyle.fill;
-
-    final path2 = Path()
+    final wave2Path = Path()
       ..moveTo(0, size.height * 0.88)
       ..quadraticBezierTo(
         size.width * 0.3, size.height * 1.02,
@@ -702,14 +699,38 @@ class _WavePainter extends CustomPainter {
       ..lineTo(0, size.height)
       ..close();
 
-    canvas.drawPath(path2, paint2);
+    final grad2Paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          colorMid.withOpacity(0.40),
+          colorBottom.withOpacity(0.30),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    canvas.drawPath(wave2Path, grad2Paint);
+
+    // Círculo decorativo sutil en la esquina superior derecha
+    final circlePaint = Paint()
+      ..color = Colors.white.withOpacity(0.06)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.15),
+        size.width * 0.28, circlePaint);
+
+    // Círculo pequeño en la esquina izquierda
+    canvas.drawCircle(Offset(size.width * 0.08, size.height * 0.25),
+        size.width * 0.12, circlePaint);
   }
 
   @override
-  bool shouldRepaint(_WavePainter old) => old.color != color;
+  bool shouldRepaint(_GradientWavePainter old) =>
+      old.colorTop != colorTop ||
+      old.colorMid != colorMid ||
+      old.colorBottom != colorBottom;
 }
 
-// ─── Painter: logo real Trainyl (hexágono redondeado + pin con círculo y +) ──
+// ─── Painter: logo Trainyl — hexágono con cubo isométrico ───────────────────
 
 class _TrainylLogoPainter extends CustomPainter {
   final Color color;
@@ -720,7 +741,8 @@ class _TrainylLogoPainter extends CustomPainter {
     final w  = size.width;
     final h  = size.height;
     final cx = w / 2;
-    final sw = w * 0.058;
+    final cy = h / 2;
+    final sw = w * 0.055;
 
     final stroke = Paint()
       ..color = color
@@ -729,72 +751,76 @@ class _TrainylLogoPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    // ── Hexágono exterior con esquinas redondeadas ──────────────────────
-    final hexR   = w * 0.44;
-    final hexCY  = h * 0.44;
-    final corner = w * 0.09;   // radio de esquina
-    final hexPath = _roundedHexPath(cx, hexCY, hexR, corner);
-    canvas.drawPath(hexPath, stroke);
+    // ── Hexágono exterior redondeado ────────────────────────────────────
+    final hexR   = w * 0.46;
+    final corner = w * 0.08;
+    canvas.drawPath(_roundedHexPath(cx, cy, hexR, corner), stroke);
 
-    // ── Pin de ubicación: cuerpo circular + punta ────────────────────────
-    final pinCY   = hexCY - h * 0.04;
-    final pinR    = w * 0.185;
-    final pinTipY = pinCY + pinR + w * 0.16;
+    // ── Cubo isométrico interior ────────────────────────────────────────
+    final cr = w * 0.22;
+    const double iso = 0.58;
 
-    // Círculo del pin
-    canvas.drawCircle(Offset(cx, pinCY), pinR, stroke);
+    final top    = Offset(cx,      cy - cr * iso);
+    final left   = Offset(cx - cr, cy);
+    final right  = Offset(cx + cr, cy);
+    final bottom = Offset(cx,      cy + cr * iso);
+    final tl     = Offset(cx - cr, cy - cr * iso);
+    final tr     = Offset(cx + cr, cy - cr * iso);
+    final bl     = Offset(cx - cr, cy + cr * iso);
+    final br     = Offset(cx + cr, cy + cr * iso);
 
-    // Punta del pin (triángulo hacia abajo) — dos líneas desde el borde inferior del círculo
-    final leftX  = cx - pinR * 0.55;
-    final rightX = cx + pinR * 0.55;
-    final baseY  = pinCY + pinR * 0.82;
-
-    canvas.drawLine(Offset(leftX, baseY),  Offset(cx, pinTipY), stroke);
-    canvas.drawLine(Offset(rightX, baseY), Offset(cx, pinTipY), stroke);
-
-    // ── Símbolo "+" (cross/más) dentro del círculo ───────────────────────
-    final crossLen = pinR * 0.50;
-    final crossSW  = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = sw * 0.82
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(
-      Offset(cx, pinCY - crossLen),
-      Offset(cx, pinCY + crossLen * 0.4),  // un poco más corto abajo (lo tapa la punta)
-      crossSW,
+    // cara superior
+    canvas.drawPath(
+      Path()
+        ..moveTo(tl.dx, tl.dy)
+        ..lineTo(top.dx, top.dy)
+        ..lineTo(tr.dx, tr.dy)
+        ..lineTo(cx, cy)
+        ..close(),
+      stroke,
     );
-    canvas.drawLine(
-      Offset(cx - crossLen, pinCY),
-      Offset(cx + crossLen, pinCY),
-      crossSW,
+    // cara izquierda
+    canvas.drawPath(
+      Path()
+        ..moveTo(tl.dx, tl.dy)
+        ..lineTo(left.dx, left.dy)
+        ..lineTo(bl.dx, bl.dy)
+        ..lineTo(cx, cy)
+        ..close(),
+      stroke,
     );
+    // cara derecha
+    canvas.drawPath(
+      Path()
+        ..moveTo(tr.dx, tr.dy)
+        ..lineTo(right.dx, right.dy)
+        ..lineTo(br.dx, br.dy)
+        ..lineTo(cx, cy)
+        ..close(),
+      stroke,
+    );
+    // arista inferior central
+    canvas.drawLine(Offset(cx, cy), bottom, stroke);
   }
 
-  // Hexágono con esquinas redondeadas
   Path _roundedHexPath(double cx, double cy, double r, double radius) {
     final vertices = List.generate(6, (i) {
       final angle = math.pi / 180 * (60 * i - 30);
       return Offset(cx + r * math.cos(angle), cy + r * math.sin(angle));
     });
-
     final path = Path();
     for (int i = 0; i < 6; i++) {
       final prev = vertices[(i + 5) % 6];
       final curr = vertices[i];
       final next = vertices[(i + 1) % 6];
-
-      final toPrev = (prev - curr);
-      final toNext = (next - curr);
+      final toPrev = prev - curr;
+      final toNext = next - curr;
       final lenPrev = toPrev.distance;
       final lenNext = toNext.distance;
       final r1 = math.min(radius, lenPrev / 2);
       final r2 = math.min(radius, lenNext / 2);
-
       final p1 = curr + Offset(toPrev.dx / lenPrev * r1, toPrev.dy / lenPrev * r1);
       final p2 = curr + Offset(toNext.dx / lenNext * r2, toNext.dy / lenNext * r2);
-
       if (i == 0) path.moveTo(p1.dx, p1.dy); else path.lineTo(p1.dx, p1.dy);
       path.quadraticBezierTo(curr.dx, curr.dy, p2.dx, p2.dy);
     }
