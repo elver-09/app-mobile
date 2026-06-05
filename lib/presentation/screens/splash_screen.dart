@@ -4,47 +4,41 @@ import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  // ── Paleta de marca ──────────────────────────────────────────────────────
-  static const Color kBlue       = Color(0xFF123C80);
-  static const Color kBlueMid    = Color(0xFF0D2D61);
-  static const Color kBlueDark   = Color(0xFF091E42);
 
-  // ── Fase 1: degradado de fondo aparece ──────────────────────────────────
-  late AnimationController _bgCtrl;
-  late Animation<double>   _bgFade;
+  // ── Paleta ───────────────────────────────────────────────────────────────
+  static const kBlue      = Color(0xFF123C80);
+  static const kBlueMid   = Color(0xFF0D2D61);
+  static const kBlueDark  = Color(0xFF071428);
+  static const kAccent    = Color(0xFF1A5BB5);
+  static const kGlow      = Color(0xFF2176D2);
 
-  // ── Fase 2: camión corre de izquierda a derecha y desaparece ─────────────
-  late AnimationController _truckCtrl;
-  late AnimationController _bounceCtrl;  // rebote de ruedas (repeat)
-  late Animation<double>   _truckX;      // posición horizontal 0..1
-  late Animation<double>   _truckFade;   // aparece y desaparece
-  late Animation<double>   _truckBounce; // pequeño rebote vertical
-  late Animation<double>   _dustFade;    // nube de polvo al salir
+  // ── Controllers ─────────────────────────────────────────────────────────
+  late AnimationController _bgCtrl;      // fondo
+  late AnimationController _orb1Ctrl;    // orbe flotante 1
+  late AnimationController _orb2Ctrl;    // orbe flotante 2
+  late AnimationController _scanCtrl;    // línea de scan
+  late AnimationController _truckCtrl;   // camión
+  late AnimationController _bounceCtrl;  // rebote ruedas
+  late AnimationController _logoCtrl;    // logo entra
+  late AnimationController _glowCtrl;    // brillo logo
+  late AnimationController _btnCtrl;     // botón entra
+  late AnimationController _pulseCtrl;   // pulso botón
+  late AnimationController _shimCtrl;    // shimmer botón
+  late AnimationController _particleCtrl;// partículas
 
-  // ── Fase 3: logo entra ───────────────────────────────────────────────────
-  late AnimationController _logoCtrl;
-  late Animation<double>   _logoScale;
-  late Animation<double>   _logoFade;
-  late Animation<double>   _subtitleFade;
+  // ── Animations ───────────────────────────────────────────────────────────
+  late Animation<double> _bgFade;
+  late Animation<double> _truckX, _truckFade, _truckBounce, _dustFade;
+  late Animation<double> _logoScale, _logoFade, _logoY;
+  late Animation<double> _glowOpacity;
+  late Animation<double> _btnSlide, _btnFade;
 
-  // ── Fase 4: botón entra ──────────────────────────────────────────────────
-  late AnimationController _btnCtrl;
-  late AnimationController _pulseCtrl; // pulso del botón (repeat)
-  late Animation<double>   _btnSlide;
-  late Animation<double>   _btnFade;
-  late Animation<double>   _btnPulse;
-
-  // ── Shimmer del botón ────────────────────────────────────────────────────
-  late AnimationController _shimCtrl;
-
-  bool _showBg    = false;
   bool _showTruck = false;
   bool _showLogo  = false;
   bool _showBtn   = false;
@@ -59,97 +53,100 @@ class _SplashScreenState extends State<SplashScreen>
   void _setup() {
     // Fondo
     _bgCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 600));
-    _bgFade = CurvedAnimation(parent: _bgCtrl, curve: Curves.easeIn);
+        duration: const Duration(milliseconds: 800));
+    _bgFade = CurvedAnimation(parent: _bgCtrl, curve: Curves.easeOut);
+
+    // Orbes flotantes (loop continuo)
+    _orb1Ctrl = AnimationController(vsync: this,
+        duration: const Duration(seconds: 6))..repeat(reverse: true);
+    _orb2Ctrl = AnimationController(vsync: this,
+        duration: const Duration(seconds: 9))..repeat(reverse: true);
+
+    // Línea de scan
+    _scanCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 1400));
 
     // Camión
     _truckCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 1800));
-    _truckX = Tween<double>(begin: -0.2, end: 1.3).animate(
+        duration: const Duration(milliseconds: 1600));
+    _truckX = Tween<double>(begin: -0.25, end: 1.3).animate(
         CurvedAnimation(parent: _truckCtrl,
-            curve: const Interval(0.0, 0.85, curve: Curves.easeInOut)));
+            curve: const Interval(0.0, 0.88, curve: Curves.easeInOut)));
     _truckFade = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 8),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 72),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
     ]).animate(_truckCtrl);
+    _dustFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _truckCtrl,
+            curve: const Interval(0.72, 0.95, curve: Curves.easeOut)));
     _bounceCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 300))
-      ..repeat();
+        duration: const Duration(milliseconds: 280))..repeat();
     _truckBounce = TweenSequence<double>([
       TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: -4.0)
-              .chain(CurveTween(curve: Curves.easeInOut)),
-          weight: 50),
+          tween: Tween(begin: 0.0, end: -5.0)
+              .chain(CurveTween(curve: Curves.easeInOut)), weight: 50),
       TweenSequenceItem(
-          tween: Tween(begin: -4.0, end: 0.0)
-              .chain(CurveTween(curve: Curves.easeInOut)),
-          weight: 50),
+          tween: Tween(begin: -5.0, end: 0.0)
+              .chain(CurveTween(curve: Curves.easeInOut)), weight: 50),
     ]).animate(_bounceCtrl);
-    // rebote simple usando el propio truckCtrl
-    _dustFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _truckCtrl,
-          curve: const Interval(0.70, 0.95, curve: Curves.easeOut)));
 
     // Logo
     _logoCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 900));
-    _logoScale = Tween<double>(begin: 0.5, end: 1.0).animate(
-        CurvedAnimation(parent: _logoCtrl,
-            curve: const Interval(0.0, 0.7, curve: Curves.elasticOut)));
+        duration: const Duration(milliseconds: 1100));
     _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _logoCtrl,
-            curve: const Interval(0.0, 0.5, curve: Curves.easeIn)));
-    _subtitleFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+            curve: const Interval(0.0, 0.55, curve: Curves.easeIn)));
+    _logoScale = Tween<double>(begin: 0.75, end: 1.0).animate(
         CurvedAnimation(parent: _logoCtrl,
-            curve: const Interval(0.5, 1.0, curve: Curves.easeIn)));
+            curve: const Interval(0.0, 0.75, curve: Curves.elasticOut)));
+    _logoY = Tween<double>(begin: 30, end: 0).animate(
+        CurvedAnimation(parent: _logoCtrl,
+            curve: const Interval(0.0, 0.6, curve: Curves.easeOut)));
+
+    // Brillo logo (glow pulsante)
+    _glowCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 2000))..repeat(reverse: true);
+    _glowOpacity = Tween<double>(begin: 0.25, end: 0.60).animate(
+        CurvedAnimation(parent: _glowCtrl, curve: Curves.easeInOut));
 
     // Botón
     _btnCtrl = AnimationController(vsync: this,
         duration: const Duration(milliseconds: 700));
-    _btnSlide = Tween<double>(begin: 40, end: 0).animate(
-        CurvedAnimation(parent: _btnCtrl,
-            curve: const Interval(0.0, 0.8, curve: Curves.easeOut)));
     _btnFade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _btnCtrl,
             curve: const Interval(0.0, 0.7, curve: Curves.easeIn)));
-    _pulseCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 1200))
-      ..repeat();
-    _btnPulse = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 1.04)
-              .chain(CurveTween(curve: Curves.easeOut)),
-          weight: 50),
-      TweenSequenceItem(
-          tween: Tween(begin: 1.04, end: 1.0)
-              .chain(CurveTween(curve: Curves.easeIn)),
-          weight: 50),
-    ]).animate(_pulseCtrl);
+    _btnSlide = Tween<double>(begin: 50, end: 0).animate(
+        CurvedAnimation(parent: _btnCtrl,
+            curve: const Interval(0.0, 0.8, curve: Curves.easeOut)));
 
-    // Shimmer
+    // Pulso botón
+    _pulseCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 1400))..repeat();
+
+    // Shimmer botón
     _shimCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 1800))
-      ..repeat();
+        duration: const Duration(milliseconds: 2000))..repeat();
+
+    // Partículas
+    _particleCtrl = AnimationController(vsync: this,
+        duration: const Duration(seconds: 8))..repeat();
   }
 
   Future<void> _run() async {
-    // Mostrar fondo degradado
-    setState(() => _showBg = true);
+    setState(() {});
     await _bgCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 200));
+    _scanCtrl.forward();
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    // Mostrar camión corriendo
     setState(() => _showTruck = true);
     await _truckCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 150));
 
-    // Mostrar logo
     setState(() { _showTruck = false; _showLogo = true; });
     await _logoCtrl.forward();
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Mostrar botón
     setState(() => _showBtn = true);
     _btnCtrl.forward();
   }
@@ -157,12 +154,17 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _bgCtrl.dispose();
+    _orb1Ctrl.dispose();
+    _orb2Ctrl.dispose();
+    _scanCtrl.dispose();
     _truckCtrl.dispose();
     _bounceCtrl.dispose();
     _logoCtrl.dispose();
+    _glowCtrl.dispose();
     _btnCtrl.dispose();
     _pulseCtrl.dispose();
     _shimCtrl.dispose();
+    _particleCtrl.dispose();
     super.dispose();
   }
 
@@ -174,141 +176,190 @@ class _SplashScreenState extends State<SplashScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _bgFade,
-        builder: (_, child) => Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                kBlue,
-                kBlueMid,
-                kBlueDark,
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
-          ),
-          child: child,
-        ),
+      body: SizedBox.expand(
         child: Stack(
-          alignment: Alignment.center,
           children: [
-            // ── Círculos decorativos de fondo ──────────────────────────
-            ..._buildBgCircles(size),
 
-            // ── Línea de carretera ──────────────────────────────────────
-            Positioned(
-              bottom: size.height * 0.32,
-              left: 0,
-              right: 0,
-              child: _RoadLine(),
+            // ── Fondo degradado radial ────────────────────────────────────
+            Positioned.fill(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment(0.0, -0.25),
+                    radius: 1.15,
+                    colors: [kAccent, kBlue, kBlueMid, kBlueDark],
+                    stops: [0.0, 0.35, 0.65, 1.0],
+                  ),
+                ),
+              ),
             ),
 
-            // ── Camión animado ─────────────────────────────────────────
+            // ── Malla sutil ───────────────────────────────────────────────
+            Positioned.fill(
+              child: CustomPaint(painter: _MeshPainter()),
+            ),
+
+            // ── Orbes animados ────────────────────────────────────────────
+            AnimatedBuilder(
+              animation: Listenable.merge([_orb1Ctrl, _orb2Ctrl]),
+              builder: (_, __) => Stack(
+                children: [
+                  Positioned(
+                    top: -size.width * 0.15 + _orb1Ctrl.value * size.width * 0.06,
+                    right: -size.width * 0.10,
+                    child: _Orb(
+                      radius: size.width * 0.52,
+                      color: kGlow,
+                      opacity: 0.13 + _orb1Ctrl.value * 0.06,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -size.width * 0.20 + _orb2Ctrl.value * size.width * 0.08,
+                    left: -size.width * 0.15,
+                    child: _Orb(
+                      radius: size.width * 0.58,
+                      color: kBlue,
+                      opacity: 0.18 + _orb2Ctrl.value * 0.07,
+                    ),
+                  ),
+                  Positioned(
+                    top: size.height * 0.10 + _orb1Ctrl.value * 12,
+                    left: size.width * 0.60,
+                    child: _Orb(
+                      radius: size.width * 0.22,
+                      color: kGlow,
+                      opacity: 0.09 + _orb2Ctrl.value * 0.04,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Partículas flotantes ──────────────────────────────────────
+            AnimatedBuilder(
+              animation: _particleCtrl,
+              builder: (_, __) => Positioned.fill(
+                child: CustomPaint(
+                  painter: _ParticlePainter(progress: _particleCtrl.value),
+                ),
+              ),
+            ),
+
+            // ── Línea de scan ─────────────────────────────────────────────
+            AnimatedBuilder(
+              animation: _scanCtrl,
+              builder: (_, __) {
+                if (_scanCtrl.value == 0) return const SizedBox.shrink();
+                return Positioned(
+                  top: _scanCtrl.value * size.height,
+                  left: 0, right: 0,
+                  child: Container(
+                    height: 1.5,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          Colors.white.withOpacity(0.06),
+                          Colors.white.withOpacity(0.20),
+                          Colors.white.withOpacity(0.06),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            // ── Camión animado ────────────────────────────────────────────
             if (_showTruck)
               AnimatedBuilder(
-                animation: _truckCtrl,
+                animation: Listenable.merge([_truckCtrl, _bounceCtrl]),
                 builder: (_, __) {
                   final xPos = _truckX.value * size.width;
-                  final yPos = size.height * 0.30;
                   return Positioned(
-                    left: xPos - 70,
-                    top: yPos,
+                    left: xPos - 75,
+                    top: size.height * 0.44 + _truckBounce.value,
                     child: Opacity(
                       opacity: _truckFade.value.clamp(0.0, 1.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 140,
-                            height: 70,
-                            child: CustomPaint(
-                              painter: _TruckPainter(
-                                color: Colors.white,
-                                progress: _truckCtrl.value,
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: SizedBox(
+                        width: 150, height: 75,
+                        child: CustomPaint(
+                          painter: _TruckPainter(progress: _truckCtrl.value),
+                        ),
                       ),
                     ),
                   );
                 },
               ),
 
-            // ── Nube de polvo al salir el camión ──────────────────────
+            // ── Polvo del camión ──────────────────────────────────────────
             if (_showTruck)
               AnimatedBuilder(
                 animation: _dustFade,
                 builder: (_, __) {
                   if (_dustFade.value < 0.01) return const SizedBox.shrink();
                   return Positioned(
-                    right: 20,
-                    top: size.height * 0.30 + 40,
+                    right: 16,
+                    top: size.height * 0.44 + 38,
                     child: Opacity(
-                      opacity: _dustFade.value * 0.6,
-                      child: _DustCloud(),
+                      opacity: (_dustFade.value * 0.55).clamp(0.0, 1.0),
+                      child: CustomPaint(
+                        size: const Size(90, 45),
+                        painter: _DustPainter(),
+                      ),
                     ),
                   );
                 },
               ),
 
-            // ── Logo + subtítulo ───────────────────────────────────────
+            // ── Logo — centrado ───────────────────────────────────────────
             if (_showLogo)
-              Center(
+              Positioned.fill(
                 child: AnimatedBuilder(
-                  animation: Listenable.merge([_logoFade, _logoScale, _subtitleFade]),
+                  animation: Listenable.merge([_logoFade, _logoScale, _logoY, _glowOpacity]),
                   builder: (_, __) => Opacity(
                     opacity: _logoFade.value,
-                    child: Transform.scale(
-                      scale: _logoScale.value,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 100,
-                            height: 100,
-                            child: CustomPaint(
-                              painter: _TrainylLogoPainter(color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          const Text(
-                            'TRAINYL',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 6,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          FadeTransition(
-                            opacity: _subtitleFade,
-                            child: Text(
-                              'logística de confianza',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w300,
-                                color: Colors.white.withOpacity(0.75),
-                                letterSpacing: 2,
+                    child: Transform.translate(
+                      offset: Offset(0, _logoY.value - size.height * 0.05),
+                      child: Transform.scale(
+                        scale: _logoScale.value,
+                        child: Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Halo de luz
+                              Container(
+                                width: 300,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(75),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: kGlow.withOpacity(_glowOpacity.value),
+                                      blurRadius: 70,
+                                      spreadRadius: 25,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              Image.asset(
+                                'assets/images/logo_trainyl.png',
+                                width: 240,
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
 
-            // ── Botón Iniciar mi Jornada ──────────────────────────────
+            // ── Botón — centrado en X, pegado al fondo ────────────────────
             if (_showBtn)
-              Positioned(
-                bottom: size.height * 0.10,
+              Align(
+                alignment: const Alignment(0, 0.88),
                 child: AnimatedBuilder(
                   animation: Listenable.merge([_btnFade, _btnSlide]),
                   builder: (_, child) => Opacity(
@@ -330,264 +381,251 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
   }
+}
 
-  List<Widget> _buildBgCircles(Size size) {
-    return [
-      Positioned(
-        top: -size.width * 0.3,
-        right: -size.width * 0.2,
-        child: Container(
-          width: size.width * 0.8,
-          height: size.width * 0.8,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.04),
-          ),
+// ═══════════════════════════════════════════════════════════════════════════
+// Orbe de luz
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _Orb extends StatelessWidget {
+  final double radius;
+  final Color color;
+  final double opacity;
+  const _Orb({required this.radius, required this.color, required this.opacity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: radius,
+      height: radius,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color.withOpacity(opacity),
+            color.withOpacity(0),
+          ],
         ),
       ),
-      Positioned(
-        bottom: -size.width * 0.25,
-        left: -size.width * 0.15,
-        child: Container(
-          width: size.width * 0.65,
-          height: size.width * 0.65,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.05),
-          ),
-        ),
-      ),
-      Positioned(
-        top: size.height * 0.15,
-        left: -30,
-        child: Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.035),
-          ),
-        ),
-      ),
-    ];
+    );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Línea de carretera animada
+// Malla de fondo sutil
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _RoadLine extends StatelessWidget {
+class _MeshPainter extends CustomPainter {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(1),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.025)
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+
+    const step = 48.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    // Líneas diagonales más sutiles
+    final diag = Paint()
+      ..color = Colors.white.withOpacity(0.012)
+      ..strokeWidth = 0.6;
+    for (double d = -size.height; d < size.width + size.height; d += step * 2) {
+      canvas.drawLine(Offset(d, 0), Offset(d + size.height, size.height), diag);
+    }
   }
+
+  @override
+  bool shouldRepaint(_MeshPainter o) => false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Partículas flotantes
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _ParticlePainter extends CustomPainter {
+  final double progress;
+  _ParticlePainter({required this.progress});
+
+  static final _rng = math.Random(42);
+  static final _particles = List.generate(28, (i) => [
+    _rng.nextDouble(), // x base
+    _rng.nextDouble(), // y base
+    _rng.nextDouble() * 2.5 + 1.0, // radio
+    _rng.nextDouble(), // fase
+    _rng.nextDouble() * 0.4 + 0.06, // opacidad max
+    _rng.nextDouble() * 0.008 + 0.003, // velocidad
+  ]);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in _particles) {
+      final x = p[0] * size.width;
+      final yBase = p[1] * size.height;
+      final r = p[2];
+      final phase = p[3];
+      final opacity = p[4];
+      final speed = p[5];
+
+      final t = (progress + phase) % 1.0;
+      final y = yBase - t * size.height * speed * 40;
+      final yWrapped = ((y % size.height) + size.height) % size.height;
+
+      // pulso de opacidad
+      final pulse = (math.sin((progress + phase) * math.pi * 4) + 1) / 2;
+
+      final paint = Paint()
+        ..color = Colors.white.withOpacity(opacity * (0.5 + pulse * 0.5))
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(Offset(x, yWrapped), r, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ParticlePainter o) => o.progress != progress;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Camión
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _TruckPainter extends CustomPainter {
+  final double progress;
+  _TruckPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final wheelAngle = progress * math.pi * 10;
+
+    final body = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final dark = Paint()
+      ..color = Colors.white.withOpacity(0.45)
+      ..style = PaintingStyle.fill;
+    final accent = Paint()
+      ..color = Colors.white.withOpacity(0.22)
+      ..style = PaintingStyle.fill;
+
+    // Remolque
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, h * 0.18, w * 0.58, h * 0.52),
+        const Radius.circular(4),
+      ),
+      body,
+    );
+    // Líneas remolque
+    for (int i = 1; i <= 3; i++) {
+      final x = (w * 0.58 / 4) * i;
+      canvas.drawRect(
+        Rect.fromLTWH(x - 0.8, h * 0.18, 1.5, h * 0.52),
+        dark,
+      );
+    }
+
+    // Cabina
+    final cabin = Path()
+      ..moveTo(w * 0.60, h * 0.70)
+      ..lineTo(w * 0.60, h * 0.30)
+      ..quadraticBezierTo(w * 0.62, h * 0.18, w * 0.72, h * 0.18)
+      ..lineTo(w * 0.84, h * 0.18)
+      ..quadraticBezierTo(w * 0.96, h * 0.20, w * 1.00, h * 0.35)
+      ..lineTo(w * 1.00, h * 0.70)
+      ..close();
+    canvas.drawPath(cabin, body);
+
+    // Ventana
+    final window = Path()
+      ..moveTo(w * 0.63, h * 0.28)
+      ..lineTo(w * 0.63, h * 0.22)
+      ..quadraticBezierTo(w * 0.64, h * 0.18, w * 0.72, h * 0.18)
+      ..lineTo(w * 0.82, h * 0.18)
+      ..quadraticBezierTo(w * 0.91, h * 0.19, w * 0.95, h * 0.28)
+      ..close();
+    canvas.drawPath(window, accent);
+
+    // Faro
+    final headlight = Paint()..color = Colors.yellow.withOpacity(0.9);
+    canvas.drawOval(Rect.fromLTWH(w * 0.976, h * 0.34, w * 0.024, h * 0.11),
+        headlight);
+
+    // Ruedas
+    _wheel(canvas, Offset(w * 0.13, h * 0.73), h * 0.155, wheelAngle, body, dark, accent);
+    _wheel(canvas, Offset(w * 0.42, h * 0.73), h * 0.155, wheelAngle, body, dark, accent);
+    _wheel(canvas, Offset(w * 0.82, h * 0.73), h * 0.175, wheelAngle, body, dark, accent);
+  }
+
+  void _wheel(Canvas c, Offset center, double r, double angle,
+      Paint body, Paint dark, Paint accent) {
+    c.drawCircle(center, r,
+        Paint()..color = body.color.withOpacity(0.88)..style = PaintingStyle.fill);
+    c.drawCircle(center, r * 0.58,
+        Paint()..color = body.color.withOpacity(0.38)..style = PaintingStyle.fill);
+    final spoke = Paint()
+      ..color = body.color.withOpacity(0.72)
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    for (int i = 0; i < 6; i++) {
+      final a = angle + (math.pi / 3) * i;
+      c.drawLine(center,
+          Offset(center.dx + math.cos(a) * r * 0.55,
+              center.dy + math.sin(a) * r * 0.55),
+          spoke);
+    }
+    c.drawCircle(center, r * 0.17, body);
+  }
+
+  @override
+  bool shouldRepaint(_TruckPainter o) => o.progress != progress;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Nube de polvo
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _DustCloud extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(80, 40),
-      painter: _DustPainter(),
-    );
-  }
-}
-
 class _DustPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.5), 14, paint);
-    paint.color = Colors.white.withOpacity(0.2);
-    canvas.drawCircle(Offset(size.width * 0.55, size.height * 0.4), 10, paint);
-    paint.color = Colors.white.withOpacity(0.15);
-    canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.6), 8, paint);
+    void circle(double x, double y, double r, double op) =>
+        canvas.drawCircle(Offset(x * size.width, y * size.height), r,
+            Paint()..color = Colors.white.withOpacity(op)..style = PaintingStyle.fill);
+    circle(0.28, 0.50, 14, 0.28);
+    circle(0.52, 0.40, 10, 0.20);
+    circle(0.72, 0.60, 8,  0.14);
+    circle(0.88, 0.45, 6,  0.10);
   }
-
   @override
   bool shouldRepaint(_DustPainter o) => false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Painter del camión
-// ═══════════════════════════════════════════════════════════════════════════
-
-class _TruckPainter extends CustomPainter {
-  final Color color;
-  final double progress; // 0..1 para animar ruedas
-
-  _TruckPainter({required this.color, required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final wheelAngle = progress * math.pi * 8; // ruedas girando
-
-    final bodyPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final darkPaint = Paint()
-      ..color = color.withOpacity(0.55)
-      ..style = PaintingStyle.fill;
-    final accentPaint = Paint()
-      ..color = color.withOpacity(0.30)
-      ..style = PaintingStyle.fill;
-
-    // ── Remolque ─────────────────────────────────────────────────────────
-    final trailerRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.0, h * 0.18, w * 0.58, h * 0.50),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(trailerRect, bodyPaint);
-
-    // Líneas del remolque
-    for (int i = 1; i <= 3; i++) {
-      final x = w * 0.0 + (w * 0.58 / 4) * i;
-      canvas.drawLine(
-        Offset(x, h * 0.18),
-        Offset(x, h * 0.68),
-        darkPaint..strokeWidth = 1.5,
-      );
-    }
-
-    // ── Cabina del camión ─────────────────────────────────────────────────
-    final cabinPath = Path()
-      ..moveTo(w * 0.60, h * 0.68)
-      ..lineTo(w * 0.60, h * 0.30)
-      ..quadraticBezierTo(w * 0.62, h * 0.18, w * 0.72, h * 0.18)
-      ..lineTo(w * 0.84, h * 0.18)
-      ..quadraticBezierTo(w * 0.95, h * 0.20, w * 1.00, h * 0.34)
-      ..lineTo(w * 1.00, h * 0.68)
-      ..close();
-    canvas.drawPath(cabinPath, bodyPaint);
-
-    // ── Ventana de cabina ─────────────────────────────────────────────────
-    final windowPath = Path()
-      ..moveTo(w * 0.63, h * 0.28)
-      ..lineTo(w * 0.63, h * 0.22)
-      ..quadraticBezierTo(w * 0.64, h * 0.18, w * 0.72, h * 0.18)
-      ..lineTo(w * 0.82, h * 0.18)
-      ..quadraticBezierTo(w * 0.90, h * 0.19, w * 0.94, h * 0.28)
-      ..close();
-    canvas.drawPath(windowPath, accentPaint);
-
-    // ── Parrilla frontal ──────────────────────────────────────────────────
-    canvas.drawRect(
-      Rect.fromLTWH(w * 0.93, h * 0.42, w * 0.07, h * 0.22),
-      darkPaint..color = color.withOpacity(0.40),
-    );
-    for (int i = 0; i < 3; i++) {
-      canvas.drawLine(
-        Offset(w * 0.93, h * 0.42 + (h * 0.22 / 3) * i + h * 0.04),
-        Offset(w * 1.00, h * 0.42 + (h * 0.22 / 3) * i + h * 0.04),
-        darkPaint
-          ..color = color.withOpacity(0.35)
-          ..strokeWidth = 1.0,
-      );
-    }
-
-    // ── Ruedas (con rotación) ─────────────────────────────────────────────
-    _drawWheel(canvas, Offset(w * 0.13, h * 0.72), h * 0.15, wheelAngle, bodyPaint, darkPaint, accentPaint);
-    _drawWheel(canvas, Offset(w * 0.42, h * 0.72), h * 0.15, wheelAngle, bodyPaint, darkPaint, accentPaint);
-    _drawWheel(canvas, Offset(w * 0.82, h * 0.72), h * 0.17, wheelAngle, bodyPaint, darkPaint, accentPaint);
-
-    // ── Línea de suelo debajo del camión ──────────────────────────────────
-    canvas.drawLine(
-      Offset(0, h * 0.87),
-      Offset(w, h * 0.87),
-      strokePaint
-        ..color = color.withOpacity(0.25)
-        ..strokeWidth = 1.0,
-    );
-
-    // ── Luz delantera ─────────────────────────────────────────────────────
-    final headlightPaint = Paint()
-      ..color = Colors.yellow.withOpacity(0.85)
-      ..style = PaintingStyle.fill;
-    canvas.drawOval(
-      Rect.fromLTWH(w * 0.975, h * 0.34, w * 0.025, h * 0.10),
-      headlightPaint,
-    );
-  }
-
-  void _drawWheel(Canvas canvas, Offset center, double r,
-      double angle, Paint body, Paint dark, Paint accent) {
-    // Llanta
-    final tirePaint = Paint()
-      ..color = body.color.withOpacity(0.85)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, r, tirePaint);
-
-    // Aro interior
-    final rimPaint = Paint()
-      ..color = body.color.withOpacity(0.40)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, r * 0.6, rimPaint);
-
-    // Radios giratorios
-    final spokePaint = Paint()
-      ..color = body.color.withOpacity(0.70)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-    for (int i = 0; i < 6; i++) {
-      final spokeAngle = angle + (math.pi / 3) * i;
-      canvas.drawLine(
-        center,
-        Offset(center.dx + math.cos(spokeAngle) * r * 0.55,
-               center.dy + math.sin(spokeAngle) * r * 0.55),
-        spokePaint,
-      );
-    }
-
-    // Centro
-    canvas.drawCircle(center, r * 0.18, body);
-  }
-
-  @override
-  bool shouldRepaint(_TruckPainter o) =>
-      o.color != color || o.progress != progress;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Botón "Iniciar mi Jornada" — interactivo con pulso
+// Botón "Iniciar mi Jornada"
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _JourneyButton extends StatefulWidget {
   final VoidCallback onTap;
   final AnimationController shimCtrl;
   final AnimationController pulseCtrl;
-  const _JourneyButton({required this.onTap, required this.shimCtrl, required this.pulseCtrl});
-
+  const _JourneyButton({
+    required this.onTap,
+    required this.shimCtrl,
+    required this.pulseCtrl,
+  });
   @override
   State<_JourneyButton> createState() => _JourneyButtonState();
 }
 
 class _JourneyButtonState extends State<_JourneyButton> {
-  static const Color kBlue    = Color(0xFF123C80);
-  static const Color kBlueMid = Color(0xFF0D2D61);
-
   bool _pressed = false;
 
   @override
@@ -599,71 +637,134 @@ class _JourneyButtonState extends State<_JourneyButton> {
       child: AnimatedBuilder(
         animation: widget.pulseCtrl,
         builder: (_, child) {
-          final pulse = Tween<double>(begin: 1.0, end: 1.05)
+          final pulse = Tween<double>(begin: 1.0, end: 1.04)
               .chain(CurveTween(curve: Curves.easeInOut))
               .evaluate(widget.pulseCtrl);
           return Transform.scale(
-            scale: _pressed ? 0.95 : pulse,
+            scale: _pressed ? 0.94 : pulse,
             child: child,
           );
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: 260,
-          height: 58,
+          duration: const Duration(milliseconds: 130),
+          width: 272,
+          height: 62,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: LinearGradient(
-              colors: _pressed
-                  ? [kBlueMid, kBlue]
-                  : [Colors.white.withOpacity(0.22), Colors.white.withOpacity(0.10)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            borderRadius: BorderRadius.circular(34),
+            gradient: _pressed
+                ? const LinearGradient(
+                    colors: [Color(0xFF0D2D61), Color(0xFF071428)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : const LinearGradient(
+                    colors: [
+                      Color(0xFF2A7AE4), // celeste brillante
+                      Color(0xFF123C80), // azul marca
+                      Color(0xFF091E42), // azul muy oscuro
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    stops: [0.0, 0.50, 1.0],
+                  ),
             border: Border.all(
-              color: Colors.white.withOpacity(0.70),
-              width: 1.8,
+              color: _pressed
+                  ? Colors.white.withOpacity(0.20)
+                  : Colors.white.withOpacity(0.45),
+              width: 1.5,
             ),
             boxShadow: _pressed
                 ? []
                 : [
+                    // Sombra principal azul profundo
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      color: const Color(0xFF071428).withOpacity(0.70),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
                     ),
+                    // Halo exterior luminoso celeste
                     BoxShadow(
-                      color: Colors.white.withOpacity(0.10),
-                      blurRadius: 8,
+                      color: const Color(0xFF2A7AE4).withOpacity(0.40),
+                      blurRadius: 40,
+                      spreadRadius: -4,
+                      offset: const Offset(0, 6),
+                    ),
+                    // Brillo superior sutil (borde de luz)
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.08),
+                      blurRadius: 6,
                       offset: const Offset(0, -2),
                     ),
                   ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(34),
             child: Stack(
               alignment: Alignment.center,
               children: [
+                // Brillo superior interno (highlight)
+                Positioned(
+                  top: 0,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          Colors.white.withOpacity(0.35),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Shimmer
                 AnimatedBuilder(
                   animation: widget.shimCtrl,
                   builder: (_, __) => CustomPaint(
                     painter: _ShimmerPainter(progress: widget.shimCtrl.value),
-                    size: const Size(260, 58),
+                    size: const Size(272, 62),
                   ),
                 ),
+                // Contenido
                 Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.play_circle_fill_rounded,
-                        color: Colors.white, size: 22),
-                    SizedBox(width: 10),
-                    Text(
+                  children: [
+                    // Ícono con fondo circular sutil
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.15),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
                       'Iniciar mi Jornada',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x55000000),
+                            offset: Offset(0, 1),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -687,134 +788,27 @@ class _ShimmerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final x = size.width * (progress * 1.6 - 0.3);
+    final x = size.width * (progress * 1.7 - 0.35);
     final paint = Paint()
       ..shader = LinearGradient(
-        colors: [Colors.transparent, Colors.white.withOpacity(0.20), Colors.transparent],
+        colors: [
+          Colors.transparent,
+          Colors.white.withOpacity(0.18),
+          Colors.transparent,
+        ],
         stops: const [0, 0.5, 1],
       ).createShader(Rect.fromLTWH(x - 60, 0, 120, size.height));
-    final path = Path()
-      ..moveTo(x - 45, 0)..lineTo(x + 15, 0)
-      ..lineTo(x - 5, size.height)..lineTo(x - 65, size.height)..close();
-    canvas.drawPath(path, paint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(x - 50, 0)
+        ..lineTo(x + 10, 0)
+        ..lineTo(x - 10, size.height)
+        ..lineTo(x - 70, size.height)
+        ..close(),
+      paint,
+    );
   }
 
   @override
   bool shouldRepaint(_ShimmerPainter o) => o.progress != progress;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Painter: logo Trainyl — hexágono con cubo isométrico
-// ═══════════════════════════════════════════════════════════════════════════
-
-class _TrainylLogoPainter extends CustomPainter {
-  final Color color;
-  _TrainylLogoPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w  = size.width;
-    final h  = size.height;
-    final cx = w / 2;
-    final cy = h / 2;
-    final sw = w * 0.055;
-
-    final stroke = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = sw
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    // ── Hexágono exterior (flat-top, lados redondeados) ─────────────────
-    final hexR   = w * 0.46;
-    final corner = w * 0.08;
-    canvas.drawPath(_roundedHexPath(cx, cy, hexR, corner), stroke);
-
-    // ── Cubo isométrico interior ────────────────────────────────────────
-    // El cubo se dibuja como 3 rombos (cara top, cara izquierda, cara derecha)
-    // usando solo stroke (igual que el hexágono exterior).
-    final cr = w * 0.22; // radio del cubo inscrito
-    // Perspectiva isométrica: eje Y comprimido al 60%
-    const double iso = 0.58;
-
-    // Los 7 vértices del cubo isométrico:
-    //   top    = arriba
-    //   left   = izq
-    //   right  = der
-    //   bottom = abajo
-    //   tl, tr = top-left, top-right
-    //   bl, br = bot-left, bot-right (no se usan todos)
-
-    final top    = Offset(cx,         cy - cr * iso);
-    final left   = Offset(cx - cr,    cy);
-    final right  = Offset(cx + cr,    cy);
-    final bottom = Offset(cx,         cy + cr * iso);
-    final tl     = Offset(cx - cr,    cy - cr * iso);
-    final tr     = Offset(cx + cr,    cy - cr * iso);
-    final bl     = Offset(cx - cr,    cy + cr * iso);
-    final br     = Offset(cx + cr,    cy + cr * iso);
-
-    // cara superior (rombo: tl → top → tr → center)
-    final topFace = Path()
-      ..moveTo(tl.dx, tl.dy)
-      ..lineTo(top.dx, top.dy)
-      ..lineTo(tr.dx, tr.dy)
-      ..lineTo(cx, cy)
-      ..close();
-    canvas.drawPath(topFace, stroke);
-
-    // cara izquierda (rombo: tl → left → bottom → center)
-    final leftFace = Path()
-      ..moveTo(tl.dx, tl.dy)
-      ..lineTo(left.dx, left.dy)
-      ..lineTo(bl.dx, bl.dy)
-      ..lineTo(cx, cy)
-      ..close();
-    canvas.drawPath(leftFace, stroke);
-
-    // cara derecha (rombo: tr → right → br → center)
-    final rightFace = Path()
-      ..moveTo(tr.dx, tr.dy)
-      ..lineTo(right.dx, right.dy)
-      ..lineTo(br.dx, br.dy)
-      ..lineTo(cx, cy)
-      ..close();
-    canvas.drawPath(rightFace, stroke);
-
-    // líneas verticales de las aristas del cubo (refuerza la forma 3D)
-    canvas.drawLine(Offset(cx, cy), bottom, stroke);
-  }
-
-  Path _roundedHexPath(double cx, double cy, double r, double radius) {
-    final vertices = List.generate(6, (i) {
-      final angle = math.pi / 180 * (60 * i - 30);
-      return Offset(cx + r * math.cos(angle), cy + r * math.sin(angle));
-    });
-
-    final path = Path();
-    for (int i = 0; i < 6; i++) {
-      final prev = vertices[(i + 5) % 6];
-      final curr = vertices[i];
-      final next = vertices[(i + 1) % 6];
-
-      final toPrev = (prev - curr);
-      final toNext = (next - curr);
-      final lenPrev = toPrev.distance;
-      final lenNext = toNext.distance;
-      final r1 = math.min(radius, lenPrev / 2);
-      final r2 = math.min(radius, lenNext / 2);
-
-      final p1 = curr + Offset(toPrev.dx / lenPrev * r1, toPrev.dy / lenPrev * r1);
-      final p2 = curr + Offset(toNext.dx / lenNext * r2, toNext.dy / lenNext * r2);
-
-      if (i == 0) path.moveTo(p1.dx, p1.dy); else path.lineTo(p1.dx, p1.dy);
-      path.quadraticBezierTo(curr.dx, curr.dy, p2.dx, p2.dy);
-    }
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldRepaint(_TrainylLogoPainter o) => o.color != color;
 }

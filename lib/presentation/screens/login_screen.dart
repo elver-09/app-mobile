@@ -224,34 +224,12 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 88,
-                            height: 106,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.25),
-                                  blurRadius: 24,
-                                  spreadRadius: 8,
-                                ),
-                              ],
-                            ),
-                            child: CustomPaint(
-                              painter: _TrainylLogoPainter(color: Colors.white),
-                            ),
+                          // Logo completo en blanco
+                          Image.asset(
+                            'assets/images/logo_trainyl.png',
+                            width: 230,
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'TRAINYL',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 10),
                           Text(
                             'Tu jornada comienza aquí',
                             style: TextStyle(
