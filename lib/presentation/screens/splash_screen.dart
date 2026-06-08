@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/app_routes.dart';
+import 'package:trainyl_2_0/presentation/widgets/animated_truck.dart';
 import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
@@ -19,22 +20,20 @@ class _SplashScreenState extends State<SplashScreen>
   static const kGlow      = Color(0xFF2176D2);
 
   // ── Controllers ─────────────────────────────────────────────────────────
-  late AnimationController _bgCtrl;      // fondo
-  late AnimationController _orb1Ctrl;    // orbe flotante 1
-  late AnimationController _orb2Ctrl;    // orbe flotante 2
-  late AnimationController _scanCtrl;    // línea de scan
-  late AnimationController _truckCtrl;   // camión
-  late AnimationController _bounceCtrl;  // rebote ruedas
-  late AnimationController _logoCtrl;    // logo entra
-  late AnimationController _glowCtrl;    // brillo logo
-  late AnimationController _btnCtrl;     // botón entra
-  late AnimationController _pulseCtrl;   // pulso botón
-  late AnimationController _shimCtrl;    // shimmer botón
-  late AnimationController _particleCtrl;// partículas
+  late AnimationController _bgCtrl;       // fondo
+  late AnimationController _orb1Ctrl;     // orbe flotante 1
+  late AnimationController _orb2Ctrl;     // orbe flotante 2
+  late AnimationController _scanCtrl;     // línea de scan
+  late AnimationController _truckCtrl;    // entrada del camión
+  late AnimationController _logoCtrl;     // logo entra
+  late AnimationController _glowCtrl;     // brillo logo
+  late AnimationController _btnCtrl;      // botón entra
+  late AnimationController _pulseCtrl;    // pulso botón
+  late AnimationController _shimCtrl;     // shimmer botón
+  late AnimationController _particleCtrl; // partículas
 
   // ── Animations ───────────────────────────────────────────────────────────
-  late Animation<double> _bgFade;
-  late Animation<double> _truckX, _truckFade, _truckBounce, _dustFade;
+  late Animation<double> _truckDrive, _truckFade, _dustFade;
   late Animation<double> _logoScale, _logoFade, _logoY;
   late Animation<double> _glowOpacity;
   late Animation<double> _btnSlide, _btnFade;
@@ -51,45 +50,28 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _setup() {
-    // Fondo
     _bgCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 800));
-    _bgFade = CurvedAnimation(parent: _bgCtrl, curve: Curves.easeOut);
+        duration: const Duration(milliseconds: 600));
 
-    // Orbes flotantes (loop continuo)
     _orb1Ctrl = AnimationController(vsync: this,
         duration: const Duration(seconds: 6))..repeat(reverse: true);
     _orb2Ctrl = AnimationController(vsync: this,
         duration: const Duration(seconds: 9))..repeat(reverse: true);
 
-    // Línea de scan
     _scanCtrl = AnimationController(vsync: this,
         duration: const Duration(milliseconds: 1400));
 
-    // Camión
+    // ── Entrada del camión: maneja desde la izquierda hasta el centro ──
     _truckCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 1600));
-    _truckX = Tween<double>(begin: -0.25, end: 1.3).animate(
+        duration: const Duration(milliseconds: 1500));
+    _truckDrive = Tween<double>(begin: -1.15, end: 0.0).animate(
+        CurvedAnimation(parent: _truckCtrl, curve: Curves.easeOutCubic));
+    _truckFade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _truckCtrl,
-            curve: const Interval(0.0, 0.88, curve: Curves.easeInOut)));
-    _truckFade = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 8),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 72),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
-    ]).animate(_truckCtrl);
+            curve: const Interval(0.0, 0.30, curve: Curves.easeOut)));
     _dustFade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _truckCtrl,
-            curve: const Interval(0.72, 0.95, curve: Curves.easeOut)));
-    _bounceCtrl = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 280))..repeat();
-    _truckBounce = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: -5.0)
-              .chain(CurveTween(curve: Curves.easeInOut)), weight: 50),
-      TweenSequenceItem(
-          tween: Tween(begin: -5.0, end: 0.0)
-              .chain(CurveTween(curve: Curves.easeInOut)), weight: 50),
-    ]).animate(_bounceCtrl);
+            curve: const Interval(0.15, 1.0, curve: Curves.easeInOut)));
 
     // Logo
     _logoCtrl = AnimationController(vsync: this,
@@ -97,14 +79,13 @@ class _SplashScreenState extends State<SplashScreen>
     _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _logoCtrl,
             curve: const Interval(0.0, 0.55, curve: Curves.easeIn)));
-    _logoScale = Tween<double>(begin: 0.75, end: 1.0).animate(
+    _logoScale = Tween<double>(begin: 0.80, end: 1.0).animate(
         CurvedAnimation(parent: _logoCtrl,
             curve: const Interval(0.0, 0.75, curve: Curves.elasticOut)));
-    _logoY = Tween<double>(begin: 30, end: 0).animate(
+    _logoY = Tween<double>(begin: 26, end: 0).animate(
         CurvedAnimation(parent: _logoCtrl,
             curve: const Interval(0.0, 0.6, curve: Curves.easeOut)));
 
-    // Brillo logo (glow pulsante)
     _glowCtrl = AnimationController(vsync: this,
         duration: const Duration(milliseconds: 2000))..repeat(reverse: true);
     _glowOpacity = Tween<double>(begin: 0.25, end: 0.60).animate(
@@ -120,32 +101,26 @@ class _SplashScreenState extends State<SplashScreen>
         CurvedAnimation(parent: _btnCtrl,
             curve: const Interval(0.0, 0.8, curve: Curves.easeOut)));
 
-    // Pulso botón
     _pulseCtrl = AnimationController(vsync: this,
         duration: const Duration(milliseconds: 1400))..repeat();
-
-    // Shimmer botón
     _shimCtrl = AnimationController(vsync: this,
         duration: const Duration(milliseconds: 2000))..repeat();
-
-    // Partículas
     _particleCtrl = AnimationController(vsync: this,
         duration: const Duration(seconds: 8))..repeat();
   }
 
   Future<void> _run() async {
-    setState(() {});
     await _bgCtrl.forward();
-    _scanCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 300));
 
+    // El camión es lo primero que aparece: entra manejando.
     setState(() => _showTruck = true);
+    _scanCtrl.forward();
     await _truckCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 450));
 
-    setState(() { _showTruck = false; _showLogo = true; });
+    setState(() => _showLogo = true);
     await _logoCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 350));
 
     setState(() => _showBtn = true);
     _btnCtrl.forward();
@@ -158,7 +133,6 @@ class _SplashScreenState extends State<SplashScreen>
     _orb2Ctrl.dispose();
     _scanCtrl.dispose();
     _truckCtrl.dispose();
-    _bounceCtrl.dispose();
     _logoCtrl.dispose();
     _glowCtrl.dispose();
     _btnCtrl.dispose();
@@ -174,6 +148,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final truckWidth = math.min(size.width * 0.78, 360.0);
 
     return Scaffold(
       body: SizedBox.expand(
@@ -195,9 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
             ),
 
             // ── Malla sutil ───────────────────────────────────────────────
-            Positioned.fill(
-              child: CustomPaint(painter: _MeshPainter()),
-            ),
+            Positioned.fill(child: CustomPaint(painter: _MeshPainter())),
 
             // ── Orbes animados ────────────────────────────────────────────
             AnimatedBuilder(
@@ -271,84 +244,78 @@ class _SplashScreenState extends State<SplashScreen>
               },
             ),
 
-            // ── Camión animado ────────────────────────────────────────────
+            // ── Camión (HÉROE): entra manejando desde la izquierda ────────
             if (_showTruck)
-              AnimatedBuilder(
-                animation: Listenable.merge([_truckCtrl, _bounceCtrl]),
-                builder: (_, __) {
-                  final xPos = _truckX.value * size.width;
-                  return Positioned(
-                    left: xPos - 75,
-                    top: size.height * 0.44 + _truckBounce.value,
-                    child: Opacity(
-                      opacity: _truckFade.value.clamp(0.0, 1.0),
-                      child: SizedBox(
-                        width: 150, height: 75,
-                        child: CustomPaint(
-                          painter: _TruckPainter(progress: _truckCtrl.value),
+              Align(
+                alignment: const Alignment(0, -0.28),
+                child: AnimatedBuilder(
+                  animation: _truckCtrl,
+                  builder: (_, child) => Opacity(
+                    opacity: _truckFade.value.clamp(0.0, 1.0),
+                    child: Transform.translate(
+                      offset: Offset(_truckDrive.value * size.width, 0),
+                      child: child,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedTruck(
+                        width: truckWidth,
+                        color: Colors.white,
+                        bobAmplitude: 5,
+                      ),
+                      // Sombra/polvo bajo el camión
+                      AnimatedBuilder(
+                        animation: _dustFade,
+                        builder: (_, __) => Opacity(
+                          opacity: (_dustFade.value * 0.5).clamp(0.0, 1.0),
+                          child: CustomPaint(
+                            size: Size(truckWidth * 0.5, 26),
+                            painter: _DustPainter(),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    ],
+                  ),
+                ),
               ),
 
-            // ── Polvo del camión ──────────────────────────────────────────
-            if (_showTruck)
-              AnimatedBuilder(
-                animation: _dustFade,
-                builder: (_, __) {
-                  if (_dustFade.value < 0.01) return const SizedBox.shrink();
-                  return Positioned(
-                    right: 16,
-                    top: size.height * 0.44 + 38,
-                    child: Opacity(
-                      opacity: (_dustFade.value * 0.55).clamp(0.0, 1.0),
-                      child: CustomPaint(
-                        size: const Size(90, 45),
-                        painter: _DustPainter(),
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-            // ── Logo — centrado ───────────────────────────────────────────
+            // ── Logo ───────────────────────────────────────────────────────
             if (_showLogo)
-              Positioned.fill(
+              Align(
+                alignment: const Alignment(0, 0.16),
                 child: AnimatedBuilder(
-                  animation: Listenable.merge([_logoFade, _logoScale, _logoY, _glowOpacity]),
+                  animation: Listenable.merge(
+                      [_logoFade, _logoScale, _logoY, _glowOpacity]),
                   builder: (_, __) => Opacity(
                     opacity: _logoFade.value,
                     child: Transform.translate(
-                      offset: Offset(0, _logoY.value - size.height * 0.05),
+                      offset: Offset(0, _logoY.value),
                       child: Transform.scale(
                         scale: _logoScale.value,
-                        child: Center(
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Halo de luz
-                              Container(
-                                width: 300,
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(75),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: kGlow.withOpacity(_glowOpacity.value),
-                                      blurRadius: 70,
-                                      spreadRadius: 25,
-                                    ),
-                                  ],
-                                ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 300,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(75),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: kGlow.withOpacity(_glowOpacity.value),
+                                    blurRadius: 70,
+                                    spreadRadius: 25,
+                                  ),
+                                ],
                               ),
-                              Image.asset(
-                                'assets/images/logo_trainyl.png',
-                                width: 240,
-                              ),
-                            ],
-                          ),
+                            ),
+                            Image.asset(
+                              'assets/images/logo_trainyl.png',
+                              width: 230,
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -356,7 +323,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
 
-            // ── Botón — centrado en X, pegado al fondo ────────────────────
+            // ── Botón ────────────────────────────────────────────────────
             if (_showBtn)
               Align(
                 alignment: const Alignment(0, 0.88),
@@ -401,10 +368,7 @@ class _Orb extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [
-            color.withOpacity(opacity),
-            color.withOpacity(0),
-          ],
+          colors: [color.withOpacity(opacity), color.withOpacity(0)],
         ),
       ),
     );
@@ -431,7 +395,6 @@ class _MeshPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
 
-    // Líneas diagonales más sutiles
     final diag = Paint()
       ..color = Colors.white.withOpacity(0.012)
       ..strokeWidth = 0.6;
@@ -454,12 +417,12 @@ class _ParticlePainter extends CustomPainter {
 
   static final _rng = math.Random(42);
   static final _particles = List.generate(28, (i) => [
-    _rng.nextDouble(), // x base
-    _rng.nextDouble(), // y base
-    _rng.nextDouble() * 2.5 + 1.0, // radio
-    _rng.nextDouble(), // fase
-    _rng.nextDouble() * 0.4 + 0.06, // opacidad max
-    _rng.nextDouble() * 0.008 + 0.003, // velocidad
+    _rng.nextDouble(),
+    _rng.nextDouble(),
+    _rng.nextDouble() * 2.5 + 1.0,
+    _rng.nextDouble(),
+    _rng.nextDouble() * 0.4 + 0.06,
+    _rng.nextDouble() * 0.008 + 0.003,
   ]);
 
   @override
@@ -476,7 +439,6 @@ class _ParticlePainter extends CustomPainter {
       final y = yBase - t * size.height * speed * 40;
       final yWrapped = ((y % size.height) + size.height) % size.height;
 
-      // pulso de opacidad
       final pulse = (math.sin((progress + phase) * math.pi * 4) + 1) / 2;
 
       final paint = Paint()
@@ -492,104 +454,6 @@ class _ParticlePainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Camión
-// ═══════════════════════════════════════════════════════════════════════════
-
-class _TruckPainter extends CustomPainter {
-  final double progress;
-  _TruckPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final wheelAngle = progress * math.pi * 10;
-
-    final body = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    final dark = Paint()
-      ..color = Colors.white.withOpacity(0.45)
-      ..style = PaintingStyle.fill;
-    final accent = Paint()
-      ..color = Colors.white.withOpacity(0.22)
-      ..style = PaintingStyle.fill;
-
-    // Remolque
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, h * 0.18, w * 0.58, h * 0.52),
-        const Radius.circular(4),
-      ),
-      body,
-    );
-    // Líneas remolque
-    for (int i = 1; i <= 3; i++) {
-      final x = (w * 0.58 / 4) * i;
-      canvas.drawRect(
-        Rect.fromLTWH(x - 0.8, h * 0.18, 1.5, h * 0.52),
-        dark,
-      );
-    }
-
-    // Cabina
-    final cabin = Path()
-      ..moveTo(w * 0.60, h * 0.70)
-      ..lineTo(w * 0.60, h * 0.30)
-      ..quadraticBezierTo(w * 0.62, h * 0.18, w * 0.72, h * 0.18)
-      ..lineTo(w * 0.84, h * 0.18)
-      ..quadraticBezierTo(w * 0.96, h * 0.20, w * 1.00, h * 0.35)
-      ..lineTo(w * 1.00, h * 0.70)
-      ..close();
-    canvas.drawPath(cabin, body);
-
-    // Ventana
-    final window = Path()
-      ..moveTo(w * 0.63, h * 0.28)
-      ..lineTo(w * 0.63, h * 0.22)
-      ..quadraticBezierTo(w * 0.64, h * 0.18, w * 0.72, h * 0.18)
-      ..lineTo(w * 0.82, h * 0.18)
-      ..quadraticBezierTo(w * 0.91, h * 0.19, w * 0.95, h * 0.28)
-      ..close();
-    canvas.drawPath(window, accent);
-
-    // Faro
-    final headlight = Paint()..color = Colors.yellow.withOpacity(0.9);
-    canvas.drawOval(Rect.fromLTWH(w * 0.976, h * 0.34, w * 0.024, h * 0.11),
-        headlight);
-
-    // Ruedas
-    _wheel(canvas, Offset(w * 0.13, h * 0.73), h * 0.155, wheelAngle, body, dark, accent);
-    _wheel(canvas, Offset(w * 0.42, h * 0.73), h * 0.155, wheelAngle, body, dark, accent);
-    _wheel(canvas, Offset(w * 0.82, h * 0.73), h * 0.175, wheelAngle, body, dark, accent);
-  }
-
-  void _wheel(Canvas c, Offset center, double r, double angle,
-      Paint body, Paint dark, Paint accent) {
-    c.drawCircle(center, r,
-        Paint()..color = body.color.withOpacity(0.88)..style = PaintingStyle.fill);
-    c.drawCircle(center, r * 0.58,
-        Paint()..color = body.color.withOpacity(0.38)..style = PaintingStyle.fill);
-    final spoke = Paint()
-      ..color = body.color.withOpacity(0.72)
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    for (int i = 0; i < 6; i++) {
-      final a = angle + (math.pi / 3) * i;
-      c.drawLine(center,
-          Offset(center.dx + math.cos(a) * r * 0.55,
-              center.dy + math.sin(a) * r * 0.55),
-          spoke);
-    }
-    c.drawCircle(center, r * 0.17, body);
-  }
-
-  @override
-  bool shouldRepaint(_TruckPainter o) => o.progress != progress;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // Nube de polvo
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -599,10 +463,10 @@ class _DustPainter extends CustomPainter {
     void circle(double x, double y, double r, double op) =>
         canvas.drawCircle(Offset(x * size.width, y * size.height), r,
             Paint()..color = Colors.white.withOpacity(op)..style = PaintingStyle.fill);
-    circle(0.28, 0.50, 14, 0.28);
-    circle(0.52, 0.40, 10, 0.20);
-    circle(0.72, 0.60, 8,  0.14);
-    circle(0.88, 0.45, 6,  0.10);
+    circle(0.20, 0.55, 11, 0.26);
+    circle(0.42, 0.42, 8,  0.18);
+    circle(0.62, 0.62, 6,  0.13);
+    circle(0.80, 0.48, 5,  0.09);
   }
   @override
   bool shouldRepaint(_DustPainter o) => false;
@@ -640,10 +504,7 @@ class _JourneyButtonState extends State<_JourneyButton> {
           final pulse = Tween<double>(begin: 1.0, end: 1.04)
               .chain(CurveTween(curve: Curves.easeInOut))
               .evaluate(widget.pulseCtrl);
-          return Transform.scale(
-            scale: _pressed ? 0.94 : pulse,
-            child: child,
-          );
+          return Transform.scale(scale: _pressed ? 0.94 : pulse, child: child);
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 130),
@@ -659,9 +520,9 @@ class _JourneyButtonState extends State<_JourneyButton> {
                   )
                 : const LinearGradient(
                     colors: [
-                      Color(0xFF2A7AE4), // celeste brillante
-                      Color(0xFF123C80), // azul marca
-                      Color(0xFF091E42), // azul muy oscuro
+                      Color(0xFF2A7AE4),
+                      Color(0xFF123C80),
+                      Color(0xFF091E42),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -676,20 +537,17 @@ class _JourneyButtonState extends State<_JourneyButton> {
             boxShadow: _pressed
                 ? []
                 : [
-                    // Sombra principal azul profundo
                     BoxShadow(
                       color: const Color(0xFF071428).withOpacity(0.70),
                       blurRadius: 24,
                       offset: const Offset(0, 12),
                     ),
-                    // Halo exterior luminoso celeste
                     BoxShadow(
                       color: const Color(0xFF2A7AE4).withOpacity(0.40),
                       blurRadius: 40,
                       spreadRadius: -4,
                       offset: const Offset(0, 6),
                     ),
-                    // Brillo superior sutil (borde de luz)
                     BoxShadow(
                       color: Colors.white.withOpacity(0.08),
                       blurRadius: 6,
@@ -702,7 +560,6 @@ class _JourneyButtonState extends State<_JourneyButton> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Brillo superior interno (highlight)
                 Positioned(
                   top: 0,
                   left: 20,
@@ -720,7 +577,6 @@ class _JourneyButtonState extends State<_JourneyButton> {
                     ),
                   ),
                 ),
-                // Shimmer
                 AnimatedBuilder(
                   animation: widget.shimCtrl,
                   builder: (_, __) => CustomPaint(
@@ -728,11 +584,9 @@ class _JourneyButtonState extends State<_JourneyButton> {
                     size: const Size(272, 62),
                   ),
                 ),
-                // Contenido
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Ícono con fondo circular sutil
                     Container(
                       width: 34,
                       height: 34,
