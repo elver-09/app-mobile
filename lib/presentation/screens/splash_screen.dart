@@ -148,7 +148,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final truckWidth = math.min(size.width * 0.78, 360.0);
+    final truckWidth = math.min(size.width * 0.42, 190.0);
 
     return Scaffold(
       body: SizedBox.expand(
