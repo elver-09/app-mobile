@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/controllers/auth_controller.dart';
-import 'package:trainyl_2_0/presentation/screens/choose_sede.dart';
+import 'package:trainyl_2_0/presentation/screens/operation_mode_screen.dart';
 import 'dart:math' as math;
 
 class LoginScreen extends StatefulWidget {
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen>
       Navigator.push(
         context,
         _buildPageRoute(
-          ChooseSede(
+          OperationModeScreen(
             token: result.token,
             odooClient: _auth.client,
             driver: {

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trainyl_2_0/core/odoo/route_model.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
+import 'package:trainyl_2_0/core/odoo/pickup_store_model.dart';
 
 /// Clase para la respuesta de órdenes de ruta con información del vehículo
 class RouteOrdersResponse {
@@ -822,6 +823,68 @@ class OdooClient {
     } catch (e) {
       print('❌ Exception en updateMultipleRejected: $e');
       return false;
+    }
+  }
+
+  /// Obtiene las tiendas de recogida asignadas al conductor
+  Future<List<PickupStore>> fetchPickupStores(String token) async {
+    final url = Uri.parse('$baseUrl/driver/pickup/stores');
+
+    final resp = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'jsonrpc': '2.0', 'method': 'call', 'params': {}}),
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('HTTP ${resp.statusCode}');
+    }
+
+    final data = jsonDecode(resp.body);
+    final result = data['result'];
+    if (result == null || result['success'] != true) {
+      return [];
+    }
+
+    final List storesData = result['stores'] ?? [];
+    return storesData
+        .map((s) => PickupStore.fromJson(s as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Escanea una orden en recojo: valida BORRADOR y la pasa a RECOGIDO (collett)
+  Future<Map<String, dynamic>> scanPickupOrder({
+    required String token,
+    required String orderCode,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/order/scan_pickup');
+
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {'order_code': orderCode},
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      final result = data['result'];
+      return result ?? {'success': false, 'error': 'Sin respuesta'};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
     }
   }
 }
