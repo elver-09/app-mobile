@@ -18,3 +18,19 @@ class PickupStore {
     );
   }
 }
+
+/// Resultado del endpoint de tiendas: incluye datos del conductor/vehículo
+/// (placa) además de la lista de tiendas asignadas.
+class PickupStoresResult {
+  final String driverName;
+  final String placa;
+  final String vehicle;
+  final List<PickupStore> stores;
+
+  PickupStoresResult({
+    required this.driverName,
+    required this.placa,
+    required this.vehicle,
+    required this.stores,
+  });
+}

@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:printing/printing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/pickup_store_model.dart';
+import 'package:trainyl_2_0/core/pdf/cargo_pdf.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/widgets/brand_header.dart';
 
@@ -12,12 +16,16 @@ class PickupScanScreen extends StatefulWidget {
   final String token;
   final OdooClient odooClient;
   final PickupStore store;
+  final Map<String, dynamic> driver;
+  final String placa;
 
   const PickupScanScreen({
     super.key,
     required this.token,
     required this.odooClient,
     required this.store,
+    required this.driver,
+    this.placa = '',
   });
 
   @override
@@ -34,10 +42,17 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
   final TextEditingController _codeController = TextEditingController();
 
   final List<_Collected> _collected = [];
+  final Set<String> _seenCodes = <String>{};
+  int _duplicates = 0;
+  bool _finished = false;
+  bool _loading = true;
+  bool _generating = false;
   bool _isProcessing = false;
   String? _lastCode;
   DateTime? _lastAt;
   static const Duration _cooldown = Duration(seconds: 2);
+
+  String get _storageKey => 'pickup_session_${widget.store.id}';
 
   @override
   void initState() {
@@ -46,6 +61,130 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
       autoStart: true,
       formats: const [BarcodeFormat.all],
     );
+    _loadSession();
+  }
+
+  // ── Persistencia de la sesión (sobrevive salir y volver) ──────────────────
+  Future<void> _loadSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_storageKey);
+      if (raw != null && raw.isNotEmpty) {
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        final items = (data['items'] as List?) ?? [];
+        _collected
+          ..clear()
+          ..addAll(items.map((e) {
+            final m = e as Map<String, dynamic>;
+            return _Collected(
+              code: m['code']?.toString() ?? '',
+              orderNumber: m['orderNumber']?.toString() ?? '',
+              fullname: m['fullname']?.toString() ?? '',
+              time: DateTime.fromMillisecondsSinceEpoch(
+                  (m['time'] as num?)?.toInt() ?? 0),
+            );
+          }));
+        _seenCodes
+          ..clear()
+          ..addAll(_collected.map((c) => c.code));
+        _duplicates = (data['duplicates'] as num?)?.toInt() ?? 0;
+        _finished = data['finished'] == true;
+      }
+    } catch (_) {
+      // Si algo falla, simplemente arranca una sesión nueva
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _saveSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = {
+        'items': _collected
+            .map((c) => {
+                  'code': c.code,
+                  'orderNumber': c.orderNumber,
+                  'fullname': c.fullname,
+                  'time': c.time.millisecondsSinceEpoch,
+                })
+            .toList(),
+        'duplicates': _duplicates,
+        'finished': _finished,
+      };
+      await prefs.setString(_storageKey, jsonEncode(data));
+    } catch (_) {}
+  }
+
+  Future<void> _clearSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+  }
+
+  Future<void> _confirmFinish() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Finalizar escaneo'),
+        content: Text(
+          'Vas a cerrar el escaneo de ${widget.store.name} con '
+          '${_collected.length} pedido(s). Después podrás imprimir el cargo, '
+          'pero no agregar más pedidos a esta sesión.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _accent),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Finalizar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      setState(() => _finished = true);
+      await _saveSession();
+    }
+  }
+
+  Future<void> _startNew() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text('Iniciar nuevo escaneo'),
+        content: const Text(
+          'Esto borrará el cargo actual de esta tienda y empezará de cero. '
+          '¿Continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Borrar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      setState(() {
+        _collected.clear();
+        _seenCodes.clear();
+        _duplicates = 0;
+        _finished = false;
+      });
+      await _clearSession();
+    }
   }
 
   @override
@@ -84,6 +223,14 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
     final code = rawCode.trim();
     if (code.isEmpty || _isProcessing) return;
 
+    // Duplicado dentro de la misma sesión
+    if (_seenCodes.contains(code)) {
+      setState(() => _duplicates++);
+      _saveSession();
+      _snack('Código duplicado: $code', const Color(0xFFF59E0B));
+      return;
+    }
+
     setState(() => _isProcessing = true);
     try {
       final result = await widget.odooClient.scanPickupOrder(
@@ -98,26 +245,85 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
         final number = order['order_number']?.toString() ?? code;
         final name = order['fullname']?.toString() ?? '';
 
-        if (!_collected.any((c) => c.orderNumber == number)) {
-          setState(() {
-            _collected.insert(0, _Collected(orderNumber: number, fullname: name));
-          });
-        }
+        _seenCodes.add(code);
+        setState(() {
+          _collected.insert(
+            0,
+            _Collected(
+              code: code,
+              orderNumber: number,
+              fullname: name,
+              time: DateTime.now(),
+            ),
+          );
+        });
+        _saveSession();
         _snack('Recogido: $number', _accent);
       } else {
         final err = result['error']?.toString() ?? 'No se pudo recoger la orden';
         final code2 = result['code']?.toString();
-        _snack(
-          err,
-          code2 == 'already_collected'
-              ? const Color(0xFFF59E0B)
-              : const Color(0xFFEF4444),
-        );
+        if (code2 == 'already_collected') {
+          setState(() => _duplicates++);
+          _saveSession();
+          _snack(err, const Color(0xFFF59E0B));
+        } else {
+          _snack(err, const Color(0xFFEF4444));
+        }
       }
     } catch (e) {
       _snack('Error: $e', const Color(0xFFEF4444));
     } finally {
       if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  /// Genera el "Cargo de Operación" en PDF con lo escaneado en esta tienda
+  /// y abre el diálogo para imprimir o guardar.
+  Future<void> _generateCargo() async {
+    if (_collected.isEmpty || _generating) return;
+    setState(() => _generating = true);
+    try {
+      // Orden cronológico (1..N) para el detalle
+      final ordered = [..._collected]..sort((a, b) => a.time.compareTo(b.time));
+
+      // Registro = primer escaneo · Término = último escaneo
+      final registro = ordered.first.time;
+      final termino = ordered.last.time;
+
+      final rows = <CargoScanRow>[];
+      for (var i = 0; i < ordered.length; i++) {
+        rows.add(CargoScanRow(
+          index: i + 1,
+          code: ordered[i].code,
+          time: ordered[i].time,
+        ));
+      }
+
+      final conductor = (widget.driver['name'] as String?)?.trim() ?? '';
+      var placa = widget.placa.trim();
+      if (placa.isEmpty) {
+        placa = (widget.driver['placa'] as String?)?.trim() ?? '';
+      }
+
+      final bytes = await CargoPdf.build(
+        storeName: widget.store.name,
+        conductor: conductor,
+        placa: placa,
+        registro: registro,
+        termino: termino,
+        itemsUnicos: _collected.length,
+        duplicados: _duplicates,
+        rows: rows,
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (_) async => bytes,
+        name: CargoPdf.fileName(widget.store.name, termino),
+      );
+    } catch (e) {
+      if (mounted) _snack('No se pudo generar el cargo: $e', const Color(0xFFEF4444));
+    } finally {
+      if (mounted) setState(() => _generating = false);
     }
   }
 
@@ -244,11 +450,14 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 
           // ── Cuerpo ────────────────────────────────────────────────────────
           Expanded(
-            child: SingleChildScrollView(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
               padding: EdgeInsets.all(responsive.getResponsiveSize(14)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (!_finished) ...[
                   Row(
                     children: [
                       const Icon(Icons.qr_code_scanner_rounded,
@@ -380,6 +589,11 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
                     ],
                   ),
                   SizedBox(height: responsive.getResponsiveSize(16)),
+                  ],
+                  if (_finished) ...[
+                    _FinishedBanner(count: _collected.length),
+                    SizedBox(height: responsive.getResponsiveSize(16)),
+                  ],
                   // Contador
                   Container(
                     padding: EdgeInsets.symmetric(
@@ -431,6 +645,88 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
                     ),
                   ),
                   SizedBox(height: responsive.getResponsiveSize(10)),
+                  if (!_finished && _collected.isNotEmpty) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _confirmFinish,
+                        icon: const Icon(Icons.flag_rounded, color: Colors.white),
+                        label: const Text(
+                          'Finalizar escaneo',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF143C82),
+                          padding: EdgeInsets.symmetric(
+                            vertical: responsive.getResponsiveSize(14),
+                          ),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(responsive.borderRadius),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(14)),
+                  ],
+                  if (_finished) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _generating ? null : _generateCargo,
+                        icon: _generating
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.picture_as_pdf_rounded,
+                                color: Colors.white),
+                        label: Text(
+                          _generating
+                              ? 'Generando...'
+                              : 'Imprimir / Guardar cargo (PDF)',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _accent,
+                          padding: EdgeInsets.symmetric(
+                            vertical: responsive.getResponsiveSize(14),
+                          ),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(responsive.borderRadius),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(6)),
+                    TextButton.icon(
+                      onPressed: _startNew,
+                      icon: const Icon(Icons.refresh_rounded,
+                          size: 18, color: Color(0xFFEF4444)),
+                      label: const Text(
+                        'Iniciar nuevo escaneo',
+                        style: TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(10)),
+                  ],
                   if (_collected.isEmpty)
                     Padding(
                       padding: EdgeInsets.symmetric(
@@ -474,9 +770,82 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 }
 
 class _Collected {
+  final String code;
   final String orderNumber;
   final String fullname;
-  _Collected({required this.orderNumber, required this.fullname});
+  final DateTime time;
+  _Collected({
+    required this.code,
+    required this.orderNumber,
+    required this.fullname,
+    required this.time,
+  });
+}
+
+class _FinishedBanner extends StatelessWidget {
+  final int count;
+  const _FinishedBanner({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2A7AE4), Color(0xFF143C82)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(responsive.borderRadius + 4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF143C82).withOpacity(0.30),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_circle_rounded,
+                color: Colors.white, size: 26),
+          ),
+          SizedBox(width: responsive.getResponsiveSize(12)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Escaneo finalizado',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: responsive.getResponsiveFontSize(16),
+                  ),
+                ),
+                SizedBox(height: responsive.getResponsiveSize(2)),
+                Text(
+                  '$count pedido(s) listos para el cargo',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: responsive.getResponsiveFontSize(12.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CollectedTile extends StatelessWidget {

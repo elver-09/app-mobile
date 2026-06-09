@@ -826,8 +826,8 @@ class OdooClient {
     }
   }
 
-  /// Obtiene las tiendas de recogida asignadas al conductor
-  Future<List<PickupStore>> fetchPickupStores(String token) async {
+  /// Obtiene las tiendas de recogida asignadas al conductor + su vehículo (placa)
+  Future<PickupStoresResult> fetchPickupStores(String token) async {
     final url = Uri.parse('$baseUrl/driver/pickup/stores');
 
     final resp = await http.post(
@@ -846,13 +846,21 @@ class OdooClient {
     final data = jsonDecode(resp.body);
     final result = data['result'];
     if (result == null || result['success'] != true) {
-      return [];
+      return PickupStoresResult(
+          driverName: '', placa: '', vehicle: '', stores: []);
     }
 
     final List storesData = result['stores'] ?? [];
-    return storesData
+    final stores = storesData
         .map((s) => PickupStore.fromJson(s as Map<String, dynamic>))
         .toList();
+
+    return PickupStoresResult(
+      driverName: result['driver_name']?.toString() ?? '',
+      placa: result['placa']?.toString() ?? '',
+      vehicle: result['vehicle']?.toString() ?? '',
+      stores: stores,
+    );
   }
 
   /// Escanea una orden en recojo: valida BORRADOR y la pasa a RECOGIDO (collett)

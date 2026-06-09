@@ -10,11 +10,13 @@ import 'package:trainyl_2_0/presentation/widgets/brand_header.dart';
 class StorePickupScreen extends StatefulWidget {
   final String token;
   final OdooClient odooClient;
+  final Map<String, dynamic> driver;
 
   const StorePickupScreen({
     super.key,
     required this.token,
     required this.odooClient,
+    required this.driver,
   });
 
   @override
@@ -25,7 +27,7 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
   static const _accent = Color(0xFF1A5BB5);
   static const _bgTint = Color(0xFFEEF3FB);
 
-  late Future<List<PickupStore>> _storesFuture;
+  late Future<PickupStoresResult> _storesFuture;
 
   @override
   void initState() {
@@ -39,7 +41,7 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
     });
   }
 
-  void _goScan(PickupStore store) {
+  void _goScan(PickupStore store, String placa) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -47,6 +49,8 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
           token: widget.token,
           odooClient: widget.odooClient,
           store: store,
+          driver: widget.driver,
+          placa: placa,
         ),
       ),
     );
@@ -113,7 +117,7 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
 
           // ── Cuerpo ────────────────────────────────────────────────────────
           Expanded(
-            child: FutureBuilder<List<PickupStore>>(
+            child: FutureBuilder<PickupStoresResult>(
               future: _storesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -123,7 +127,8 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
                   return _ErrorState(onRetry: _reload, message: '${snapshot.error}');
                 }
 
-                final stores = snapshot.data ?? [];
+                final stores = snapshot.data?.stores ?? [];
+                final placa = snapshot.data?.placa ?? '';
                 if (stores.isEmpty) {
                   return _EmptyState(onRetry: _reload);
                 }
@@ -167,7 +172,7 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
                         child: _StoreCard(
                           store: store,
                           single: stores.length == 1,
-                          onTap: () => _goScan(store),
+                          onTap: () => _goScan(store, placa),
                         ),
                       ),
                     ),

@@ -41,6 +41,7 @@ class OperationModeScreen extends StatelessWidget {
         builder: (_) => StorePickupScreen(
           token: token,
           odooClient: odooClient,
+          driver: driver,
         ),
       ),
     );
