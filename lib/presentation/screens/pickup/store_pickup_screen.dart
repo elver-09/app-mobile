@@ -3,6 +3,7 @@ import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/pickup_store_model.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/screens/pickup/pickup_scan_screen.dart';
+import 'package:trainyl_2_0/presentation/widgets/brand_header.dart';
 
 /// Pantalla que indica a qué tienda(s) va el conductor a recoger.
 /// Si tiene 1 tienda asignada la muestra directo; si tiene varias, lista para elegir.
@@ -21,6 +22,9 @@ class StorePickupScreen extends StatefulWidget {
 }
 
 class _StorePickupScreenState extends State<StorePickupScreen> {
+  static const _accent = Color(0xFF1A5BB5);
+  static const _bgTint = Color(0xFFEEF3FB);
+
   late Future<List<PickupStore>> _storesFuture;
 
   @override
@@ -51,66 +55,149 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
+    final topInset = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        foregroundColor: const Color(0xFF0F172A),
-        title: const Text(
-          'Recojo en tienda',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-        ),
-      ),
-      body: SafeArea(
-        child: FutureBuilder<List<PickupStore>>(
-          future: _storesFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return _ErrorState(onRetry: _reload, message: '${snapshot.error}');
-            }
-
-            final stores = snapshot.data ?? [];
-            if (stores.isEmpty) {
-              return _EmptyState(onRetry: _reload);
-            }
-
-            return SingleChildScrollView(
-              padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+      backgroundColor: _bgTint,
+      body: Column(
+        children: [
+          // ── Encabezado curvo corporativo ──────────────────────────────────
+          BrandHeader(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                responsive.getResponsiveSize(14),
+                topInset + responsive.getResponsiveSize(12),
+                responsive.getResponsiveSize(16),
+                responsive.getResponsiveSize(30),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    stores.length == 1
-                        ? 'Vas a recoger en esta tienda:'
-                        : 'Elige la tienda a la que vas a ir:',
-                    style: TextStyle(
-                      fontSize: responsive.bodyMediumFontSize,
-                      color: const Color(0xFF64748B),
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    children: [
+                      _CircleButton(
+                        icon: Icons.arrow_back,
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      SizedBox(width: responsive.getResponsiveSize(12)),
+                      Icon(Icons.store_mall_directory_rounded,
+                          color: Colors.white.withOpacity(0.95),
+                          size: responsive.iconSize),
+                      SizedBox(width: responsive.getResponsiveSize(8)),
+                      Flexible(
+                        child: Text(
+                          'Recojo en tienda',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: responsive.getResponsiveFontSize(20),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: responsive.getResponsiveSize(14)),
-                  ...stores.map(
-                    (store) => Padding(
-                      padding: EdgeInsets.only(
-                        bottom: responsive.getResponsiveSize(14),
-                      ),
-                      child: _StoreCard(
-                        store: store,
-                        single: stores.length == 1,
-                        onTap: () => _goScan(store),
-                      ),
+                  SizedBox(height: responsive.getResponsiveSize(12)),
+                  Text(
+                    'Elige la tienda a la que vas a ir y escanea ahí los pedidos',
+                    style: TextStyle(
+                      fontSize: responsive.getResponsiveFontSize(12.5),
+                      color: Colors.white.withOpacity(0.85),
+                      height: 1.3,
                     ),
                   ),
                 ],
               ),
-            );
-          },
+            ),
+          ),
+
+          // ── Cuerpo ────────────────────────────────────────────────────────
+          Expanded(
+            child: FutureBuilder<List<PickupStore>>(
+              future: _storesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return _ErrorState(onRetry: _reload, message: '${snapshot.error}');
+                }
+
+                final stores = snapshot.data ?? [];
+                if (stores.isEmpty) {
+                  return _EmptyState(onRetry: _reload);
+                }
+
+                return ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    responsive.getResponsiveSize(16),
+                    responsive.getResponsiveSize(16),
+                    responsive.getResponsiveSize(16),
+                    responsive.getResponsiveSize(24),
+                  ),
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: _accent.withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            stores.length == 1
+                                ? '1 tienda asignada'
+                                : '${stores.length} tiendas asignadas',
+                            style: TextStyle(
+                              fontSize: responsive.getResponsiveFontSize(12.5),
+                              color: _accent,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: responsive.getResponsiveSize(14)),
+                    ...stores.map(
+                      (store) => Padding(
+                        padding: EdgeInsets.only(
+                          bottom: responsive.getResponsiveSize(14),
+                        ),
+                        child: _StoreCard(
+                          store: store,
+                          single: stores.length == 1,
+                          onTap: () => _goScan(store),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _CircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withOpacity(0.18),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, color: Colors.white, size: 20),
         ),
       ),
     );
@@ -135,63 +222,73 @@ class _StoreCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(responsive.borderRadius),
+        borderRadius: BorderRadius.circular(responsive.borderRadius + 4),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF123C80).withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0EA5A4).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(responsive.borderRadius),
-                ),
-                child: Icon(
-                  Icons.store_mall_directory_rounded,
-                  color: const Color(0xFF0F766E),
-                  size: responsive.iconSize,
-                ),
-              ),
-              SizedBox(width: responsive.getResponsiveSize(12)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      store.name,
-                      style: TextStyle(
-                        fontSize: responsive.headingMediumFontSize,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF0F172A),
-                      ),
+          Padding(
+            padding: EdgeInsets.all(responsive.getResponsiveSize(16)),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(responsive.getResponsiveSize(12)),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2A7AE4), Color(0xFF143C82)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    if (store.address.isNotEmpty) ...[
-                      SizedBox(height: responsive.getResponsiveSize(4)),
+                    borderRadius: BorderRadius.circular(responsive.borderRadius),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF123C80).withOpacity(0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.storefront_rounded,
+                    color: Colors.white,
+                    size: responsive.iconSize,
+                  ),
+                ),
+                SizedBox(width: responsive.getResponsiveSize(12)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        store.name,
+                        style: TextStyle(
+                          fontSize: responsive.getResponsiveFontSize(17.5),
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      SizedBox(height: responsive.getResponsiveSize(3)),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.location_on_outlined,
-                            size: responsive.iconSize * 0.7,
-                            color: const Color(0xFF64748B),
-                          ),
+                          const Icon(Icons.location_on_outlined,
+                              size: 14, color: Color(0xFF94A3B8)),
                           SizedBox(width: responsive.getResponsiveSize(4)),
                           Expanded(
                             child: Text(
-                              store.address,
+                              store.address.isNotEmpty
+                                  ? store.address
+                                  : 'Sin dirección registrada',
                               style: TextStyle(
-                                fontSize: responsive.bodySmallFontSize,
+                                fontSize: responsive.getResponsiveFontSize(12.5),
                                 color: const Color(0xFF64748B),
                               ),
                             ),
@@ -199,30 +296,51 @@ class _StoreCard extends StatelessWidget {
                         ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          SizedBox(height: responsive.getResponsiveSize(14)),
-          SizedBox(
-            width: double.infinity,
-            height: responsive.buttonHeight * 0.85,
-            child: ElevatedButton.icon(
-              onPressed: onTap,
-              icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
-              label: Text(
-                single ? 'Escanear pedidos' : 'Ir y escanear',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(responsive.borderRadius + 4),
+                bottomRight: Radius.circular(responsive.borderRadius + 4),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F766E),
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(responsive.borderRadius),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: responsive.getResponsiveSize(13),
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1B4FA0), Color(0xFF0E2C63)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(responsive.borderRadius + 4),
+                    bottomRight: Radius.circular(responsive.borderRadius + 4),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.qr_code_scanner_rounded,
+                        color: Colors.white, size: 18),
+                    SizedBox(width: responsive.getResponsiveSize(8)),
+                    Text(
+                      single ? 'Escanear pedidos' : 'Ir y escanear',
+                      style: TextStyle(
+                        fontSize: responsive.getResponsiveFontSize(15),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -246,14 +364,21 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.store_outlined,
-                size: responsive.iconSize * 2.5, color: const Color(0xFFCBD5E1)),
-            SizedBox(height: responsive.getResponsiveSize(12)),
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A5BB5).withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.store_outlined,
+                  size: responsive.iconSize * 2, color: const Color(0xFF1A5BB5)),
+            ),
+            SizedBox(height: responsive.getResponsiveSize(14)),
             Text(
               'No tienes tiendas de recogida asignadas',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: responsive.bodyMediumFontSize,
+                fontSize: responsive.getResponsiveFontSize(15),
                 color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
               ),
@@ -281,14 +406,21 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline,
-                size: responsive.iconSize * 2.5, color: const Color(0xFFEF4444)),
-            SizedBox(height: responsive.getResponsiveSize(12)),
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.error_outline,
+                  size: responsive.iconSize * 2, color: const Color(0xFFEF4444)),
+            ),
+            SizedBox(height: responsive.getResponsiveSize(14)),
             Text(
               'No se pudieron cargar las tiendas',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: responsive.bodyMediumFontSize,
+                fontSize: responsive.getResponsiveFontSize(15),
                 color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
               ),
