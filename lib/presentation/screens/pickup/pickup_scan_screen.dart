@@ -306,7 +306,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
       }
 
       final bytes = await CargoPdf.build(
-        storeName: widget.store.name,
+        storeName: widget.store.fullName,
         conductor: conductor,
         placa: placa,
         registro: registro,
@@ -318,7 +318,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 
       await Printing.layoutPdf(
         onLayout: (_) async => bytes,
-        name: CargoPdf.fileName(widget.store.name, termino),
+        name: CargoPdf.fileName(widget.store.fullName, termino),
       );
     } catch (e) {
       if (mounted) _snack('No se pudo generar el cargo: $e', const Color(0xFFEF4444));

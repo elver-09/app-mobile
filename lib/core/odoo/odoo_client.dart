@@ -846,8 +846,7 @@ class OdooClient {
     final data = jsonDecode(resp.body);
     final result = data['result'];
     if (result == null || result['success'] != true) {
-      return PickupStoresResult(
-          driverName: '', placa: '', vehicle: '', stores: []);
+      return PickupStoresResult(driverName: '', placa: '', stores: []);
     }
 
     final List storesData = result['stores'] ?? [];
@@ -858,7 +857,6 @@ class OdooClient {
     return PickupStoresResult(
       driverName: result['driver_name']?.toString() ?? '',
       placa: result['placa']?.toString() ?? '',
-      vehicle: result['vehicle']?.toString() ?? '',
       stores: stores,
     );
   }

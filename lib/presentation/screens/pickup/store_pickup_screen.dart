@@ -272,6 +272,27 @@ class _StoreCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (store.client.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A5BB5).withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            store.sellerCode.isNotEmpty
+                                ? '${store.client} · ${store.sellerCode}'
+                                : store.client,
+                            style: TextStyle(
+                              fontSize: responsive.getResponsiveFontSize(11),
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A5BB5),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: responsive.getResponsiveSize(6)),
+                      ],
                       Text(
                         store.name,
                         style: TextStyle(
