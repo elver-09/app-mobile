@@ -865,6 +865,7 @@ class OdooClient {
   Future<Map<String, dynamic>> scanPickupOrder({
     required String token,
     required String orderCode,
+    required int storeId,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/scan_pickup');
 
@@ -878,7 +879,7 @@ class OdooClient {
         body: jsonEncode({
           'jsonrpc': '2.0',
           'method': 'call',
-          'params': {'order_code': orderCode},
+          'params': {'order_code': orderCode, 'store_id': storeId},
         }),
       );
 

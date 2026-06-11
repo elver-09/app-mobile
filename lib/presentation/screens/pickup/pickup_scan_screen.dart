@@ -86,7 +86,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
           }));
         _seenCodes
           ..clear()
-          ..addAll(_collected.map((c) => c.code));
+          ..addAll(_collected.map((c) => c.code.toUpperCase()));
         _duplicates = (data['duplicates'] as num?)?.toInt() ?? 0;
         _finished = data['finished'] == true;
       }
@@ -223,12 +223,29 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
     final code = rawCode.trim();
     if (code.isEmpty || _isProcessing) return;
 
-    // Duplicado dentro de la misma sesión
-    if (_seenCodes.contains(code)) {
+    // Duplicado dentro de la misma sesión (sin distinguir may/min)
+    if (_seenCodes.contains(code.toUpperCase())) {
       setState(() => _duplicates++);
       _saveSession();
       _snack('Código duplicado: $code', const Color(0xFFF59E0B));
       return;
+    }
+
+    // Validación de formato (solo si el cliente lo exige, ej. Ripley).
+    // Evita que el escáner sensible procese códigos basura.
+    if (widget.store.scanValidate) {
+      final prefix = widget.store.scanPrefix.trim();
+      final len = widget.store.scanLength;
+      if (prefix.isNotEmpty && !code.startsWith(prefix)) {
+        _snack('Código inválido: debe empezar con $prefix',
+            const Color(0xFFEF4444));
+        return;
+      }
+      if (len > 0 && code.length != len) {
+        _snack('Código inválido: debe tener $len caracteres',
+            const Color(0xFFEF4444));
+        return;
+      }
     }
 
     setState(() => _isProcessing = true);
@@ -236,6 +253,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
       final result = await widget.odooClient.scanPickupOrder(
         token: widget.token,
         orderCode: code,
+        storeId: widget.store.id,
       );
 
       if (!mounted) return;
@@ -245,7 +263,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
         final number = order['order_number']?.toString() ?? code;
         final name = order['fullname']?.toString() ?? '';
 
-        _seenCodes.add(code);
+        _seenCodes.add(code.toUpperCase());
         setState(() {
           _collected.insert(
             0,
@@ -258,7 +276,11 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
           );
         });
         _saveSession();
-        _snack('Recogido: $number', _accent);
+        final created = result['created'] == true;
+        _snack(
+          created ? 'Creado y recogido: $number' : 'Recogido: $number',
+          _accent,
+        );
       } else {
         final err = result['error']?.toString() ?? 'No se pudo recoger la orden';
         final code2 = result['code']?.toString();
