@@ -219,6 +219,62 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
     );
   }
 
+  void _registerCollected(Map result, String code) {
+    final order = (result['order'] as Map?) ?? {};
+    final number = order['order_number']?.toString() ?? code;
+    final name = order['fullname']?.toString() ?? '';
+    _seenCodes.add(code.toUpperCase());
+    setState(() {
+      _collected.insert(
+        0,
+        _Collected(
+          code: code,
+          orderNumber: number,
+          fullname: name,
+          time: DateTime.now(),
+        ),
+      );
+    });
+    _saveSession();
+    final created = result['created'] == true;
+    _snack(
+      created ? 'Creado y recogido: $number' : 'Recogido: $number',
+      _accent,
+    );
+  }
+
+  Future<bool> _confirmCreateOrder(String code) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Row(
+          children: const [
+            Icon(Icons.help_outline, color: Color(0xFF2A7AE4)),
+            SizedBox(width: 8),
+            Expanded(child: Text('Orden no registrada')),
+          ],
+        ),
+        content: Text(
+          'La orden $code no existe en el sistema. '
+          '¿Deseas registrarla y marcarla como recogida?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _accent),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Registrar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
   Future<void> _processCode(String rawCode) async {
     final code = rawCode.trim();
     if (code.isEmpty || _isProcessing) return;
@@ -250,7 +306,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 
     setState(() => _isProcessing = true);
     try {
-      final result = await widget.odooClient.scanPickupOrder(
+      var result = await widget.odooClient.scanPickupOrder(
         token: widget.token,
         orderCode: code,
         storeId: widget.store.id,
@@ -258,29 +314,25 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 
       if (!mounted) return;
 
-      if (result['success'] == true) {
-        final order = (result['order'] as Map?) ?? {};
-        final number = order['order_number']?.toString() ?? code;
-        final name = order['fullname']?.toString() ?? '';
-
-        _seenCodes.add(code.toUpperCase());
-        setState(() {
-          _collected.insert(
-            0,
-            _Collected(
-              code: code,
-              orderNumber: number,
-              fullname: name,
-              time: DateTime.now(),
-            ),
-          );
-        });
-        _saveSession();
-        final created = result['created'] == true;
-        _snack(
-          created ? 'Creado y recogido: $number' : 'Recogido: $number',
-          _accent,
+      // La orden no existe: pedir confirmación ANTES de crearla.
+      if (result['needs_confirmation'] == true) {
+        final confirm = await _confirmCreateOrder(code);
+        if (!mounted) return;
+        if (!confirm) {
+          _snack('Registro cancelado', const Color(0xFFF59E0B));
+          return;
+        }
+        result = await widget.odooClient.scanPickupOrder(
+          token: widget.token,
+          orderCode: code,
+          storeId: widget.store.id,
+          confirmCreate: true,
         );
+        if (!mounted) return;
+      }
+
+      if (result['success'] == true) {
+        _registerCollected(result, code);
       } else {
         final err = result['error']?.toString() ?? 'No se pudo recoger la orden';
         final code2 = result['code']?.toString();

@@ -866,6 +866,7 @@ class OdooClient {
     required String token,
     required String orderCode,
     required int storeId,
+    bool confirmCreate = false,
   }) async {
     final url = Uri.parse('$baseUrl/driver/order/scan_pickup');
 
@@ -879,7 +880,11 @@ class OdooClient {
         body: jsonEncode({
           'jsonrpc': '2.0',
           'method': 'call',
-          'params': {'order_code': orderCode, 'store_id': storeId},
+          'params': {
+            'order_code': orderCode,
+            'store_id': storeId,
+            'confirm_create': confirmCreate,
+          },
         }),
       );
 
