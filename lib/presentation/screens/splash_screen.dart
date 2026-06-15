@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/app_routes.dart';
-import 'package:trainyl_2_0/core/auth/session_store.dart';
-import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
-import 'package:trainyl_2_0/presentation/screens/operation_mode_screen.dart';
 import 'package:trainyl_2_0/presentation/widgets/animated_truck.dart';
 import 'dart:math' as math;
 
@@ -145,25 +142,8 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Future<void> _goToLogin() async {
-    // Si hay una sesión guardada, entra directo (no se pide login de nuevo).
-    final session = await SessionStore.load();
-    if (!mounted) return;
-    if (session != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OperationModeScreen(
-            token: session.token,
-            odooClient: OdooClient(baseUrl: session.baseUrl, db: session.db),
-            driver: session.driver,
-          ),
-        ),
-      );
-    } else {
+  void _goToLogin() =>
       Navigator.pushReplacementNamed(context, AppRoutes.login);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

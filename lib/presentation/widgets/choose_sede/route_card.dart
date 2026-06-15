@@ -77,33 +77,12 @@ class RouteCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: statusColor.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                inProgress ? Icons.play_circle_filled : Icons.circle,
-                size: 14,
-                color: statusColor,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                status,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: statusColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+        Text(
+          status,
+          style: TextStyle(
+            fontSize: 13,
+            color: statusColor,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
