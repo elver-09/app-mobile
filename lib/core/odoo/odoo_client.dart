@@ -899,4 +899,45 @@ class OdooClient {
       return {'success': false, 'error': e.toString()};
     }
   }
+
+  /// Sincroniza un lote de escaneos hechos offline.
+  /// `items` = lista de {uuid, code, scanned_at}. El backend procesa cada uno
+  /// (recoge si existe, crea si no — política B) de forma idempotente por uuid,
+  /// y devuelve `results`: lista de {uuid, success, kind, order_number,
+  /// fullname, created, error}.
+  Future<Map<String, dynamic>> scanPickupBatch({
+    required String token,
+    required int storeId,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/pickup/scan_batch');
+
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'store_id': storeId,
+            'items': items,
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      final result = data['result'];
+      return result ?? {'success': false, 'error': 'Sin respuesta'};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }

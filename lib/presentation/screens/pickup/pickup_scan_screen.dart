@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/pickup_store_model.dart';
+import 'package:trainyl_2_0/core/offline/pickup_queue_db.dart';
+import 'package:trainyl_2_0/core/offline/connectivity_service.dart';
 import 'package:trainyl_2_0/core/pdf/cargo_pdf.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/widgets/brand_header.dart';
@@ -52,6 +56,14 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
   DateTime? _lastAt;
   static const Duration _cooldown = Duration(seconds: 2);
 
+  // ── Offline-first ──
+  bool _online = true;
+  bool _syncing = false;
+  int _pendingCount = 0;
+  StreamSubscription<bool>? _connSub;
+  final ConnectivityService _conn = ConnectivityService();
+  final Uuid _uuidGen = const Uuid();
+
   String get _storageKey => 'pickup_session_${widget.store.id}';
 
   @override
@@ -62,36 +74,49 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
       formats: const [BarcodeFormat.all],
     );
     _loadSession();
+
+    // Estado de conexión inicial + escucha de cambios (recupera señal -> sync)
+    _conn.isOnline().then((v) {
+      if (mounted) setState(() => _online = v);
+      if (v) _trySync();
+    });
+    _connSub = _conn.onStatusChange.listen((online) {
+      if (mounted) setState(() => _online = online);
+      if (online) _trySync();
+    });
   }
 
-  // ── Persistencia de la sesión (sobrevive salir y volver) ──────────────────
+  // ── Persistencia: la cola local (sqflite) es la fuente de verdad ──────────
   Future<void> _loadSession() async {
     try {
+      final rows = await PickupQueueDb.instance.itemsForStore(widget.store.id);
+      _collected
+        ..clear()
+        ..addAll(rows.map((s) => _Collected(
+              uuid: s.uuid,
+              code: s.code,
+              orderNumber: s.orderNumber.isNotEmpty ? s.orderNumber : s.code,
+              fullname: s.fullname,
+              time: s.scannedAt,
+              status: s.status,
+              created: s.created,
+              errorMsg: s.errorMsg,
+            )));
+      _seenCodes
+        ..clear()
+        ..addAll(_collected.map((c) => c.code.toUpperCase()));
+
+      // dups / finished se guardan como metadato ligero en prefs
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_storageKey);
       if (raw != null && raw.isNotEmpty) {
         final data = jsonDecode(raw) as Map<String, dynamic>;
-        final items = (data['items'] as List?) ?? [];
-        _collected
-          ..clear()
-          ..addAll(items.map((e) {
-            final m = e as Map<String, dynamic>;
-            return _Collected(
-              code: m['code']?.toString() ?? '',
-              orderNumber: m['orderNumber']?.toString() ?? '',
-              fullname: m['fullname']?.toString() ?? '',
-              time: DateTime.fromMillisecondsSinceEpoch(
-                  (m['time'] as num?)?.toInt() ?? 0),
-            );
-          }));
-        _seenCodes
-          ..clear()
-          ..addAll(_collected.map((c) => c.code.toUpperCase()));
         _duplicates = (data['duplicates'] as num?)?.toInt() ?? 0;
         _finished = data['finished'] == true;
       }
+      await _refreshPendingCount();
     } catch (_) {
-      // Si algo falla, simplemente arranca una sesión nueva
+      // Si algo falla, arranca una sesión nueva
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -100,26 +125,17 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
   Future<void> _saveSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final data = {
-        'items': _collected
-            .map((c) => {
-                  'code': c.code,
-                  'orderNumber': c.orderNumber,
-                  'fullname': c.fullname,
-                  'time': c.time.millisecondsSinceEpoch,
-                })
-            .toList(),
-        'duplicates': _duplicates,
-        'finished': _finished,
-      };
+      final data = {'duplicates': _duplicates, 'finished': _finished};
       await prefs.setString(_storageKey, jsonEncode(data));
     } catch (_) {}
   }
 
   Future<void> _clearSession() async {
     try {
+      await PickupQueueDb.instance.clearStore(widget.store.id);
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
+      if (mounted) setState(() => _pendingCount = 0);
     } catch (_) {}
   }
 
@@ -189,6 +205,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 
   @override
   void dispose() {
+    _connSub?.cancel();
     cameraController.dispose();
     _codeController.dispose();
     super.dispose();
@@ -217,62 +234,6 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
-  }
-
-  void _registerCollected(Map result, String code) {
-    final order = (result['order'] as Map?) ?? {};
-    final number = order['order_number']?.toString() ?? code;
-    final name = order['fullname']?.toString() ?? '';
-    _seenCodes.add(code.toUpperCase());
-    setState(() {
-      _collected.insert(
-        0,
-        _Collected(
-          code: code,
-          orderNumber: number,
-          fullname: name,
-          time: DateTime.now(),
-        ),
-      );
-    });
-    _saveSession();
-    final created = result['created'] == true;
-    _snack(
-      created ? 'Creado y recogido: $number' : 'Recogido: $number',
-      _accent,
-    );
-  }
-
-  Future<bool> _confirmCreateOrder(String code) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: Row(
-          children: const [
-            Icon(Icons.help_outline, color: Color(0xFF2A7AE4)),
-            SizedBox(width: 8),
-            Expanded(child: Text('Orden no registrada')),
-          ],
-        ),
-        content: Text(
-          'La orden $code no existe en el sistema. '
-          '¿Deseas registrarla y marcarla como recogida?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _accent),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Registrar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-    return ok == true;
   }
 
   Future<void> _processCode(String rawCode) async {
@@ -306,49 +267,185 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 
     setState(() => _isProcessing = true);
     try {
-      var result = await widget.odooClient.scanPickupOrder(
-        token: widget.token,
-        orderCode: code,
+      // 1) Se guarda SIEMPRE en la cola local (funciona sin señal).
+      final scan = PickupScan(
+        uuid: _uuidGen.v4(),
         storeId: widget.store.id,
+        code: code,
+        scannedAt: DateTime.now(),
       );
+      await PickupQueueDb.instance.insert(scan);
 
-      if (!mounted) return;
-
-      // La orden no existe: pedir confirmación ANTES de crearla.
-      if (result['needs_confirmation'] == true) {
-        final confirm = await _confirmCreateOrder(code);
-        if (!mounted) return;
-        if (!confirm) {
-          _snack('Registro cancelado', const Color(0xFFF59E0B));
-          return;
-        }
-        result = await widget.odooClient.scanPickupOrder(
-          token: widget.token,
-          orderCode: code,
-          storeId: widget.store.id,
-          confirmCreate: true,
+      _seenCodes.add(code.toUpperCase());
+      setState(() {
+        _collected.insert(
+          0,
+          _Collected(
+            uuid: scan.uuid,
+            code: code,
+            orderNumber: code,
+            fullname: '',
+            time: scan.scannedAt,
+            status: 'pending',
+          ),
         );
-        if (!mounted) return;
-      }
-
-      if (result['success'] == true) {
-        _registerCollected(result, code);
-      } else {
-        final err = result['error']?.toString() ?? 'No se pudo recoger la orden';
-        final code2 = result['code']?.toString();
-        if (code2 == 'already_collected') {
-          setState(() => _duplicates++);
-          _saveSession();
-          _snack(err, const Color(0xFFF59E0B));
-        } else {
-          _snack(err, const Color(0xFFEF4444));
-        }
-      }
+      });
+      _snack('Escaneado: $code', _accent);
     } catch (e) {
-      _snack('Error: $e', const Color(0xFFEF4444));
+      _snack('Error guardando escaneo: $e', const Color(0xFFEF4444));
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
+
+    // 2) Intenta sincronizar (si hay señal). Si no, queda pendiente.
+    await _refreshPendingCount();
+    _trySync();
+  }
+
+  void _trySync() {
+    if (_online && !_syncing) {
+      _syncNow();
+    }
+  }
+
+  Future<void> _syncNow() async {
+    if (_syncing) return;
+    final pending = await PickupQueueDb.instance.pendingForStore(widget.store.id);
+    if (pending.isEmpty) {
+      await _refreshPendingCount();
+      return;
+    }
+    setState(() => _syncing = true);
+    try {
+      final items = pending
+          .map((s) => {
+                'uuid': s.uuid,
+                'code': s.code,
+                'scanned_at': s.scannedAt.toIso8601String(),
+              })
+          .toList();
+
+      final res = await widget.odooClient.scanPickupBatch(
+        token: widget.token,
+        storeId: widget.store.id,
+        items: items,
+      );
+
+      if (res['success'] == true) {
+        final results = (res['results'] as List?) ?? [];
+        int ok = 0, err = 0;
+        for (final r in results) {
+          final m = r as Map;
+          final uuid = m['uuid']?.toString() ?? '';
+          final success = m['success'] == true;
+          final status = success ? 'synced' : 'error';
+          final number = m['order_number']?.toString() ?? '';
+          final name = m['fullname']?.toString() ?? '';
+          final created = m['created'] == true;
+          final errMsg = m['error']?.toString() ?? '';
+
+          await PickupQueueDb.instance.updateResult(
+            uuid,
+            status: status,
+            orderNumber: number,
+            fullname: name,
+            created: created,
+            errorMsg: errMsg,
+          );
+          _applySyncResult(uuid, status, number, name, created, errMsg);
+          if (success) {
+            ok++;
+          } else {
+            err++;
+          }
+        }
+        if (mounted && (ok > 0 || err > 0)) {
+          _snack(
+            'Sincronizado: $ok ok${err > 0 ? ', $err con error' : ''}',
+            err > 0 ? const Color(0xFFF59E0B) : _accent,
+          );
+        }
+      }
+      // Si falla la conexión, los pendientes quedan tal cual para reintentar.
+    } catch (_) {
+      // sin conexión / error de red -> se reintentará luego
+    } finally {
+      await _refreshPendingCount();
+      if (mounted) setState(() => _syncing = false);
+    }
+  }
+
+  void _applySyncResult(String uuid, String status, String number, String name,
+      bool created, String errMsg) {
+    final i = _collected.indexWhere((c) => c.uuid == uuid);
+    if (i < 0) return;
+    setState(() {
+      final c = _collected[i];
+      c.status = status;
+      c.created = created;
+      c.errorMsg = errMsg;
+      if (number.isNotEmpty) c.orderNumber = number;
+      if (name.isNotEmpty) c.fullname = name;
+    });
+  }
+
+  Future<void> _refreshPendingCount() async {
+    final p =
+        await PickupQueueDb.instance.countByStatus(widget.store.id, 'pending');
+    final e =
+        await PickupQueueDb.instance.countByStatus(widget.store.id, 'error');
+    if (mounted) setState(() => _pendingCount = p + e);
+  }
+
+  Widget _syncBar() {
+    final responsive = context.responsive;
+    final synced = _collected.where((c) => c.status == 'synced').length;
+    return Container(
+      margin: EdgeInsets.only(bottom: responsive.getResponsiveSize(12)),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: _online ? const Color(0xFFEFF7EF) : const Color(0xFFFFF4E5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: (_online ? const Color(0xFF22A06B) : const Color(0xFFF59E0B))
+              .withOpacity(0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _online ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+            size: 18,
+            color: _online ? const Color(0xFF22A06B) : const Color(0xFFB7791F),
+          ),
+          SizedBox(width: responsive.getResponsiveSize(8)),
+          Expanded(
+            child: Text(
+              _online
+                  ? 'En línea · $synced sincronizados · $_pendingCount pendientes'
+                  : 'Sin conexión · $_pendingCount por sincronizar (guardados en el equipo)',
+              style: TextStyle(
+                fontSize: responsive.getResponsiveFontSize(12),
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF374151),
+              ),
+            ),
+          ),
+          if (_pendingCount > 0)
+            TextButton.icon(
+              onPressed: (_online && !_syncing) ? _syncNow : null,
+              icon: _syncing
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.sync_rounded, size: 16),
+              label: Text(_syncing ? 'Sincronizando' : 'Sincronizar'),
+              style: TextButton.styleFrom(foregroundColor: _accent),
+            ),
+        ],
+      ),
+    );
   }
 
   /// Genera el "Cargo de Operación" en PDF con lo escaneado en esta tienda
@@ -524,13 +621,16 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 
           // ── Cuerpo ────────────────────────────────────────────────────────
           Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
+            child: SafeArea(
+              top: false,
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
               padding: EdgeInsets.all(responsive.getResponsiveSize(14)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _syncBar(),
                   if (!_finished) ...[
                   Row(
                     children: [
@@ -836,6 +936,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
                 ],
               ),
             ),
+            ),
           ),
         ],
       ),
@@ -844,15 +945,23 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
 }
 
 class _Collected {
+  final String uuid;
   final String code;
-  final String orderNumber;
-  final String fullname;
+  String orderNumber;
+  String fullname;
   final DateTime time;
+  String status; // pending | synced | error
+  bool created;
+  String errorMsg;
   _Collected({
     required this.code,
     required this.orderNumber,
     required this.fullname,
     required this.time,
+    this.uuid = '',
+    this.status = 'synced',
+    this.created = false,
+    this.errorMsg = '',
   });
 }
 
@@ -929,6 +1038,17 @@ class _CollectedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
+    final isPending = item.status == 'pending';
+    final isError = item.status == 'error';
+    final Color accent = isError
+        ? const Color(0xFFEF4444)
+        : (isPending ? const Color(0xFFF59E0B) : const Color(0xFF1A5BB5));
+    final IconData icon = isError
+        ? Icons.error_outline
+        : (isPending ? Icons.schedule_rounded : Icons.check_rounded);
+    final String label = isError
+        ? 'Error'
+        : (isPending ? 'Pendiente' : (item.created ? 'Creado' : 'Recogido'));
     return Container(
       margin: EdgeInsets.only(bottom: responsive.getResponsiveSize(8)),
       padding: EdgeInsets.all(responsive.getResponsiveSize(12)),
@@ -936,7 +1056,7 @@ class _CollectedTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(responsive.borderRadius),
         border: Border.all(
-          color: const Color(0xFF1A5BB5).withOpacity(0.30),
+          color: accent.withOpacity(0.30),
           width: 1.5,
         ),
         boxShadow: [
@@ -951,12 +1071,11 @@ class _CollectedTile extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(
-              color: Color(0xFFEFF4FD),
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.10),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_rounded,
-                color: Color(0xFF1A5BB5), size: 18),
+            child: Icon(icon, color: accent, size: 18),
           ),
           SizedBox(width: responsive.getResponsiveSize(10)),
           Expanded(
@@ -979,19 +1098,27 @@ class _CollectedTile extends StatelessWidget {
                       color: const Color(0xFF64748B),
                     ),
                   ),
+                if (isError && item.errorMsg.isNotEmpty)
+                  Text(
+                    item.errorMsg,
+                    style: TextStyle(
+                      fontSize: responsive.getResponsiveFontSize(11.5),
+                      color: const Color(0xFFEF4444),
+                    ),
+                  ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A5BB5).withOpacity(0.10),
+              color: accent.withOpacity(0.10),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text(
-              'Recogido',
+            child: Text(
+              label,
               style: TextStyle(
-                color: Color(0xFF1A5BB5),
+                color: accent,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
               ),

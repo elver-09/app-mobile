@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trainyl_2_0/core/auth/session_store.dart';
 import 'package:trainyl_2_0/presentation/screens/login_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -200,7 +201,9 @@ class DriverProfileScreen extends StatelessWidget {
                   SizedBox(
                     width: 260,
                     child: ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
+                        await SessionStore.clear();
+                        if (!context.mounted) return;
                         Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(
                             builder: (_) => const LoginScreen(),

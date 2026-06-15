@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
+import 'package:trainyl_2_0/core/auth/session_store.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/controllers/auth_controller.dart';
 import 'package:trainyl_2_0/presentation/screens/operation_mode_screen.dart';
@@ -120,20 +121,31 @@ class _LoginScreenState extends State<LoginScreen>
       }
 
       if (!mounted) return;
+
+      // Persistir la sesión para mantenerla iniciada (sobrevive bloqueo/cierre).
+      final driverMap = {
+        'name': result.driver.name,
+        'work_email': result.driver.workEmail,
+        'work_phone': result.driver.workPhone,
+        'job': result.driver.job,
+        'license_number': result.driver.licenseNumber,
+        'image_1920': result.driver.imageBase64,
+      };
+      await SessionStore.save(
+        token: result.token,
+        baseUrl: _auth.client.baseUrl,
+        db: _auth.client.db,
+        driver: driverMap,
+      );
+      if (!mounted) return;
+
       Navigator.push(
         context,
         _buildPageRoute(
           OperationModeScreen(
             token: result.token,
             odooClient: _auth.client,
-            driver: {
-              'name': result.driver.name,
-              'work_email': result.driver.workEmail,
-              'work_phone': result.driver.workPhone,
-              'job': result.driver.job,
-              'license_number': result.driver.licenseNumber,
-              'image_1920': result.driver.imageBase64,
-            },
+            driver: driverMap,
           ),
         ),
       );

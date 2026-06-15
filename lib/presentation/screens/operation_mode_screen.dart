@@ -137,8 +137,10 @@ class OperationModeScreen extends StatelessWidget {
 
               // ── Tarjetas (se superponen al encabezado) ────────────────────
               Expanded(
-                child: Transform.translate(
-                  offset: const Offset(0, -30),
+                child: SafeArea(
+                  top: false,
+                  child: Transform.translate(
+                    offset: const Offset(0, -30),
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: responsive.getResponsiveSize(20),
@@ -183,7 +185,7 @@ class OperationModeScreen extends StatelessWidget {
                             bottom: responsive.getResponsiveSize(16),
                           ),
                           child: Text(
-                            'Trainyl · Logística de Confianza',
+                            'Trainyl · Logística inteligente',
                             style: TextStyle(
                               fontSize: responsive.getResponsiveFontSize(12.5) * 0.95,
                               color: const Color(0xFF94A3B8),
@@ -194,6 +196,7 @@ class OperationModeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                ),
                 ),
               ),
             ],

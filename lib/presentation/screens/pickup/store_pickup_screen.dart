@@ -117,32 +117,34 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
 
           // ── Cuerpo ────────────────────────────────────────────────────────
           Expanded(
-            child: FutureBuilder<PickupStoresResult>(
-              future: _storesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return _ErrorState(onRetry: _reload, message: '${snapshot.error}');
-                }
+            child: SafeArea(
+              top: false,
+              child: FutureBuilder<PickupStoresResult>(
+                future: _storesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return _ErrorState(onRetry: _reload, message: '${snapshot.error}');
+                  }
 
-                final stores = snapshot.data?.stores ?? [];
-                final placa = snapshot.data?.placa ?? '';
-                if (stores.isEmpty) {
-                  return _EmptyState(onRetry: _reload);
-                }
+                  final stores = snapshot.data?.stores ?? [];
+                  final placa = snapshot.data?.placa ?? '';
+                  if (stores.isEmpty) {
+                    return _EmptyState(onRetry: _reload);
+                  }
 
-                return ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    responsive.getResponsiveSize(16),
-                    responsive.getResponsiveSize(16),
-                    responsive.getResponsiveSize(16),
-                    responsive.getResponsiveSize(24),
-                  ),
-                  children: [
-                    Row(
-                      children: [
+                  return ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      responsive.getResponsiveSize(16),
+                      responsive.getResponsiveSize(16),
+                      responsive.getResponsiveSize(16),
+                      responsive.getResponsiveSize(24),
+                    ),
+                    children: [
+                      Row(
+                        children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
@@ -179,6 +181,7 @@ class _StorePickupScreenState extends State<StorePickupScreen> {
                   ],
                 );
               },
+            ),
             ),
           ),
         ],
