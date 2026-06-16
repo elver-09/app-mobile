@@ -12,6 +12,8 @@ class RouteCard extends StatelessWidget {
   final Color statusColor;
   final bool inProgress;
   final VoidCallback onTapDetail;
+  final bool isFinished;
+  final VoidCallback onTerminar;
 
   const RouteCard({
     super.key,
@@ -26,6 +28,8 @@ class RouteCard extends StatelessWidget {
     required this.statusColor,
     required this.inProgress,
     required this.onTapDetail,
+    this.isFinished = false,
+    required this.onTerminar,
   });
 
   @override
@@ -154,14 +158,51 @@ class RouteCard extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          progressText,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w500,
+        Expanded(
+          child: Text(
+            progressText,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
+        if (isFinished) ...[
+          GestureDetector(
+            onTap: onTerminar,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE7F7EF),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFA7E3C8),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: const [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 13,
+                    color: Color(0xFF10B981),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Terminar',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF10B981),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
         GestureDetector(
           onTap: onTapDetail,
           child: Container(

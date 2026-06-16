@@ -94,6 +94,78 @@ class _ChooseSedeState extends State<ChooseSede> {
 
     return routesWithOrders;
   }
+  Future<void> _terminarRuta(RouteItem route) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.check_circle_outline, color: Color(0xFF10B981)),
+            SizedBox(width: 8),
+            Expanded(child: Text('Terminar ruta')),
+          ],
+        ),
+        content: Text(
+          '¿Seguro que deseas terminar la ruta "${route.name}"? '
+          'Se ocultará de tu lista de rutas de hoy.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Terminar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    try {
+      final result = await widget.odooClient.closeRoute(
+        token: widget.token,
+        routeId: route.id,
+      );
+      if (!mounted) return;
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ruta ${route.name} terminada'),
+            backgroundColor: const Color(0xFF10B981),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        // Recargar: la ruta terminada ya no aparece.
+        setState(() {
+          _routesFuture = widget.odooClient.fetchTodayRoutes(widget.token);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${result["error"] ?? "No se pudo terminar la ruta"}'),
+            backgroundColor: const Color(0xFFEF4444),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: const Color(0xFFEF4444),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   Map<String, int> _getRouteStatistics(List<RouteItem> routes) {
     int porValidar = 0;
     int enRuta = 0;
@@ -504,6 +576,8 @@ class _ChooseSedeState extends State<ChooseSede> {
                                 progress: route.progressValue,
                                 statusColor: statusColor,
                                 inProgress: route.inProgress,
+                                isFinished: route.status == RouteStatus.finished,
+                                onTerminar: () => _terminarRuta(route),
                                 onTapDetail: () async {
                                   await Navigator.push(
                                     context,
