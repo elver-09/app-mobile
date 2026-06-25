@@ -515,6 +515,43 @@ class OdooClient {
     }
   }
 
+  /// Registra un escaneo como multibulto (varios paquetes para la misma orden).
+  Future<Map<String, dynamic>> registerPickupMultipack({
+    required String token,
+    required String orderCode,
+    required int packageCount,
+  }) async {
+    final url = Uri.parse('$baseUrl/driver/pickup/register_multipack');
+
+    try {
+      final resp = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'method': 'call',
+          'params': {
+            'order_code': orderCode,
+            'package_count': packageCount,
+          },
+        }),
+      );
+
+      if (resp.statusCode != 200) {
+        return {'success': false, 'error': 'HTTP ${resp.statusCode}'};
+      }
+
+      final data = jsonDecode(resp.body);
+      final result = data['result'];
+      return result ?? {'success': false, 'error': 'Sin respuesta'};
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// Iniciar siguiente orden desde ubicación actual
   Future<Map<String, dynamic>> startNextOrderFromCurrent({
     required String token,

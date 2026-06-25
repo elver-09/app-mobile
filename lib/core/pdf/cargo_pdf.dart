@@ -9,12 +9,14 @@ class CargoScanRow {
   final String code;
   final DateTime time;
   final String status;
+  final int multipackCount; // 0 = normal, ≥2 = multibulto
 
   CargoScanRow({
     required this.index,
     required this.code,
     required this.time,
     this.status = 'REGISTRADO',
+    this.multipackCount = 0,
   });
 }
 
@@ -47,6 +49,7 @@ class CargoPdf {
     required int itemsUnicos,
     required int duplicados,
     required List<CargoScanRow> rows,
+    int totalBultos = 0,
   }) async {
     final doc = pw.Document();
 
@@ -165,6 +168,11 @@ class CargoPdf {
                 pw.Divider(color: _line, height: 1),
                 kvRow('DUPLICADOS', duplicados == 0 ? '-' : '$duplicados',
                     'TOTAL DE LECTURAS', '$total'),
+                if (totalBultos > itemsUnicos) ...[
+                  pw.Divider(color: _line, height: 1),
+                  kvRow('MULTIBULTO', '${totalBultos - itemsUnicos} extra',
+                      'TOTAL BULTOS', '$totalBultos'),
+                ],
               ],
             ),
           ),
@@ -181,12 +189,13 @@ class CargoPdf {
           ),
           pw.SizedBox(height: 8),
           pw.TableHelper.fromTextArray(
-            headers: ['#', 'Código', 'Hora', 'Estado'],
+            headers: ['#', 'Código', 'Hora', 'Bultos', 'Estado'],
             data: rows
                 .map((r) => [
                       '${r.index}',
                       r.code,
                       _dfHora.format(r.time),
+                      r.multipackCount >= 2 ? '${r.multipackCount}' : '1',
                       r.status,
                     ])
                 .toList(),
@@ -205,12 +214,14 @@ class CargoPdf {
               1: pw.Alignment.centerLeft,
               2: pw.Alignment.center,
               3: pw.Alignment.center,
+              4: pw.Alignment.center,
             },
             columnWidths: {
               0: const pw.FixedColumnWidth(28),
               1: const pw.FlexColumnWidth(3),
               2: const pw.FixedColumnWidth(58),
-              3: const pw.FixedColumnWidth(70),
+              3: const pw.FixedColumnWidth(42),
+              4: const pw.FixedColumnWidth(70),
             },
           ),
         ],

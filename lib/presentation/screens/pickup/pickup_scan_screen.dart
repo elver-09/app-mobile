@@ -236,15 +236,83 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
     );
   }
 
+  // ── Multibulto ───────────────────────────────────────────────────────────
+  Future<bool?> _askMultibulto(String code) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.inventory_2_rounded, color: Color(0xFF2A7AE4)),
+            SizedBox(width: 8),
+            Expanded(child: Text('Código ya escaneado')),
+          ],
+        ),
+        content: Text(
+          'El código "$code" ya fue escaneado en esta sesión.\n\n'
+          '¿Es multibulto? (varios paquetes para la misma orden)',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No, es duplicado'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.add_box_rounded, size: 18, color: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: _accent),
+            onPressed: () => Navigator.pop(ctx, true),
+            label: const Text('Sí, multibulto', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _registerMultibulto(String code) async {
+    // Encontrar la entrada original de este código
+    final idx = _collected.indexWhere(
+        (c) => c.code.toUpperCase() == code.toUpperCase());
+    if (idx < 0) return;
+    final original = _collected[idx];
+
+    // Incrementar el contador (de 0→2, luego +1 cada vez)
+    final newCount = (original.multipackCount < 2) ? 2 : original.multipackCount + 1;
+
+    setState(() {
+      original.multipackCount = newCount;
+    });
+
+    _snack('Multibulto: $code ($newCount bultos)', _accent);
+
+    // Registrar en el backend (si hay conexión)
+    if (_online) {
+      try {
+        await widget.odooClient.registerPickupMultipack(
+          token: widget.token,
+          orderCode: code,
+          packageCount: newCount,
+        );
+      } catch (_) {
+        // Se registrará al sincronizar con el batch
+      }
+    }
+  }
+
   Future<void> _processCode(String rawCode) async {
     final code = rawCode.trim();
     if (code.isEmpty || _isProcessing) return;
 
-    // Duplicado dentro de la misma sesión (sin distinguir may/min)
+    // ── Duplicado: preguntar si es multibulto ──────────────────────────────
     if (_seenCodes.contains(code.toUpperCase())) {
-      setState(() => _duplicates++);
-      _saveSession();
-      _snack('Código duplicado: $code', const Color(0xFFF59E0B));
+      final isMulti = await _askMultibulto(code);
+      if (isMulti == true) {
+        await _registerMultibulto(code);
+      } else {
+        setState(() => _duplicates++);
+        _saveSession();
+        _snack('Código duplicado: $code', const Color(0xFFF59E0B));
+      }
       return;
     }
 
@@ -462,11 +530,15 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
       final termino = ordered.last.time;
 
       final rows = <CargoScanRow>[];
+      int totalBultos = 0;
       for (var i = 0; i < ordered.length; i++) {
+        final mc = ordered[i].multipackCount;
+        totalBultos += (mc >= 2) ? mc : 1;
         rows.add(CargoScanRow(
           index: i + 1,
           code: ordered[i].code,
           time: ordered[i].time,
+          multipackCount: mc,
         ));
       }
 
@@ -484,6 +556,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
         termino: termino,
         itemsUnicos: _collected.length,
         duplicados: _duplicates,
+        totalBultos: totalBultos,
         rows: rows,
       );
 
@@ -953,6 +1026,7 @@ class _Collected {
   String status; // pending | synced | error
   bool created;
   String errorMsg;
+  int multipackCount; // 0 = normal, ≥2 = multibulto
   _Collected({
     required this.code,
     required this.orderNumber,
@@ -962,6 +1036,7 @@ class _Collected {
     this.status = 'synced',
     this.created = false,
     this.errorMsg = '',
+    this.multipackCount = 0,
   });
 }
 
@@ -1104,6 +1179,25 @@ class _CollectedTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: responsive.getResponsiveFontSize(11.5),
                       color: const Color(0xFFEF4444),
+                    ),
+                  ),
+                if (item.multipackCount >= 2)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.inventory_2_rounded,
+                            size: 13, color: Color(0xFF7C3AED)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Multibulto: ${item.multipackCount} bultos',
+                          style: TextStyle(
+                            fontSize: responsive.getResponsiveFontSize(11.5),
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF7C3AED),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],

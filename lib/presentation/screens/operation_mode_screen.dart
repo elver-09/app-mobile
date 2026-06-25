@@ -185,7 +185,7 @@ class OperationModeScreen extends StatelessWidget {
                             bottom: responsive.getResponsiveSize(16),
                           ),
                           child: Text(
-                            'Trainyl · Logística inteligente',
+                            'Trainyl · Logística de Confianza',
                             style: TextStyle(
                               fontSize: responsive.getResponsiveFontSize(12.5) * 0.95,
                               color: const Color(0xFF94A3B8),
