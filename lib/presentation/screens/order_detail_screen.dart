@@ -427,6 +427,118 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     }
   }
 
+  String? _normalizeWhatsAppPhone(String rawPhone) {
+    final phoneParts = rawPhone.split(RegExp(r'[/,;|]'));
+
+    for (final part in phoneParts) {
+      var digits = part.replaceAll(RegExp(r'\D'), '');
+
+      while (digits.startsWith('0') && digits.length > 9) {
+        digits = digits.substring(1);
+      }
+
+      if (digits.length == 9 && digits.startsWith('9')) {
+        return '51$digits';
+      }
+
+      if (digits.length == 11 &&
+          digits.startsWith('51') &&
+          digits.substring(2).startsWith('9')) {
+        return digits;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _openWhatsAppMessage(String message) async {
+    final normalizedPhone = _normalizeWhatsAppPhone(widget.phone);
+
+    if (normalizedPhone == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El número del cliente no es válido para WhatsApp'),
+        ),
+      );
+      return;
+    }
+
+    final whatsappAppUri = Uri(
+      scheme: 'whatsapp',
+      host: 'send',
+      queryParameters: <String, String>{
+        'phone': normalizedPhone,
+        'text': message,
+      },
+    );
+    final whatsappWebUri = Uri.https(
+      'wa.me',
+      '/$normalizedPhone',
+      <String, String>{'text': message},
+    );
+
+    try {
+      final openedInApp = await launchUrl(
+        whatsappAppUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (openedInApp) return;
+    } catch (e) {
+      print('⚠️ No se pudo abrir el esquema directo de WhatsApp: $e');
+    }
+
+    try {
+      final openedInWeb = await launchUrl(
+        whatsappWebUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!openedInWeb && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir WhatsApp')),
+        );
+      }
+    } catch (e) {
+      print('❌ Error al abrir WhatsApp: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir WhatsApp')),
+      );
+    }
+  }
+
+  Future<void> _requestLocationByWhatsApp() async {
+    final clientName = widget.clientName.trim().isNotEmpty
+        ? widget.clientName.trim()
+        : 'cliente';
+    final orderNumber = widget.orderNumber.trim();
+
+    final message =
+        'Buenos días $clientName.\n'
+        'Le escribimos para realizar la entrega de su(s) pedido(s):\n'
+        '• Pedido $orderNumber\n'
+        'Hoy estaremos realizando la entrega. ¿Podría enviarnos su ubicación por favor?\n'
+        'Equipo de Entregas - Trainyl';
+
+    await _openWhatsAppMessage(message);
+  }
+
+  Future<void> _notifyOnTheWayByWhatsApp() async {
+    final clientName = widget.clientName.trim().isNotEmpty
+        ? widget.clientName.trim()
+        : 'cliente';
+    final orderNumber = widget.orderNumber.trim();
+
+    final message =
+        'Buenos días $clientName.\n'
+        'Estamos en camino hacia su domicilio con su(s) pedido(s) de Ripley:\n'
+        '• Pedido $orderNumber\n'
+        'Equipo de entregas Trainyl';
+
+    await _openWhatsAppMessage(message);
+  }
+
   Future<void> _openRouteInMaps() async {
     // Validar coordenadas de destino
     if (widget.latitude == null || widget.longitude == null) {
@@ -908,6 +1020,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                           ? () {}
                           : () => _makePhoneCall(widget.phone),
                       onMapPressed: isBlocked ? () {} : _openRouteInMaps,
+                      onRequestLocationPressed: isBlocked
+                          ? () {}
+                          : _requestLocationByWhatsApp,
+                      onOnTheWayPressed: isBlocked
+                          ? () {}
+                          : _notifyOnTheWayByWhatsApp,
                       statusLabel: _getStatusLabel(),
                       statusColor: _getStatusColor(),
                       isBlocked: currentOrderStatus == 'blocked',

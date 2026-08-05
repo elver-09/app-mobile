@@ -311,11 +311,17 @@ class _ReprogramModalState extends State<ReprogramModal> {
                                     )
                                   : DropdownButtonFormField<int>(
                                       value: selectedValue,
+                                      isExpanded: true,
+                                      menuMaxHeight: 320,
                                       items: filteredDistricts
                                           .map(
                                             (d) => DropdownMenuItem<int>(
                                               value: d['id'] as int,
-                                              child: Text(d['name'] ?? ''),
+                                              child: Text(
+                                                d['name'] ?? '',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
                                           )
                                           .toList(),

@@ -10,6 +10,8 @@ class OrderInfoCard extends StatelessWidget {
   final String? product;
   final VoidCallback onCallPressed;
   final VoidCallback onMapPressed;
+  final VoidCallback onRequestLocationPressed;
+  final VoidCallback onOnTheWayPressed;
   final String statusLabel;
   final Color statusColor;
   final bool isBlocked;
@@ -30,6 +32,8 @@ class OrderInfoCard extends StatelessWidget {
     this.product,
     required this.onCallPressed,
     required this.onMapPressed,
+    required this.onRequestLocationPressed,
+    required this.onOnTheWayPressed,
     this.statusLabel = 'Pendiente',
     this.statusColor = const Color(0xFF2563EB),
     this.isBlocked = false,
@@ -193,48 +197,112 @@ class OrderInfoCard extends StatelessWidget {
                     alignment: Alignment.center,
                     child: FractionallySizedBox(
                       widthFactor: 0.92,
-                      child: Row(
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: onCallPressed,
-                              icon: const Icon(Icons.phone, size: 14),
-                              label: Text(
-                                'Llamar a ${clientName.split(' ').first}',
-                                style: const TextStyle(fontSize: 10.8),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0F766E),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 7),
-                                minimumSize: const Size(0, 34),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: onCallPressed,
+                                  icon: const Icon(Icons.phone, size: 14),
+                                  label: Text(
+                                    'Llamar a ${clientName.split(' ').first}',
+                                    style: const TextStyle(fontSize: 10.8),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0F766E),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 7,
+                                    ),
+                                    minimumSize: const Size(0, 34),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: onMapPressed,
+                                  icon: const Icon(Icons.map_outlined, size: 14),
+                                  label: const Text(
+                                    'Abrir en mapas',
+                                    style: TextStyle(fontSize: 10.8),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1D4ED8),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 7,
+                                    ),
+                                    minimumSize: const Size(0, 34),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: onMapPressed,
-                              icon: const Icon(Icons.map_outlined, size: 14),
-                              label: const Text(
-                                'Abrir en mapas',
-                                style: TextStyle(fontSize: 10.8),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1D4ED8),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 7),
-                                minimumSize: const Size(0, 34),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                          const SizedBox(height: 7),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: onRequestLocationPressed,
+                                  icon: const Icon(
+                                    Icons.location_on_outlined,
+                                    size: 14,
+                                  ),
+                                  label: const Text(
+                                    'Pedir ubicación',
+                                    style: TextStyle(fontSize: 10.8),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF16A34A),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 7,
+                                    ),
+                                    minimumSize: const Size(0, 34),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: onOnTheWayPressed,
+                                  icon: const Icon(
+                                    Icons.local_shipping_outlined,
+                                    size: 14,
+                                  ),
+                                  label: const Text(
+                                    'Avisar que vamos',
+                                    style: TextStyle(fontSize: 10.8),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF059669),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 7,
+                                    ),
+                                    minimumSize: const Size(0, 34),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
