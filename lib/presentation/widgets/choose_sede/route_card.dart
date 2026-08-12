@@ -5,6 +5,7 @@ class RouteCard extends StatelessWidget {
   final String routeName;
   final String title;
   final String status;
+  final String? routeDate;
   final int stops;
   final int orders;
   final String progressText;
@@ -21,6 +22,7 @@ class RouteCard extends StatelessWidget {
     required this.routeName,
     required this.title,
     required this.status,
+    this.routeDate,
     required this.stops,
     required this.orders,
     required this.progressText,
@@ -55,6 +57,10 @@ class RouteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
+          if (routeDate != null && routeDate!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildRouteDate(),
+          ],
           const SizedBox(height: 14),
           _buildStatsRow(),
           const SizedBox(height: 14),
@@ -91,6 +97,38 @@ class RouteCard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+
+  Widget _buildRouteDate() {
+    return Row(
+      children: [
+        const Icon(
+          Icons.calendar_today_outlined,
+          size: 15,
+          color: Color(0xFF64748B),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'Fecha de ruta: ${_formatRouteDate(routeDate!)}',
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatRouteDate(String value) {
+    final cleanValue = value.trim();
+    final parsed = DateTime.tryParse(cleanValue);
+    if (parsed == null) return cleanValue;
+
+    final day = parsed.day.toString().padLeft(2, '0');
+    final month = parsed.month.toString().padLeft(2, '0');
+    return '$day/$month/${parsed.year}';
   }
 
   Widget _buildStatsRow() {

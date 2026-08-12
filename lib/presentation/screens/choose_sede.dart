@@ -581,6 +581,7 @@ class _ChooseSedeState extends State<ChooseSede> {
                                 routeName: route.name,
                                 title: '${route.name} · ${route.zone}',
                                 status: route.statusDisplay,
+                                routeDate: route.rutaDate,
                                 stops: route.ordersQty,
                                 orders: route.ordersQty,
                                 progressText: route.progressText,
