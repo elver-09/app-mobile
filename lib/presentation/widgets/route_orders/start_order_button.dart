@@ -3,7 +3,8 @@ import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
 
 /// Botón para iniciar manualmente cualquier orden de la ruta.
-/// Inicia directamente; el backend bloquea si ya hay otra orden en curso.
+/// Si ya hay otro cliente/dirección en curso, el backend lo devuelve a
+/// "En transporte" y activa la orden seleccionada.
 class StartOrderButton extends StatefulWidget {
   final int orderId;
   final int routeId;
@@ -50,16 +51,23 @@ class _StartOrderButtonState extends State<StartOrderButton> {
       if (!mounted) return;
 
       if (result['success'] == true) {
+        final switchedOrdersCount = result['switched_orders_count'] is int
+            ? result['switched_orders_count'] as int
+            : int.tryParse('${result['switched_orders_count'] ?? 0}') ?? 0;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Orden ${widget.orderNumber} iniciada'),
+            content: Text(
+              switchedOrdersCount > 0
+                  ? '✅ Orden ${widget.orderNumber} iniciada. La anterior volvió a Transporte.'
+                  : '✅ Orden ${widget.orderNumber} iniciada',
+            ),
             backgroundColor: const Color(0xFF10B981),
             duration: const Duration(seconds: 2),
           ),
         );
         widget.onSuccess?.call();
       } else {
-        // Incluye el caso "Ya tienes una orden en curso" que valida el backend.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ ${result["error"] ?? "Error al iniciar orden"}'),
