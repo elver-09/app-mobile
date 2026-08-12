@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/presentation/screens/login_screen.dart';
 import 'package:flutter/services.dart';
@@ -7,25 +10,53 @@ class DriverProfileScreen extends StatelessWidget {
   final Map<String, dynamic> driver;
   const DriverProfileScreen({super.key, required this.driver});
 
+  Uint8List? _decodeProfileImage(dynamic rawImage) {
+    if (rawImage is! String) return null;
+
+    var payload = rawImage.trim();
+    if (payload.isEmpty) return null;
+
+    // Odoo normalmente devuelve solo el Base64, pero también toleramos
+    // valores con prefijo data:image/...;base64,.
+    final commaIndex = payload.indexOf(',');
+    if (payload.startsWith('data:image/') && commaIndex >= 0) {
+      payload = payload.substring(commaIndex + 1);
+    }
+
+    payload = payload.replaceAll(RegExp(r'\s+'), '');
+    if (payload.isEmpty) return null;
+
+    try {
+      final normalized = base64.normalize(payload);
+      final bytes = base64Decode(normalized);
+      return bytes.isEmpty ? null : bytes;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Widget _profileImageFallback() {
+    return const ColoredBox(
+      color: Color(0xFFDBEAFE),
+      child: Center(
+        child: Icon(
+          Icons.person,
+          size: 40,
+          color: Color(0xFF1D4ED8),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String name = driver['name'] ?? '';
     final String workEmail = driver['work_email'] ?? '';
     final String workPhone = driver['work_phone'] ?? '';
     final String job = driver['job'] ?? '';
-    final String? imageBase64 = driver['image_1920'] ?? driver['imageBase64'];
+    final dynamic rawImage = driver['image_1920'] ?? driver['imageBase64'];
+    final Uint8List? profileImageBytes = _decodeProfileImage(rawImage);
     final String licenseNumber = driver['license_number'] ?? '';
-
-    ImageProvider? profileImage;
-    if (imageBase64 != null && imageBase64.isNotEmpty) {
-      try {
-        profileImage = MemoryImage(
-          Uri.parse('data:image/png;base64,$imageBase64').data!.contentAsBytes(),
-        );
-      } catch (_) {
-        profileImage = null;
-      }
-    }
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -77,17 +108,21 @@ class DriverProfileScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: CircleAvatar(
-                        radius: 36,
-                        backgroundColor: const Color(0xFFDBEAFE),
-                        backgroundImage: profileImage,
-                        child: profileImage == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 40,
-                                color: Color(0xFF1D4ED8),
-                              )
-                            : null,
+                      child: ClipOval(
+                        child: SizedBox(
+                          width: 72,
+                          height: 72,
+                          child: profileImageBytes == null
+                              ? _profileImageFallback()
+                              : Image.memory(
+                                  profileImageBytes,
+                                  fit: BoxFit.cover,
+                                  gaplessPlayback: true,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return _profileImageFallback();
+                                  },
+                                ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 18),
