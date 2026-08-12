@@ -88,9 +88,19 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
   OrderItem? _scannedOrder;
   final TextEditingController _codeController = TextEditingController();
   bool _isConfirming = false;
+  bool _hasProcessedOrder = false;
+  final Set<int> _processedOrderIds = <int>{};
+  final Set<int> _partialMultipackOrderIds = <int>{};
   String? _lastDetectedCode;
   DateTime? _lastDetectedAt;
   static const Duration _scanCooldown = Duration(seconds: 2);
+
+  int get _processedOrdersCount => _processedOrderIds.length;
+  int get _totalOrders => widget.orders.length;
+  bool get _allOrdersProcessed =>
+      _totalOrders > 0 &&
+      _processedOrdersCount >= _totalOrders &&
+      _partialMultipackOrderIds.isEmpty;
 
   @override
   void initState() {
@@ -99,6 +109,28 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
       autoStart: true,
       formats: const [BarcodeFormat.all],
     );
+
+    // Mantener el mismo criterio de la pantalla "Verificar carga":
+    // una orden deja de estar pendiente cuando ya no está en planificación.
+    _processedOrderIds.addAll(
+      widget.orders
+          .where((order) => order.planningStatus != 'in_planification')
+          .map((order) => order.id),
+    );
+
+    // Si el usuario entra con un multibulto ya iniciado, no considerar la
+    // carga terminada hasta registrar todos sus bultos.
+    _partialMultipackOrderIds.addAll(
+      widget.orders
+          .where(
+            (order) =>
+                order.isMultipack &&
+                order.expectedPackages > 1 &&
+                order.scannedPackages > 0 &&
+                order.remainingPackages > 0,
+          )
+          .map((order) => order.id),
+    );
   }
 
   @override
@@ -106,6 +138,12 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
     cameraController.dispose();
     _codeController.dispose();
     super.dispose();
+  }
+
+  void _exitScanner() {
+    // Si se procesó al menos una orden, avisar a la pantalla anterior para
+    // que refresque los datos de Odoo. Si no hubo cambios, salir normalmente.
+    Navigator.pop(context, _hasProcessedOrder ? true : null);
   }
 
   Future<void> _searchOrderByCode(String code) async {
@@ -367,16 +405,17 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
         final isMultipack = result['is_multipack'] == true;
         final multipackInProgress = isMultipack && expectedPackages > 1 && remainingPackages > 0;
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ ${result["message"] ?? "Orden confirmada y en transporte"}'),
-            backgroundColor: const Color(0xFF10B981),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Actualizar progreso local para que sea visible en pantalla
+        // Actualizar el progreso local sin salir del scanner. El endpoint ya
+        // cambió la orden a "in_transport" en Odoo; aquí solo reflejamos ese
+        // resultado para continuar escaneando de forma consecutiva.
         setState(() {
+          _hasProcessedOrder = true;
+          _processedOrderIds.add(_scannedOrder!.id);
+          if (multipackInProgress) {
+            _partialMultipackOrderIds.add(_scannedOrder!.id);
+          } else {
+            _partialMultipackOrderIds.remove(_scannedOrder!.id);
+          }
           _scannedOrder = _scannedOrder?.copyWith(
             planningStatus: result['new_status'] as String? ?? _scannedOrder!.planningStatus,
             isMultipack: isMultipack,
@@ -386,24 +425,60 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
           );
         });
 
-        // Si es multibulto y aún faltan bultos, quedarse en la pantalla para volver a escanear
+        // Si es multibulto y aún faltan bultos, quedarse en esta misma pantalla
+        // para registrar el siguiente bulto de la orden.
         if (multipackInProgress) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Bulto $scannedPackages/$expectedPackages registrado. Escanea el siguiente.',
+              ),
+              backgroundColor: const Color(0xFF10B981),
+              duration: const Duration(milliseconds: 1200),
+            ),
+          );
           print('🔁 Multibulto en progreso: $scannedPackages/$expectedPackages');
           return;
         }
 
-        // Caso normal o multibulto completo: limpiar y regresar para refrescar
+        // Ya no regresamos después de cada orden. Limpiamos la orden actual y
+        // dejamos la cámara lista para escanear la siguiente.
         setState(() {
           _scannedOrder = null;
         });
 
-        print('🔵 Regresando a pantalla anterior para refrescar...');
-        // Regresar a la pantalla anterior para refrescar la lista
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) {
-          Navigator.pop(context, true);
-          print('✅ Navegación completada');
+        // Solo cuando ya se procesaron todas las órdenes de la ruta regresamos
+        // automáticamente a "Verificar carga" para que se refresque desde Odoo.
+        if (_allOrdersProcessed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Carga verificada: $_processedOrdersCount/$_totalOrders órdenes',
+              ),
+              backgroundColor: const Color(0xFF10B981),
+              duration: const Duration(milliseconds: 900),
+            ),
+          );
+
+          await Future.delayed(const Duration(milliseconds: 900));
+          if (mounted) {
+            Navigator.pop(context, true);
+            print('✅ Todas las órdenes procesadas. Regresando para refrescar.');
+          }
+          return;
         }
+
+        // Quedan órdenes por escanear: informar éxito y mantener la cámara
+        // disponible para la siguiente lectura.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ ${result["message"] ?? "Orden confirmada y en transporte"}',
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            duration: const Duration(milliseconds: 1200),
+          ),
+        );
       } else {
         print('❌ ERROR: La respuesta del servidor indica fallo');
         print('❌ Motivo: ${result['error']}');
@@ -578,7 +653,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                               color: const Color(0xFF0F172A),
                               size: responsive.iconSize,
                             ),
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: _exitScanner,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
@@ -726,6 +801,17 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                     style: TextStyle(
                                       fontSize: responsive.bodySmallFontSize,
                                       color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  SizedBox(height: responsive.getResponsiveSize(2)),
+                                  Text(
+                                    _partialMultipackOrderIds.isEmpty
+                                        ? 'Progreso: $_processedOrdersCount / $_totalOrders'
+                                        : 'Progreso: $_processedOrdersCount / $_totalOrders • multibulto pendiente',
+                                    style: TextStyle(
+                                      fontSize: responsive.bodySmallFontSize,
+                                      color: const Color(0xFF2563EB),
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],
