@@ -36,6 +36,12 @@ class RouteOrdersScreen extends StatefulWidget {
 
 class _RouteOrdersScreenState extends State<RouteOrdersScreen>
     with WidgetsBindingObserver {
+  // Correlativo visual administrado únicamente por Flutter.
+  // Se conserva por token + ruta mientras dure la sesión del login.
+  static final Map<String, Map<int, int>> _appSequenceByRoute =
+      <String, Map<int, int>>{};
+  static final Map<String, int> _nextAppSequenceByRoute = <String, int>{};
+
   late Future<RouteOrdersResponse> _ordersFuture;
   bool _showOnlyActive = true;
   bool _isLoadingNextOrder = false;
@@ -47,14 +53,59 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
   Timer? _clearFocusTimer;
   List<Map<String, dynamic>> rejectionReasons = [];
 
+  String get _appSequenceKey => '${widget.token}:${widget.routeId}';
+
+  int _getOrCreateAppSequence(int orderId) {
+    final key = _appSequenceKey;
+    final sequenceByOrderId = _appSequenceByRoute.putIfAbsent(
+      key,
+      () => <int, int>{},
+    );
+
+    final existingSequence = sequenceByOrderId[orderId];
+    if (existingSequence != null) {
+      return existingSequence;
+    }
+
+    final nextSequence = _nextAppSequenceByRoute[key] ??
+        (sequenceByOrderId.isEmpty
+            ? 1
+            : sequenceByOrderId.values.reduce((a, b) => a > b ? a : b) + 1);
+
+    sequenceByOrderId[orderId] = nextSequence;
+    _nextAppSequenceByRoute[key] = nextSequence + 1;
+    return nextSequence;
+  }
+
+  Future<RouteOrdersResponse> _fetchRouteOrdersWithAppSequence() async {
+    final response = await widget.odooClient.fetchRouteOrders(
+      token: widget.token,
+      routeId: widget.routeId,
+    );
+
+    // No se ordena la respuesta. Se respeta exactamente el orden en que
+    // llega del backend y solo se sustituye el correlativo visual.
+    final orders = response.orders.map((order) {
+      final appSequence = _getOrCreateAppSequence(order.id);
+      return order.copyWith(routeSequence: appSequence);
+    }).toList(growable: false);
+
+    return RouteOrdersResponse(
+      orders: orders,
+      fleetType: response.fleetType,
+      fleetLicense: response.fleetLicense,
+      routeStartAddress: response.routeStartAddress,
+      routeStartLatitude: response.routeStartLatitude,
+      routeStartLongitude: response.routeStartLongitude,
+      routeStatus: response.routeStatus,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _ordersFuture = widget.odooClient.fetchRouteOrders(
-      token: widget.token,
-      routeId: widget.routeId,
-    );
+    _ordersFuture = _fetchRouteOrdersWithAppSequence();
     _loadRejectionReasons();
   }
 
@@ -148,10 +199,7 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
   void _reloadOrders() {
     if (!mounted) return;
     setState(() {
-      _ordersFuture = widget.odooClient.fetchRouteOrders(
-        token: widget.token,
-        routeId: widget.routeId,
-      );
+      _ordersFuture = _fetchRouteOrdersWithAppSequence();
     });
     // Recargar también las razones de rechazo para que estén siempre actualizadas
     _loadRejectionReasons();
@@ -337,9 +385,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
                   OrderDetailScreen(
                     orderId: detail.id,
                     routeSequence:
+                        order.routeSequence ??
                         detail.routeSequence ??
                         detail.sequence ??
-                        order.routeSequence ??
                         order.sequence,
                     orderNumber: detail.orderNumber,
                     clientName: detail.fullname,
@@ -383,9 +431,9 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
               builder: (context) => OrderDetailScreen(
                 orderId: detail.id,
                 routeSequence:
+                    order.routeSequence ??
                     detail.routeSequence ??
                     detail.sequence ??
-                    order.routeSequence ??
                     order.sequence,
                 orderNumber: detail.orderNumber,
                 clientName: detail.fullname,
