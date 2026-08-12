@@ -3,6 +3,7 @@ import 'package:trainyl_2_0/core/constants/route_status.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/route_model.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
+import 'package:trainyl_2_0/core/services/route_order_sequence_store.dart';
 import 'package:trainyl_2_0/presentation/screens/profile_screen.dart';
 import 'package:trainyl_2_0/presentation/screens/route_orders_screen.dart';
 import '../widgets/choose_sede/sede_header.dart';
@@ -134,6 +135,16 @@ class _ChooseSedeState extends State<ChooseSede> {
       );
       if (!mounted) return;
       if (result['success'] == true) {
+        // La ruta ya fue cerrada definitivamente en Odoo; recién aquí se
+        // libera su tabla local de correlativos. Un fallo local no debe hacer
+        // parecer que el cierre en Odoo falló.
+        try {
+          await RouteOrderSequenceStore.clearRoute(route.id);
+        } catch (e) {
+          print('⚠️ No se pudo limpiar el correlativo de la ruta ${route.id}: $e');
+        }
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Ruta ${route.name} terminada'),

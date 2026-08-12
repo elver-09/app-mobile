@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:trainyl_2_0/core/odoo/odoo_client.dart';
 import 'package:trainyl_2_0/core/odoo/order_model.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
+import 'package:trainyl_2_0/core/services/route_order_sequence_store.dart';
 import 'package:trainyl_2_0/presentation/screens/scan_barcode_screen.dart';
 import '../widgets/route_orders/route_order_card.dart';
 import '../widgets/route_orders/orders_filter_switch.dart';
@@ -36,12 +37,6 @@ class RouteOrdersScreen extends StatefulWidget {
 
 class _RouteOrdersScreenState extends State<RouteOrdersScreen>
     with WidgetsBindingObserver {
-  // Correlativo visual administrado únicamente por Flutter.
-  // Se conserva por token + ruta mientras dure la sesión del login.
-  static final Map<String, Map<int, int>> _appSequenceByRoute =
-      <String, Map<int, int>>{};
-  static final Map<String, int> _nextAppSequenceByRoute = <String, int>{};
-
   late Future<RouteOrdersResponse> _ordersFuture;
   bool _showOnlyActive = true;
   bool _isLoadingNextOrder = false;
@@ -53,41 +48,26 @@ class _RouteOrdersScreenState extends State<RouteOrdersScreen>
   Timer? _clearFocusTimer;
   List<Map<String, dynamic>> rejectionReasons = [];
 
-  String get _appSequenceKey => '${widget.token}:${widget.routeId}';
-
-  int _getOrCreateAppSequence(int orderId) {
-    final key = _appSequenceKey;
-    final sequenceByOrderId = _appSequenceByRoute.putIfAbsent(
-      key,
-      () => <int, int>{},
-    );
-
-    final existingSequence = sequenceByOrderId[orderId];
-    if (existingSequence != null) {
-      return existingSequence;
-    }
-
-    final nextSequence = _nextAppSequenceByRoute[key] ??
-        (sequenceByOrderId.isEmpty
-            ? 1
-            : sequenceByOrderId.values.reduce((a, b) => a > b ? a : b) + 1);
-
-    sequenceByOrderId[orderId] = nextSequence;
-    _nextAppSequenceByRoute[key] = nextSequence + 1;
-    return nextSequence;
-  }
-
   Future<RouteOrdersResponse> _fetchRouteOrdersWithAppSequence() async {
     final response = await widget.odooClient.fetchRouteOrders(
       token: widget.token,
       routeId: widget.routeId,
     );
 
-    // No se ordena la respuesta. Se respeta exactamente el orden en que
-    // llega del backend y solo se sustituye el correlativo visual.
+    // El correlativo se persiste por routeId + orderId. Una orden que deje de
+    // venir en la respuesta conserva su número y dicho número no se reutiliza.
+    final sequenceState = await RouteOrderSequenceStore.assignForOrders(
+      routeId: widget.routeId,
+      orderIds: response.orders.map((order) => order.id),
+    );
+
+    // No se ordena la respuesta. Se respeta exactamente el orden en que llega
+    // del backend y routeSequence se usa aquí solo como correlativo visual.
     final orders = response.orders.map((order) {
-      final appSequence = _getOrCreateAppSequence(order.id);
-      return order.copyWith(routeSequence: appSequence);
+      final appSequence = sequenceState.sequenceByOrderId[order.id];
+      return appSequence == null
+          ? order
+          : order.copyWith(routeSequence: appSequence);
     }).toList(growable: false);
 
     return RouteOrdersResponse(
