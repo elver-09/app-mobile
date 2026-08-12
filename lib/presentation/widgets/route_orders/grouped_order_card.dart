@@ -574,6 +574,74 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
                             ),
                         ],
                       ),
+                    if (!allBlocked && hasPhone) ...[
+                      SizedBox(height: responsive.getResponsiveSize(8)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 42,
+                              child: ElevatedButton.icon(
+                                onPressed: _requestLocationByWhatsApp,
+                                icon: const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  'Pedir ubicación',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF16A34A),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: responsive.getResponsiveSize(8)),
+                          Expanded(
+                            child: SizedBox(
+                              height: 42,
+                              child: ElevatedButton.icon(
+                                onPressed: _notifyOnTheWayByWhatsApp,
+                                icon: const Icon(
+                                  Icons.local_shipping_outlined,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  'Avisar que vamos',
+                                  style: TextStyle(
+                                    fontSize: responsive.bodySmallFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF059669),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -982,6 +1050,143 @@ class _GroupedOrderCardState extends State<GroupedOrderCard> {
     } catch (e) {
       print('❌ Error al iniciar la llamada: $e');
     }
+  }
+
+  String? _normalizeWhatsAppPhone(String rawPhone) {
+    final phoneParts = rawPhone.split(RegExp(r'[/,;|]'));
+
+    for (final part in phoneParts) {
+      var digits = part.replaceAll(RegExp(r'\D'), '');
+
+      while (digits.startsWith('0') && digits.length > 9) {
+        digits = digits.substring(1);
+      }
+
+      if (digits.length == 9 && digits.startsWith('9')) {
+        return '51$digits';
+      }
+
+      if (digits.length == 11 &&
+          digits.startsWith('51') &&
+          digits.substring(2).startsWith('9')) {
+        return digits;
+      }
+    }
+
+    return null;
+  }
+
+  String _groupPhone() {
+    final groupPhone = widget.groupedOrder.phone?.trim();
+    if (groupPhone != null && groupPhone.isNotEmpty) {
+      return groupPhone;
+    }
+
+    for (final order in widget.groupedOrder.orders) {
+      final phone = order.phone?.trim();
+      if (phone != null && phone.isNotEmpty) {
+        return phone;
+      }
+    }
+
+    return '';
+  }
+
+  List<OrderItem> _ordersForWhatsApp() {
+    final pending = widget.groupedOrder.pendingOrders;
+    return pending.isNotEmpty ? pending : widget.groupedOrder.orders;
+  }
+
+  Future<void> _openWhatsAppMessage(String message) async {
+    final normalizedPhone = _normalizeWhatsAppPhone(_groupPhone());
+
+    if (normalizedPhone == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El número del cliente no es válido para WhatsApp'),
+        ),
+      );
+      return;
+    }
+
+    final whatsappAppUri = Uri(
+      scheme: 'whatsapp',
+      host: 'send',
+      queryParameters: <String, String>{
+        'phone': normalizedPhone,
+        'text': message,
+      },
+    );
+    final whatsappWebUri = Uri.https(
+      'wa.me',
+      '/$normalizedPhone',
+      <String, String>{'text': message},
+    );
+
+    try {
+      final openedInApp = await launchUrl(
+        whatsappAppUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (openedInApp) return;
+    } catch (e) {
+      print('⚠️ No se pudo abrir el esquema directo de WhatsApp: $e');
+    }
+
+    try {
+      final openedInWeb = await launchUrl(
+        whatsappWebUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!openedInWeb && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir WhatsApp')),
+        );
+      }
+    } catch (e) {
+      print('❌ Error al abrir WhatsApp: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir WhatsApp')),
+      );
+    }
+  }
+
+  Future<void> _requestLocationByWhatsApp() async {
+    final clientName = widget.groupedOrder.clientName.trim().isNotEmpty
+        ? widget.groupedOrder.clientName.trim()
+        : 'cliente';
+    final orderLines = _ordersForWhatsApp()
+        .map((order) => '• Pedido ${order.orderNumber}')
+        .join('\n');
+
+    final message =
+        'Buenos días $clientName.\n'
+        'Le escribimos para realizar la entrega de su(s) pedido(s):\n'
+        '$orderLines\n'
+        'Hoy estaremos realizando la entrega. ¿Podría enviarnos su ubicación por favor?\n'
+        'Equipo de Entregas - Trainyl';
+
+    await _openWhatsAppMessage(message);
+  }
+
+  Future<void> _notifyOnTheWayByWhatsApp() async {
+    final clientName = widget.groupedOrder.clientName.trim().isNotEmpty
+        ? widget.groupedOrder.clientName.trim()
+        : 'cliente';
+    final orderLines = _ordersForWhatsApp()
+        .map((order) => '• Pedido ${order.orderNumber}')
+        .join('\n');
+
+    final message =
+        'Buenos días $clientName.\n'
+        'Estamos en camino hacia su domicilio con su(s) pedido(s) de Ripley:\n'
+        '$orderLines\n'
+        'Equipo de entregas Trainyl';
+
+    await _openWhatsAppMessage(message);
   }
 
   void _launchMap({double? lat, double? lng, required String address}) async {
