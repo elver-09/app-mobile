@@ -108,7 +108,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
     super.dispose();
   }
 
-  void _searchOrderByCode(String code) {
+  Future<void> _searchOrderByCode(String code) async {
     final normalizedCode = code.trim();
 
     if (normalizedCode.isEmpty) {
@@ -121,31 +121,33 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
       return;
     }
 
+    // Evita procesar otro código mientras una orden de la ruta actual
+    // se está confirmando automáticamente en el servidor.
+    if (_isConfirming) return;
+
+    OrderItem? order;
     try {
-      final order = widget.orders.firstWhere(
+      order = widget.orders.firstWhere(
         (o) => o.orderNumber.toLowerCase() == normalizedCode.toLowerCase(),
       );
-
-      if (_scannedOrder?.orderNumber == order.orderNumber) {
-        return;
-      }
-
-      setState(() {
-        _scannedOrder = order;
-      });
-
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Orden encontrada: ${order.orderNumber}'),
-          backgroundColor: const Color(0xFF10B981),
-        ),
-      );
-    } catch (e) {
+    } on StateError {
       print('❌ Orden no encontrada localmente: $normalizedCode');
-      // Buscar globalmente en el servidor
-      _searchOrderGlobally(normalizedCode);
+      // Se conserva exactamente el flujo existente para órdenes que no
+      // pertenecen a la ruta cargada: búsqueda global + alerta correspondiente.
+      await _searchOrderGlobally(normalizedCode);
+      return;
     }
+
+    if (!mounted) return;
+
+    // La orden sí pertenece a la ruta actual. Ya no se pide una confirmación
+    // manual: se registra el escaneo inmediatamente usando el mismo endpoint
+    // que antes ejecutaba el botón "Confirmar".
+    setState(() {
+      _scannedOrder = order;
+    });
+
+    await _confirmScanOrder();
   }
 
   bool _shouldIgnoreDetection(String code) {
@@ -304,7 +306,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
   }
 
   Future<void> _confirmScanOrder() async {
-    if (_scannedOrder == null) return;
+    if (_scannedOrder == null || _isConfirming) return;
     
     print('🔵 ===== INICIO CONFIRMACIÓN DE ESCANEO =====');
     print('🔵 Orden ID: ${_scannedOrder!.id}');
@@ -847,288 +849,40 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                   ],
                 ),
               ),
-              if (_scannedOrder != null)
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.getResponsiveSize(8),
-                    vertical: responsive.getResponsiveSize(8),
-                  ),
+              Padding(
+                padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
+                child: Center(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Encabezado con badge
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Orden encontrada',
-                            style: TextStyle(
-                              fontSize: responsive.getResponsiveFontSize(13),
-                              color: const Color(0xFF0F172A),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: responsive.getResponsiveSize(10),
-                              vertical: responsive.getResponsiveSize(4),
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF10B981),
-                                  const Color(0xFF059669),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF10B981).withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.white,
-                                  size: responsive.iconSize * 0.6,
-                                ),
-                                SizedBox(width: responsive.getResponsiveSize(4)),
-                                Text(
-                                  'Lista para confirmar',
-                                  style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize * 0.75,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: responsive.getResponsiveSize(6)),
-                      // Tarjeta de orden
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(responsive.borderRadius),
-                          border: Border.all(
-                            color: const Color(0xFF10B981).withOpacity(0.3),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF10B981).withOpacity(0.1),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Encabezado de orden
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _scannedOrder!.fullname,
-                                        style: TextStyle(
-                                          fontSize: responsive.getResponsiveFontSize(13),
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      SizedBox(height: responsive.getResponsiveSize(4)),
-                                      Text(
-                                        _scannedOrder!.orderNumber,
-                                        style: TextStyle(
-                                          fontSize: responsive.getResponsiveFontSize(11),
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF3B82F6),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.all(responsive.getResponsiveSize(6)),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF0FDF4),
-                                    borderRadius: BorderRadius.circular(responsive.borderRadius - 4),
-                                    border: Border.all(
-                                      color: const Color(0xFF10B981).withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    Icons.local_shipping,
-                                    color: const Color(0xFF10B981),
-                                    size: responsive.iconSize * 0.8,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: responsive.getResponsiveSize(6)),
-                            // Detalles
-                            Divider(
-                              color: const Color(0xFFE2E8F0),
-                              thickness: 1,
-                              height: responsive.getResponsiveSize(14),
-                            ),
-                            Text(
-                              'Detalles del envío',
-                              style: TextStyle(
-                                fontSize: responsive.getResponsiveFontSize(12),
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF0F172A),
-                              ),
-                            ),
-                            SizedBox(height: responsive.getResponsiveSize(6)),
-                            _buildDetailRow(
-                              context,
-                              Icons.inventory_2,
-                              'Producto',
-                              _scannedOrder!.product ?? 'N/A',
-                            ),
-                            SizedBox(height: responsive.getResponsiveSize(4)),
-                            _buildDetailRow(
-                              context,
-                              Icons.location_on,
-                              'Zona',
-                              _scannedOrder!.district,
-                            ),
-                            SizedBox(height: responsive.getResponsiveSize(4)),
-                            _buildDetailRow(
-                              context,
-                              Icons.attach_money,
-                              'Dirección',
-                              _scannedOrder!.address,
-                            ),
-                            if (_scannedOrder!.isMultipack && _scannedOrder!.expectedPackages > 1) ...[
-                              SizedBox(height: responsive.getResponsiveSize(4)),
-                              _buildDetailRow(
-                                context,
-                                Icons.inventory_2,
-                                'Multibulto',
-                                '${_scannedOrder!.scannedPackages}/${_scannedOrder!.expectedPackages} · Faltan ${_scannedOrder!.remainingPackages}',
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
                       SizedBox(height: responsive.getResponsiveSize(8)),
-                      // Botones de acción
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: responsive.buttonHeight * 0.8,
-                              child: ElevatedButton(
-                                onPressed: _isConfirming ? null : _confirmScanOrder,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF10B981),
-                                  disabledBackgroundColor: const Color(0xFF10B981).withOpacity(0.5),
-                                  elevation: 2,
-                                  shadowColor: const Color(0xFF10B981).withOpacity(0.25),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(responsive.borderRadius),
-                                  ),
-                                ),
-                                child: _isConfirming
-                                    ? SizedBox(
-                                        height: responsive.buttonHeight * 0.35,
-                                        width: responsive.buttonHeight * 0.35,
-                                        child: const CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        ),
-                                      )
-                                    : Text(
-                                        'Confirmar',
-                                        style: TextStyle(
-                                          fontSize: responsive.bodySmallFontSize,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                              ),
-                            ),
+                      if (_isConfirming)
+                        SizedBox(
+                          width: responsive.iconSize * 1.5,
+                          height: responsive.iconSize * 1.5,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
                           ),
-                          SizedBox(width: responsive.getResponsiveSize(8)),
-                          Expanded(
-                            child: SizedBox(
-                              height: responsive.buttonHeight * 0.8,
-                              child: OutlinedButton(
-                                onPressed: _isConfirming
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          _scannedOrder = null;
-                                        });
-                                        _codeController.clear();
-                                      },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: Color(0xFFE2E8F0),
-                                    width: 1.5,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(responsive.borderRadius),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Cancelar',
-                                  style: TextStyle(
-                                    fontSize: responsive.bodySmallFontSize,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF475569),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Padding(
-                  padding: EdgeInsets.all(responsive.getResponsiveSize(10)),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        SizedBox(height: responsive.getResponsiveSize(8)),
+                        )
+                      else
                         Icon(
                           Icons.camera_alt_outlined,
                           size: responsive.iconSize * 2,
                           color: const Color(0xFFCBD5E1),
                         ),
-                        SizedBox(height: responsive.getResponsiveSize(8)),
-                        Text(
-                          'Escanea una orden',
-                          style: TextStyle(
-                            fontSize: responsive.bodyMediumFontSize,
-                            color: const Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
-                          ),
+                      SizedBox(height: responsive.getResponsiveSize(8)),
+                      Text(
+                        _isConfirming ? 'Registrando escaneo...' : 'Escanea una orden',
+                        style: TextStyle(
+                          fontSize: responsive.bodyMediumFontSize,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
             ],
           ),
         ),
