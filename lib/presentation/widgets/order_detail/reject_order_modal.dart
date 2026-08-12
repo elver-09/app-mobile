@@ -59,7 +59,7 @@ class _RejectOrderModalState extends State<RejectOrderModal> {
     if (!_canConfirm()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor completa los campos y captura 3 fotos'),
+          content: Text('Por favor completa los campos y agrega 3 fotos'),
           backgroundColor: Colors.red,
         ),
       );

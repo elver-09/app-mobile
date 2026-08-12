@@ -34,7 +34,7 @@ class _DeliveryConfirmationModalState extends State<DeliveryConfirmationModal> {
     if (!_canConfirm()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor captura al menos 3 fotos'),
+          content: Text('Por favor agrega al menos 3 fotos'),
           backgroundColor: Colors.orange,
         ),
       );

@@ -118,6 +118,41 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
     }
   }
 
+  Future<void> _attachPhotos(int maxPhotos) async {
+    if (photos.length >= maxPhotos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Máximo $maxPhotos foto${maxPhotos > 1 ? 's' : ''} '
+            'permitida${maxPhotos > 1 ? 's' : ''}',
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (photo != null && mounted) {
+        setState(() {
+          photos.add(File(photo.path));
+        });
+        print('🖼️ Foto adjuntada: ${photo.path}');
+      }
+    } catch (e) {
+      print('❌ Error al adjuntar foto: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al adjuntar foto: $e')),
+        );
+      }
+    }
+  }
+
   bool get _canConfirm {
     if (widget.actionType == 'deliver') {
       // Para entrega, necesita 3 fotos
@@ -138,7 +173,7 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(widget.actionType == 'deliver'
-              ? 'Por favor captura las 3 fotos obligatorias'
+              ? 'Por favor agrega las 3 fotos obligatorias'
               : 'Por favor completa todos los campos'),
           backgroundColor: Colors.red,
         ),
@@ -392,44 +427,83 @@ class _MultipleDeliveryModalState extends State<MultipleDeliveryModal> {
                     ),
                     const SizedBox(height: 8),
                     if (photos.length < 3)
-                      SizedBox(
-                        height: 34,
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            await _takePhoto(3);
-                          },
-                          icon: const Icon(Icons.camera_alt, size: 18),
-                          label: Text(
-                            'Capturar foto (${photos.length}/3)',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 38,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await _takePhoto(3);
+                                },
+                                icon: const Icon(Icons.camera_alt, size: 17),
+                                label: const Text('Tomar foto'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: isDelivery
+                                      ? const Color(0xFF10B981)
+                                      : const Color(0xFFEF4444),
+                                  side: BorderSide(
+                                    color: isDelivery
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFEF4444),
+                                    width: 1.2,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                  textStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: isDelivery
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFFEF4444),
-                            side: BorderSide(
-                              color: isDelivery
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFFEF4444),
-                              width: 1.2,
-                            ),
-                            backgroundColor: Colors.white,
-                            textStyle: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: SizedBox(
+                              height: 38,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await _attachPhotos(3);
+                                },
+                                icon: const Icon(
+                                  Icons.photo_library_outlined,
+                                  size: 17,
+                                ),
+                                label: const Text('Adjuntar'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: isDelivery
+                                      ? const Color(0xFF10B981)
+                                      : const Color(0xFFEF4444),
+                                  side: BorderSide(
+                                    color: isDelivery
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFEF4444),
+                                    width: 1.2,
+                                  ),
+                                  backgroundColor: Colors.white,
+                                  textStyle: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     if (photos.isNotEmpty) ...[
                       const SizedBox(height: 8),

@@ -600,27 +600,67 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
           ),
         ),
         const SizedBox(height: 8),
-        // Botón para capturar foto
         if (photos.length < maxPhotos)
-          OutlinedButton.icon(
-            onPressed: () async {
-              await _takePhoto(photos, onPhotoAdded, maxPhotos);
-            },
-            icon: const Icon(Icons.camera_alt),
-            label: Text('Capturar foto (${photos.length}/$maxPhotos)'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF3B82F6),
-              side: const BorderSide(color: Color(0xFF94A3B8), width: 1.4),
-              backgroundColor: Colors.white,
-              textStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await _takePhoto(photos, onPhotoAdded, maxPhotos);
+                  },
+                  icon: const Icon(Icons.camera_alt, size: 17),
+                  label: const Text('Tomar foto'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF3B82F6),
+                    side: const BorderSide(
+                      color: Color(0xFF94A3B8),
+                      width: 1.4,
+                    ),
+                    backgroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await _attachPhotos(photos, onPhotoAdded, maxPhotos);
+                  },
+                  icon: const Icon(Icons.photo_library_outlined, size: 17),
+                  label: const Text('Adjuntar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF3B82F6),
+                    side: const BorderSide(
+                      color: Color(0xFF94A3B8),
+                      width: 1.4,
+                    ),
+                    backgroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         if (photos.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -711,6 +751,43 @@ class _PartialDeliveryModalState extends State<PartialDeliveryModal> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al capturar foto: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _attachPhotos(
+    List<File> photos,
+    Function(File) onPhotoAdded,
+    int maxPhotos,
+  ) async {
+    if (photos.length >= maxPhotos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Máximo $maxPhotos foto${maxPhotos > 1 ? 's' : ''} '
+            'permitida${maxPhotos > 1 ? 's' : ''}',
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (photo != null) {
+        onPhotoAdded(File(photo.path));
+        print('🖼️ Foto adjuntada: ${photo.path}');
+      }
+    } catch (e) {
+      print('❌ Error al adjuntar foto: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al adjuntar foto: $e')),
         );
       }
     }

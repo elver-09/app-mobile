@@ -25,15 +25,19 @@ class PhotoCaptureWidget extends StatefulWidget {
 class _PhotoCaptureWidgetState extends State<PhotoCaptureWidget> {
   final ImagePicker _imagePicker = ImagePicker();
 
+  bool _hasRoom() {
+    if (widget.photos.length < widget.maxPhotos) return true;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Máximo ${widget.maxPhotos} fotos permitidas'),
+      ),
+    );
+    return false;
+  }
+
   Future<void> _takePhoto() async {
-    if (widget.photos.length >= widget.maxPhotos) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Máximo ${widget.maxPhotos} fotos permitidas'),
-        ),
-      );
-      return;
-    }
+    if (!_hasRoom()) return;
 
     try {
       final XFile? photo = await _imagePicker.pickImage(
@@ -55,25 +59,27 @@ class _PhotoCaptureWidgetState extends State<PhotoCaptureWidget> {
     }
   }
 
-  void _viewPhotos() {
-    if (widget.photos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.emptyMessage),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+  Future<void> _attachPhotos() async {
+    if (!_hasRoom()) return;
 
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(0),
-        child: PhotoViewerModal(photos: widget.photos),
-      ),
-    );
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (photo != null) {
+        widget.onPhotoAdded(File(photo.path));
+        print('🖼️ Foto adjuntada: ${photo.path}');
+      }
+    } catch (e) {
+      print('❌ Error al adjuntar foto: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al adjuntar foto: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -90,9 +96,9 @@ class _PhotoCaptureWidgetState extends State<PhotoCaptureWidget> {
         const SizedBox(width: 8),
         Expanded(
           child: _buildActionButton(
-            label: 'Ver foto',
-            icon: Icons.image,
-            onPressed: _viewPhotos,
+            label: 'Adjuntar',
+            icon: Icons.photo_library_outlined,
+            onPressed: _attachPhotos,
           ),
         ),
       ],
