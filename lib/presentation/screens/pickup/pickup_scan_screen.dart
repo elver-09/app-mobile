@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:printing/printing.dart';
@@ -10,6 +12,7 @@ import 'package:trainyl_2_0/core/odoo/pickup_store_model.dart';
 import 'package:trainyl_2_0/core/offline/pickup_queue_db.dart';
 import 'package:trainyl_2_0/core/offline/connectivity_service.dart';
 import 'package:trainyl_2_0/core/pdf/cargo_pdf.dart';
+import 'package:trainyl_2_0/core/pdf/cargo_pdf_storage.dart';
 import 'package:trainyl_2_0/core/responsive/responsive_helper.dart';
 import 'package:trainyl_2_0/presentation/widgets/brand_header.dart';
 
@@ -52,6 +55,9 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
   bool _loading = true;
   bool _generating = false;
   bool _isProcessing = false;
+  String? _cargoPdfPath;
+  String? _cargoPdfName;
+  bool _cargoInPublicDownloads = false;
   String? _lastCode;
   DateTime? _lastAt;
   static const Duration _cooldown = Duration(seconds: 2);
@@ -113,6 +119,9 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
         final data = jsonDecode(raw) as Map<String, dynamic>;
         _duplicates = (data['duplicates'] as num?)?.toInt() ?? 0;
         _finished = data['finished'] == true;
+        _cargoPdfPath = (data['cargo_pdf_path'] as String?)?.trim();
+        _cargoPdfName = (data['cargo_pdf_name'] as String?)?.trim();
+        _cargoInPublicDownloads = data['cargo_pdf_public'] == true;
       }
       await _refreshPendingCount();
     } catch (_) {
@@ -125,7 +134,13 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
   Future<void> _saveSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final data = {'duplicates': _duplicates, 'finished': _finished};
+      final data = {
+        'duplicates': _duplicates,
+        'finished': _finished,
+        'cargo_pdf_path': _cargoPdfPath,
+        'cargo_pdf_name': _cargoPdfName,
+        'cargo_pdf_public': _cargoInPublicDownloads,
+      };
       await prefs.setString(_storageKey, jsonEncode(data));
     } catch (_) {}
   }
@@ -147,8 +162,9 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
         title: const Text('Finalizar escaneo'),
         content: Text(
           'Vas a cerrar el escaneo de ${widget.store.name} con '
-          '${_collected.length} pedido(s). Después podrás imprimir el cargo, '
-          'pero no agregar más pedidos a esta sesión.',
+          '${_collected.length} pedido(s). El cargo PDF se guardará '
+          'automáticamente en el dispositivo. Después podrás abrirlo o '
+          'imprimirlo cuando lo necesites, pero no agregar más pedidos a esta sesión.',
         ),
         actions: [
           TextButton(
@@ -166,6 +182,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
     if (ok == true) {
       setState(() => _finished = true);
       await _saveSession();
+      await _saveCargoPdf(showFeedback: true);
     }
   }
 
@@ -198,6 +215,9 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
         _seenCodes.clear();
         _duplicates = 0;
         _finished = false;
+        _cargoPdfPath = null;
+        _cargoPdfName = null;
+        _cargoInPublicDownloads = false;
       });
       await _clearSession();
     }
@@ -516,56 +536,126 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
     );
   }
 
-  /// Genera el "Cargo de Operación" en PDF con lo escaneado en esta tienda
-  /// y abre el diálogo para imprimir o guardar.
-  Future<void> _generateCargo() async {
+  /// Construye el mismo PDF de cargo que se utilizaba para impresión.
+  Future<_BuiltCargoPdf> _buildCargoPdf() async {
+    final ordered = [..._collected]..sort((a, b) => a.time.compareTo(b.time));
+    final registro = ordered.first.time;
+    final termino = ordered.last.time;
+
+    final rows = <CargoScanRow>[];
+    int totalBultos = 0;
+    for (var i = 0; i < ordered.length; i++) {
+      final mc = ordered[i].multipackCount;
+      totalBultos += (mc >= 2) ? mc : 1;
+      rows.add(CargoScanRow(
+        index: i + 1,
+        code: ordered[i].code,
+        time: ordered[i].time,
+        multipackCount: mc,
+      ));
+    }
+
+    final conductor = (widget.driver['name'] as String?)?.trim() ?? '';
+    var placa = widget.placa.trim();
+    if (placa.isEmpty) {
+      placa = (widget.driver['placa'] as String?)?.trim() ?? '';
+    }
+
+    final bytes = await CargoPdf.build(
+      storeName: widget.store.fullName,
+      conductor: conductor,
+      placa: placa,
+      registro: registro,
+      termino: termino,
+      itemsUnicos: _collected.length,
+      duplicados: _duplicates,
+      totalBultos: totalBultos,
+      rows: rows,
+    );
+
+    return _BuiltCargoPdf(
+      bytes: bytes,
+      fileName: CargoPdf.fileName(widget.store.fullName, termino),
+    );
+  }
+
+  /// Guarda automáticamente el cargo en el dispositivo sin abrir impresión.
+  Future<bool> _saveCargoPdf({bool showFeedback = false}) async {
+    if (_collected.isEmpty || _generating) return false;
+    setState(() => _generating = true);
+    try {
+      final built = await _buildCargoPdf();
+      final saved = await CargoPdfStorage.save(
+        bytes: built.bytes,
+        fileName: built.fileName,
+      );
+
+      _cargoPdfPath = saved.path;
+      _cargoPdfName = File(saved.path).uri.pathSegments.last;
+      _cargoInPublicDownloads = saved.isPublicDownload;
+      await _saveSession();
+
+      if (mounted && showFeedback) {
+        final where = saved.isPublicDownload
+            ? 'Download/Trainyl/Cargos'
+            : 'el almacenamiento de Trainyl';
+        _snack('PDF guardado automáticamente en $where', const Color(0xFF16A34A));
+      }
+      return true;
+    } catch (e) {
+      if (mounted && showFeedback) {
+        _snack(
+          'Escaneo finalizado, pero no se pudo guardar el PDF: $e',
+          const Color(0xFFEF4444),
+        );
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
+  }
+
+  /// La vista de impresión solo se abre cuando el usuario lo solicita.
+  Future<void> _openCargoPdf() async {
     if (_collected.isEmpty || _generating) return;
     setState(() => _generating = true);
     try {
-      // Orden cronológico (1..N) para el detalle
-      final ordered = [..._collected]..sort((a, b) => a.time.compareTo(b.time));
+      Uint8List? bytes;
+      var fileName = _cargoPdfName;
+      final path = _cargoPdfPath;
 
-      // Registro = primer escaneo · Término = último escaneo
-      final registro = ordered.first.time;
-      final termino = ordered.last.time;
-
-      final rows = <CargoScanRow>[];
-      int totalBultos = 0;
-      for (var i = 0; i < ordered.length; i++) {
-        final mc = ordered[i].multipackCount;
-        totalBultos += (mc >= 2) ? mc : 1;
-        rows.add(CargoScanRow(
-          index: i + 1,
-          code: ordered[i].code,
-          time: ordered[i].time,
-          multipackCount: mc,
-        ));
+      if (path != null && path.isNotEmpty) {
+        final file = File(path);
+        if (await file.exists()) {
+          bytes = await file.readAsBytes();
+          fileName ??= file.uri.pathSegments.isNotEmpty
+              ? file.uri.pathSegments.last
+              : null;
+        }
       }
 
-      final conductor = (widget.driver['name'] as String?)?.trim() ?? '';
-      var placa = widget.placa.trim();
-      if (placa.isEmpty) {
-        placa = (widget.driver['placa'] as String?)?.trim() ?? '';
+      if (bytes == null) {
+        final built = await _buildCargoPdf();
+        final saved = await CargoPdfStorage.save(
+          bytes: built.bytes,
+          fileName: built.fileName,
+        );
+        bytes = built.bytes;
+        fileName = built.fileName;
+        _cargoPdfPath = saved.path;
+        _cargoPdfName = File(saved.path).uri.pathSegments.last;
+        _cargoInPublicDownloads = saved.isPublicDownload;
+        await _saveSession();
       }
-
-      final bytes = await CargoPdf.build(
-        storeName: widget.store.fullName,
-        conductor: conductor,
-        placa: placa,
-        registro: registro,
-        termino: termino,
-        itemsUnicos: _collected.length,
-        duplicados: _duplicates,
-        totalBultos: totalBultos,
-        rows: rows,
-      );
 
       await Printing.layoutPdf(
-        onLayout: (_) async => bytes,
-        name: CargoPdf.fileName(widget.store.fullName, termino),
+        onLayout: (_) async => bytes!,
+        name: fileName ?? 'Cargo_Trainyl.pdf',
       );
     } catch (e) {
-      if (mounted) _snack('No se pudo generar el cargo: $e', const Color(0xFFEF4444));
+      if (mounted) {
+        _snack('No se pudo abrir el cargo: $e', const Color(0xFFEF4444));
+      }
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -924,7 +1014,7 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _generating ? null : _generateCargo,
+                        onPressed: _generating ? null : _openCargoPdf,
                         icon: _generating
                             ? const SizedBox(
                                 width: 18,
@@ -939,8 +1029,8 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
                                 color: Colors.white),
                         label: Text(
                           _generating
-                              ? 'Generando...'
-                              : 'Imprimir / Guardar cargo (PDF)',
+                              ? 'Abriendo...'
+                              : 'Abrir / imprimir cargo (PDF)',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -1015,6 +1105,16 @@ class _PickupScanScreenState extends State<PickupScanScreen> {
       ),
     );
   }
+}
+
+class _BuiltCargoPdf {
+  final Uint8List bytes;
+  final String fileName;
+
+  const _BuiltCargoPdf({
+    required this.bytes,
+    required this.fileName,
+  });
 }
 
 class _Collected {
