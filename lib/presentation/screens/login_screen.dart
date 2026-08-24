@@ -44,8 +44,8 @@ class _LoginScreenState extends State<LoginScreen>
     super.initState();
     _auth = AuthController(
       client: OdooClient(
-        baseUrl: 'https://trainyl.digilab.pe',
-        db: 'trainyl-prd',
+        baseUrl: 'https://portal.trainyl.com',
+        db: 'trainyl',
       ),
     );
 

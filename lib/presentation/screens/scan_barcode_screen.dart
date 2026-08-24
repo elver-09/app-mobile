@@ -223,8 +223,8 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
       }
 
       final odooClient = widget.odooClient ?? OdooClient(
-        baseUrl: 'https://trainyl.digilab.pe',
-        db: 'trainyl-prd',
+        baseUrl: 'https://portal.trainyl.com',
+        db: 'trainyl',
       );
 
       print('🔵 Buscando orden globalmente: $code');
